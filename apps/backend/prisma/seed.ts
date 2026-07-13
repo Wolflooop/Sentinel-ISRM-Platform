@@ -63,6 +63,26 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
   { recurso: "amenazas", accion: "crear", descripcion: "Registrar una amenaza propia" },
   { recurso: "amenazas", accion: "actualizar", descripcion: "Actualizar una amenaza propia" },
   { recurso: "amenazas", accion: "eliminar", descripcion: "Eliminar una amenaza propia" },
+  {
+    recurso: "vulnerabilidades",
+    accion: "leer",
+    descripcion: "Consultar el catálogo de vulnerabilidades",
+  },
+  {
+    recurso: "vulnerabilidades",
+    accion: "crear",
+    descripcion: "Registrar una vulnerabilidad en el catálogo",
+  },
+  {
+    recurso: "vulnerabilidades",
+    accion: "actualizar",
+    descripcion: "Actualizar una vulnerabilidad del catálogo",
+  },
+  {
+    recurso: "vulnerabilidades",
+    accion: "eliminar",
+    descripcion: "Eliminar una vulnerabilidad del catálogo",
+  },
 ];
 
 const ROL_ADMINISTRADOR = {

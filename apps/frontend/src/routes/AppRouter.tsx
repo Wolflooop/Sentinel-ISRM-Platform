@@ -15,6 +15,9 @@ import { EditAssetPage } from "../features/assets/pages/EditAssetPage";
 import { ThreatsListPage } from "../features/threats/pages/ThreatsListPage";
 import { CreateThreatPage } from "../features/threats/pages/CreateThreatPage";
 import { EditThreatPage } from "../features/threats/pages/EditThreatPage";
+import { VulnerabilitiesListPage } from "../features/vulnerabilities/pages/VulnerabilitiesListPage";
+import { CreateVulnerabilityPage } from "../features/vulnerabilities/pages/CreateVulnerabilityPage";
+import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVulnerabilityPage";
 
 /**
  * Enrutador raíz de la aplicación.
@@ -49,6 +52,10 @@ export function AppRouter() {
         <Route path="/amenazas" element={<ThreatsListPage />} />
         <Route path="/amenazas/nueva" element={<CreateThreatPage />} />
         <Route path="/amenazas/:id/editar" element={<EditThreatPage />} />
+
+        <Route path="/vulnerabilidades" element={<VulnerabilitiesListPage />} />
+        <Route path="/vulnerabilidades/nueva" element={<CreateVulnerabilityPage />} />
+        <Route path="/vulnerabilidades/:id/editar" element={<EditVulnerabilityPage />} />
       </Routes>
     </BrowserRouter>
   );
