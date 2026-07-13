@@ -16,6 +16,7 @@ import { threatsRouter } from "./modules/threats/routes/threats.routes";
 import { vulnerabilitiesRouter } from "./modules/vulnerabilities/routes/vulnerabilities.routes";
 import { risksRouter } from "./modules/risks/routes/risks.routes";
 import { evaluationsRouter } from "./modules/evaluations/routes/evaluations.routes";
+import { treatmentsRouter } from "./modules/treatments/routes/treatments.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -80,6 +81,7 @@ export function createApp(): Application {
   app.use("/api/vulnerabilidades", vulnerabilitiesRouter);
   app.use("/api/riesgos", risksRouter);
   app.use("/api/evaluaciones", evaluationsRouter);
+  app.use("/api/tratamientos", treatmentsRouter);
   // Fase 10 en adelante (Tratamientos, ...), siguiendo el orden
   // oficial de desarrollo (Constitución, Sección 13)
   // ==========================================================================
