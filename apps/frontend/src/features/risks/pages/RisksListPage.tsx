@@ -13,12 +13,20 @@ export function RisksListPage() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-slate-800">Riesgos</h1>
-        <Link
-          to="/riesgos/nuevo"
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
-        >
-          Nuevo riesgo
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/riesgos/matriz"
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Ver matriz
+          </Link>
+          <Link
+            to="/riesgos/nuevo"
+            className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
+          >
+            Nuevo riesgo
+          </Link>
+        </div>
       </div>
 
       <div className="mt-4">

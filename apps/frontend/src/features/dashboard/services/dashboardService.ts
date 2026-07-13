@@ -1,16 +1,48 @@
 import { apiClient } from "../../../lib/apiClient";
 import { getOrganizacionIdActual } from "../../../lib/authSession";
-import { ActivoResumen, ControlResumen, IndicadoresDashboard, RiesgoResumen } from "../types/dashboard.types";
+import {
+  ActivoResumen,
+  ConteoPorEstadoControl,
+  ConteoPorNivel,
+  ControlResumen,
+  EstadoImplementacionControl,
+  IndicadoresDashboard,
+  NivelRiesgo,
+  RiesgoResumen,
+} from "../types/dashboard.types";
+
+const NIVELES_RIESGO: NivelRiesgo[] = ["BAJO", "MEDIO", "ALTO", "CRITICO"];
+const ESTADOS_CONTROL: EstadoImplementacionControl[] = [
+  "NO_APLICADO",
+  "PLANIFICADO",
+  "EN_PROGRESO",
+  "IMPLEMENTADO",
+];
 
 /**
- * Un riesgo se cuenta como "crítico" por su nivel residual cuando ya fue
- * evaluado tras tratamiento; si aún no tiene nivel residual, se usa el
- * inherente. Esto refleja el nivel de riesgo vigente en cada momento,
- * consistente con cómo el módulo de Riesgos expone ambos campos.
+ * Un riesgo se cuenta por su nivel residual cuando ya fue evaluado tras
+ * tratamiento; si aún no tiene nivel residual, se usa el inherente. Esto
+ * refleja el nivel de riesgo vigente en cada momento, consistente con cómo
+ * el módulo de Riesgos expone ambos campos.
  */
-function esRiesgoCritico(riesgo: RiesgoResumen): boolean {
-  const nivelVigente = riesgo.nivelRiesgoResidual ?? riesgo.nivelRiesgoInherente;
-  return nivelVigente === "CRITICO";
+function nivelVigente(riesgo: RiesgoResumen): NivelRiesgo {
+  return riesgo.nivelRiesgoResidual ?? riesgo.nivelRiesgoInherente;
+}
+
+function contarPorNivel(riesgos: RiesgoResumen[]): ConteoPorNivel {
+  const conteo = Object.fromEntries(NIVELES_RIESGO.map((nivel) => [nivel, 0])) as ConteoPorNivel;
+  for (const riesgo of riesgos) {
+    conteo[nivelVigente(riesgo)] += 1;
+  }
+  return conteo;
+}
+
+function contarPorEstadoControl(controles: ControlResumen[]): ConteoPorEstadoControl {
+  const conteo = Object.fromEntries(ESTADOS_CONTROL.map((estado) => [estado, 0])) as ConteoPorEstadoControl;
+  for (const control of controles) {
+    conteo[control.estadoImplementacion] += 1;
+  }
+  return conteo;
 }
 
 export async function obtenerIndicadoresDashboard(): Promise<IndicadoresDashboard> {
@@ -25,11 +57,15 @@ export async function obtenerIndicadoresDashboard(): Promise<IndicadoresDashboar
   ]);
 
   const riesgos = riesgosRes.data;
+  const controles = controlesRes.data;
+  const riesgosPorNivel = contarPorNivel(riesgos);
 
   return {
     totalActivos: activosRes.data.length,
     totalRiesgos: riesgos.length,
-    riesgosCriticos: riesgos.filter(esRiesgoCritico).length,
-    totalControles: controlesRes.data.length,
+    riesgosCriticos: riesgosPorNivel.CRITICO,
+    totalControles: controles.length,
+    riesgosPorNivel,
+    controlesPorEstado: contarPorEstadoControl(controles),
   };
 }

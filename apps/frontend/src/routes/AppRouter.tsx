@@ -24,6 +24,7 @@ import { EvaluationHistoryPage } from "../features/evaluations/pages/EvaluationH
 import { CreateVulnerabilityPage } from "../features/vulnerabilities/pages/CreateVulnerabilityPage";
 import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVulnerabilityPage";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
+import { RiskMatrixPage } from "../features/risk-matrix/pages/RiskMatrixPage";
 import { tokenStorage } from "../lib/tokenStorage";
 
 /**
@@ -85,6 +86,7 @@ export function AppRouter() {
         <Route path="/vulnerabilidades/:id/editar" element={<EditVulnerabilityPage />} />
 
         <Route path="/riesgos" element={<RisksListPage />} />
+        <Route path="/riesgos/matriz" element={<RiskMatrixPage />} />
         <Route path="/riesgos/nuevo" element={<CreateRiskPage />} />
         <Route path="/riesgos/:id" element={<RiskDetailPage />} />
         <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />

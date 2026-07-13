@@ -1,6 +1,8 @@
 import { Boxes, ShieldAlert, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useIndicadoresDashboard } from "../hooks/useDashboard";
 import { IndicatorCard } from "../components/IndicatorCard";
+import { RiskLevelChart } from "../components/RiskLevelChart";
+import { ControlsStatusChart } from "../components/ControlsStatusChart";
 
 function SkeletonCard() {
   return (
@@ -57,13 +59,19 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* Fase 8: estructura preparada para gráficos futuros (distribución de
-          riesgos por nivel, evolución en el tiempo, controles por estado). */}
-      <div className="mt-8 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-        <p className="text-sm text-slate-500">
-          Los gráficos de distribución de riesgos y avance de controles se agregarán en esta sección.
-        </p>
-      </div>
+      {isLoading ? (
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="h-72 animate-pulse rounded-lg border border-slate-200 bg-slate-50" />
+          <div className="h-72 animate-pulse rounded-lg border border-slate-200 bg-slate-50" />
+        </div>
+      ) : (
+        indicadores && (
+          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <RiskLevelChart riesgosPorNivel={indicadores.riesgosPorNivel} />
+            <ControlsStatusChart controlesPorEstado={indicadores.controlesPorEstado} />
+          </div>
+        )
+      )}
     </main>
   );
 }
