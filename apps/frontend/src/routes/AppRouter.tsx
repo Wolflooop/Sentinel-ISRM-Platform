@@ -9,12 +9,15 @@ import { OrganizationSettingsPage } from "../features/organizations/pages/Organi
 import { ContextListPage } from "../features/context/pages/ContextListPage";
 import { CreateContextPage } from "../features/context/pages/CreateContextPage";
 import { ContextDetailPage } from "../features/context/pages/ContextDetailPage";
+import { AssetsListPage } from "../features/assets/pages/AssetsListPage";
+import { CreateAssetPage } from "../features/assets/pages/CreateAssetPage";
+import { EditAssetPage } from "../features/assets/pages/EditAssetPage";
 
 /**
  * Enrutador raíz de la aplicación.
  *
- * Fase 5 — Contexto ISO: se agregan las rutas de listado, creación y
- * detalle (edición, escalas, matriz y activación) del Contexto ISO.
+ * Fase 6 — Activos: se agregan las rutas de listado (con filtros), creación
+ * y edición del inventario de activos.
  */
 export function AppRouter() {
   return (
@@ -35,6 +38,10 @@ export function AppRouter() {
         <Route path="/contexto" element={<ContextListPage />} />
         <Route path="/contexto/nuevo" element={<CreateContextPage />} />
         <Route path="/contexto/:id" element={<ContextDetailPage />} />
+
+        <Route path="/activos" element={<AssetsListPage />} />
+        <Route path="/activos/nuevo" element={<CreateAssetPage />} />
+        <Route path="/activos/:id/editar" element={<EditAssetPage />} />
       </Routes>
     </BrowserRouter>
   );

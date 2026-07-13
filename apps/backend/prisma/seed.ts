@@ -51,6 +51,14 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
     descripcion: "Actualizar alcance/criterios y configurar escalas/matriz de un Contexto ISO",
   },
   { recurso: "contexto", accion: "activar", descripcion: "Activar un Contexto ISO" },
+  { recurso: "activos", accion: "leer", descripcion: "Consultar el inventario de activos" },
+  { recurso: "activos", accion: "crear", descripcion: "Registrar un nuevo activo" },
+  { recurso: "activos", accion: "actualizar", descripcion: "Actualizar datos de un activo" },
+  {
+    recurso: "activos",
+    accion: "cambiarEstado",
+    descripcion: "Activar/desactivar/retirar un activo",
+  },
 ];
 
 const ROL_ADMINISTRADOR = {

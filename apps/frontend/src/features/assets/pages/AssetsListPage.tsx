@@ -1,0 +1,37 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useActivos } from "../hooks/useAssets";
+import { AssetsTable } from "../components/AssetsTable";
+import { AssetsFilterBar } from "../components/AssetsFilterBar";
+import { FiltrosActivos } from "../types/assets.types";
+
+export function AssetsListPage() {
+  const [filtros, setFiltros] = useState<FiltrosActivos>({});
+  const { data: activos, isLoading, isError } = useActivos(filtros);
+
+  return (
+    <main className="mx-auto max-w-4xl px-4 py-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-slate-800">Activos</h1>
+        <Link
+          to="/activos/nuevo"
+          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
+        >
+          Nuevo activo
+        </Link>
+      </div>
+
+      <div className="mt-4">
+        <AssetsFilterBar filtros={filtros} onChange={setFiltros} />
+      </div>
+
+      {isLoading && <p className="mt-4 text-sm text-slate-500">Cargando activos...</p>}
+      {isError && <p className="mt-4 text-sm text-red-600">No se pudieron cargar los activos.</p>}
+      {activos && (
+        <div className="mt-4">
+          <AssetsTable activos={activos} />
+        </div>
+      )}
+    </main>
+  );
+}
