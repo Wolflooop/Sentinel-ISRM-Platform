@@ -22,11 +22,10 @@ import { controlsRouter } from "./modules/controls/routes/controls.routes";
 /**
  * Construye y configura la aplicación Express.
  *
- * Fase 1 — Infraestructura base: solo se configuran middlewares transversales
- * de seguridad, logging y parsing. NO se registra ningún módulo funcional
- * (auth, activos, riesgos, etc.) — eso corresponde a fases posteriores, cada
- * una montada en app.use("/api/<recurso>", <router>) siguiendo la cadena
- * obligatoria: Route → JWT → RBAC → Zod → Controller → Service → Repository.
+ * Configura middlewares transversales de seguridad, logging y parsing, y
+ * monta todos los módulos funcionales en app.use("/api/<recurso>", <router>)
+ * siguiendo la cadena obligatoria: Route → JWT → RBAC → Zod → Controller →
+ * Service → Repository.
  */
 export function createApp(): Application {
   const app = express();
@@ -84,8 +83,6 @@ export function createApp(): Application {
   app.use("/api/evaluaciones", evaluationsRouter);
   app.use("/api/tratamientos", treatmentsRouter);
   app.use("/api/controles", controlsRouter);
-  // Fase 10 en adelante (Tratamientos, ...), siguiendo el orden
-  // oficial de desarrollo (Constitución, Sección 13)
   // ==========================================================================
 
   // 404 para cualquier ruta no reconocida

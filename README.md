@@ -6,7 +6,7 @@ Plataforma web multiorganizacional (multi-tenant lógico) para la gestión de ri
 
 ## Estado del proyecto
 
-**Fase 1 — Infraestructura base.** Solo existe el andamiaje inicial (backend Express + Prisma, frontend React + Vite). Ningún módulo funcional (auth, activos, riesgos, etc.) está implementado todavía.
+Backend y frontend con los módulos funcionales implementados: autenticación JWT, usuarios, roles, permisos, organizaciones, contexto ISO, activos, amenazas, vulnerabilidades, riesgos, evaluaciones, tratamientos y controles.
 
 ## Stack tecnológico
 

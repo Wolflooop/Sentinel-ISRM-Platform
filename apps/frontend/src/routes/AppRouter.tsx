@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { UsersListPage } from "../features/users/pages/UsersListPage";
 import { CreateUserPage } from "../features/users/pages/CreateUserPage";
@@ -27,14 +27,30 @@ import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVul
 /**
  * Enrutador raíz de la aplicación.
  *
- * Fase 6 — Activos: se agregan las rutas de listado (con filtros), creación
- * y edición del inventario de activos.
+ * La ruta raíz no renderiza un componente estático: actúa como despachador
+ * según el estado de autenticación (ver RootRedirect).
  */
+
+// Ajustar aquí si el proyecto usa otra key de storage o un AuthContext propio.
+// Esta comprobación es de solo lectura: no modifica lógica de autenticación.
+const AUTH_TOKEN_KEY = "token";
+const HOME_ROUTE = "/riesgos"; // módulo principal post-login
+
+function isAuthenticated(): boolean {
+  return Boolean(localStorage.getItem(AUTH_TOKEN_KEY));
+}
+
+function RootRedirect() {
+  return isAuthenticated()
+    ? <Navigate to={HOME_ROUTE} replace />
+    : <Navigate to="/login" replace />;
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<PlaceholderHome />} />
+        <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/usuarios" element={<UsersListPage />} />
@@ -69,20 +85,5 @@ export function AppRouter() {
         <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
       </Routes>
     </BrowserRouter>
-  );
-}
-
-function PlaceholderHome() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-slate-800">
-          Sentinel ISRM Platform
-        </h1>
-        <p className="mt-2 text-slate-500">
-          Infraestructura base — Fase 1. Módulos funcionales aún no implementados.
-        </p>
-      </div>
-    </main>
   );
 }
