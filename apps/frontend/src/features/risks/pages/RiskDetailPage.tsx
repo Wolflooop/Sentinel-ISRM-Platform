@@ -35,6 +35,21 @@ export function RiskDetailPage() {
         </span>
       </div>
 
+      <div className="mt-6 flex gap-2">
+        <Link
+          to={`/riesgos/${id}/evaluaciones/nueva`}
+          className="rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white"
+        >
+          Nueva evaluación
+        </Link>
+        <Link
+          to={`/riesgos/${id}/evaluaciones`}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
+        >
+          Ver historial
+        </Link>
+      </div>
+
       <div className="mt-6 grid grid-cols-2 gap-4 rounded-md border border-slate-200 p-4 text-sm">
         <div>
           <p className="text-xs text-slate-500">Activo</p>

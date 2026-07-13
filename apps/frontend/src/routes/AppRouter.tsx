@@ -19,6 +19,8 @@ import { VulnerabilitiesListPage } from "../features/vulnerabilities/pages/Vulne
 import { RisksListPage } from "../features/risks/pages/RisksListPage";
 import { CreateRiskPage } from "../features/risks/pages/CreateRiskPage";
 import { RiskDetailPage } from "../features/risks/pages/RiskDetailPage";
+import { EvaluationCreatePage } from "../features/evaluations/pages/EvaluationCreatePage";
+import { EvaluationHistoryPage } from "../features/evaluations/pages/EvaluationHistoryPage";
 import { CreateVulnerabilityPage } from "../features/vulnerabilities/pages/CreateVulnerabilityPage";
 import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVulnerabilityPage";
 
@@ -63,6 +65,8 @@ export function AppRouter() {
         <Route path="/riesgos" element={<RisksListPage />} />
         <Route path="/riesgos/nuevo" element={<CreateRiskPage />} />
         <Route path="/riesgos/:id" element={<RiskDetailPage />} />
+        <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />
+        <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
       </Routes>
     </BrowserRouter>
   );
