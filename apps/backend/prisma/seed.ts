@@ -83,6 +83,12 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
     accion: "eliminar",
     descripcion: "Eliminar una vulnerabilidad del catálogo",
   },
+  { recurso: "riesgos", accion: "leer", descripcion: "Consultar los riesgos identificados" },
+  {
+    recurso: "riesgos",
+    accion: "crear",
+    descripcion: "Registrar un nuevo riesgo (activo + amenaza + vulnerabilidad)",
+  },
 ];
 
 const ROL_ADMINISTRADOR = {

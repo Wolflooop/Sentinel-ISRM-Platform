@@ -14,6 +14,7 @@ import { contextRouter } from "./modules/context/routes/context.routes";
 import { assetsRouter } from "./modules/assets/routes/assets.routes";
 import { threatsRouter } from "./modules/threats/routes/threats.routes";
 import { vulnerabilitiesRouter } from "./modules/vulnerabilities/routes/vulnerabilities.routes";
+import { risksRouter } from "./modules/risks/routes/risks.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -76,7 +77,8 @@ export function createApp(): Application {
   app.use("/api/activos", assetsRouter);
   app.use("/api/amenazas", threatsRouter);
   app.use("/api/vulnerabilidades", vulnerabilitiesRouter);
-  // Fase 9 en adelante (AAV y Riesgos, ...), siguiendo el orden
+  app.use("/api/riesgos", risksRouter);
+  // Fase 10 en adelante (Evaluaciones, ...), siguiendo el orden
   // oficial de desarrollo (Constitución, Sección 13)
   // ==========================================================================
 

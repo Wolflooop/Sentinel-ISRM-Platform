@@ -16,6 +16,9 @@ import { ThreatsListPage } from "../features/threats/pages/ThreatsListPage";
 import { CreateThreatPage } from "../features/threats/pages/CreateThreatPage";
 import { EditThreatPage } from "../features/threats/pages/EditThreatPage";
 import { VulnerabilitiesListPage } from "../features/vulnerabilities/pages/VulnerabilitiesListPage";
+import { RisksListPage } from "../features/risks/pages/RisksListPage";
+import { CreateRiskPage } from "../features/risks/pages/CreateRiskPage";
+import { RiskDetailPage } from "../features/risks/pages/RiskDetailPage";
 import { CreateVulnerabilityPage } from "../features/vulnerabilities/pages/CreateVulnerabilityPage";
 import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVulnerabilityPage";
 
@@ -56,6 +59,10 @@ export function AppRouter() {
         <Route path="/vulnerabilidades" element={<VulnerabilitiesListPage />} />
         <Route path="/vulnerabilidades/nueva" element={<CreateVulnerabilityPage />} />
         <Route path="/vulnerabilidades/:id/editar" element={<EditVulnerabilityPage />} />
+
+        <Route path="/riesgos" element={<RisksListPage />} />
+        <Route path="/riesgos/nuevo" element={<CreateRiskPage />} />
+        <Route path="/riesgos/:id" element={<RiskDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

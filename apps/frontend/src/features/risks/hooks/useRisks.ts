@@ -1,0 +1,33 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  listarRiesgosRequest,
+  obtenerRiesgoRequest,
+  crearRiesgoRequest,
+} from "../services/risksService";
+import { FiltrosRiesgos } from "../types/risks.types";
+import { CrearRiesgoFormValues } from "../schemas/risksSchema";
+
+export function useRiesgos(filtros: FiltrosRiesgos) {
+  return useQuery({
+    queryKey: ["riesgos", filtros],
+    queryFn: () => listarRiesgosRequest(filtros),
+  });
+}
+
+export function useRiesgo(id: string | undefined) {
+  return useQuery({
+    queryKey: ["riesgos", id],
+    queryFn: () => obtenerRiesgoRequest(id as string),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCrearRiesgo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CrearRiesgoFormValues) => crearRiesgoRequest(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["riesgos"] });
+    },
+  });
+}
