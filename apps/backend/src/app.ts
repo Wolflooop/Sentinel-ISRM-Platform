@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
 import { requestLogger } from "./middleware/requestLogger";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { authRouter } from "./modules/auth/routes/auth.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -56,8 +57,10 @@ export function createApp(): Application {
   });
 
   // ==========================================================================
-  // Módulos funcionales — se montarán aquí en las fases siguientes:
-  // app.use("/api/auth", authRouter);
+  // Módulos funcionales
+  // ==========================================================================
+  app.use("/api/auth", authRouter);
+  // Fases siguientes:
   // app.use("/api/usuarios", usuariosRouter);
   // ... etc, siguiendo el orden oficial de desarrollo (Constitución, Sección 13)
   // ==========================================================================

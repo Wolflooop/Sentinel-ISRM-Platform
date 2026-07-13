@@ -1,19 +1,20 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LoginPage } from "../features/auth/pages/LoginPage";
 
 /**
  * Enrutador raíz de la aplicación.
  *
- * Fase 1 — Infraestructura base: solo existe una ruta placeholder para
- * verificar que Router, Tailwind y el resto del bootstrap funcionan. Las
- * rutas funcionales (login, dashboard, activos, riesgos, etc.) se agregan en
- * sus fases correspondientes, montadas dentro de los layouts que se definan
- * en `src/layouts/`.
+ * Fase 2 — Autenticación: se agrega la ruta pública `/login`. El resto de
+ * rutas funcionales (dashboard, activos, riesgos, etc.) se agregan en sus
+ * fases correspondientes, montadas dentro de los layouts que se definan en
+ * `src/layouts/`.
  */
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<PlaceholderHome />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
   );

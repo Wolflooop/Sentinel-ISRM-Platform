@@ -20,6 +20,14 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
   LOG_LEVEL: z.string().default("info"),
+
+  // Política de bloqueo de usuario por intentos fallidos — INFORMACIÓN
+  // PENDIENTE DE DEFINICIÓN (Constitución: no inventar número máximo de
+  // intentos ni tiempo de bloqueo). Deliberadamente sin `.default(...)`:
+  // si no se configuran, la funcionalidad de bloqueo queda preparada pero
+  // inactiva (ver auth.service.ts). Ningún valor mágico vive en el código.
+  AUTH_MAX_INTENTOS_FALLIDOS: z.coerce.number().int().positive().optional(),
+  AUTH_BLOQUEO_MINUTOS: z.coerce.number().int().positive().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
