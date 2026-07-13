@@ -12,6 +12,7 @@ import { permissionsRouter } from "./modules/permissions/routes/permissions.rout
 import { organizationsRouter } from "./modules/organizations/routes/organizations.routes";
 import { contextRouter } from "./modules/context/routes/context.routes";
 import { assetsRouter } from "./modules/assets/routes/assets.routes";
+import { threatsRouter } from "./modules/threats/routes/threats.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -72,7 +73,8 @@ export function createApp(): Application {
   app.use("/api/organizaciones", organizationsRouter);
   app.use("/api/contexto", contextRouter);
   app.use("/api/activos", assetsRouter);
-  // Fase 7 en adelante (Amenazas, ...), siguiendo el orden
+  app.use("/api/amenazas", threatsRouter);
+  // Fase 8 en adelante (Vulnerabilidades, ...), siguiendo el orden
   // oficial de desarrollo (Constitución, Sección 13)
   // ==========================================================================
 

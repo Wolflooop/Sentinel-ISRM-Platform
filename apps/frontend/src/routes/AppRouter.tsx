@@ -12,6 +12,9 @@ import { ContextDetailPage } from "../features/context/pages/ContextDetailPage";
 import { AssetsListPage } from "../features/assets/pages/AssetsListPage";
 import { CreateAssetPage } from "../features/assets/pages/CreateAssetPage";
 import { EditAssetPage } from "../features/assets/pages/EditAssetPage";
+import { ThreatsListPage } from "../features/threats/pages/ThreatsListPage";
+import { CreateThreatPage } from "../features/threats/pages/CreateThreatPage";
+import { EditThreatPage } from "../features/threats/pages/EditThreatPage";
 
 /**
  * Enrutador raíz de la aplicación.
@@ -42,6 +45,10 @@ export function AppRouter() {
         <Route path="/activos" element={<AssetsListPage />} />
         <Route path="/activos/nuevo" element={<CreateAssetPage />} />
         <Route path="/activos/:id/editar" element={<EditAssetPage />} />
+
+        <Route path="/amenazas" element={<ThreatsListPage />} />
+        <Route path="/amenazas/nueva" element={<CreateThreatPage />} />
+        <Route path="/amenazas/:id/editar" element={<EditThreatPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -59,6 +59,10 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
     accion: "cambiarEstado",
     descripcion: "Activar/desactivar/retirar un activo",
   },
+  { recurso: "amenazas", accion: "leer", descripcion: "Consultar el catálogo de amenazas" },
+  { recurso: "amenazas", accion: "crear", descripcion: "Registrar una amenaza propia" },
+  { recurso: "amenazas", accion: "actualizar", descripcion: "Actualizar una amenaza propia" },
+  { recurso: "amenazas", accion: "eliminar", descripcion: "Eliminar una amenaza propia" },
 ];
 
 const ROL_ADMINISTRADOR = {
