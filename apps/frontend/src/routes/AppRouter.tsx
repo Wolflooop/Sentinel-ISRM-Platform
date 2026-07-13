@@ -23,6 +23,8 @@ import { EvaluationCreatePage } from "../features/evaluations/pages/EvaluationCr
 import { EvaluationHistoryPage } from "../features/evaluations/pages/EvaluationHistoryPage";
 import { CreateVulnerabilityPage } from "../features/vulnerabilities/pages/CreateVulnerabilityPage";
 import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVulnerabilityPage";
+import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
+import { tokenStorage } from "../lib/tokenStorage";
 
 /**
  * Enrutador raíz de la aplicación.
@@ -31,13 +33,15 @@ import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVul
  * según el estado de autenticación (ver RootRedirect).
  */
 
-// Ajustar aquí si el proyecto usa otra key de storage o un AuthContext propio.
-// Esta comprobación es de solo lectura: no modifica lógica de autenticación.
-const AUTH_TOKEN_KEY = "token";
-const HOME_ROUTE = "/riesgos"; // módulo principal post-login
+// Corrección: antes se leía la key "token" directamente de localStorage,
+// que nunca coincidió con la key real usada por tokenStorage
+// ("sentinel_isrm_token" — ver lib/tokenStorage.ts). Esto hacía que "/"
+// redirigiera siempre a /login incluso con sesión activa. Se usa
+// tokenStorage como único punto de verdad, igual que el resto de la app.
+const HOME_ROUTE = "/dashboard"; // módulo principal post-login (Fase 8)
 
 function isAuthenticated(): boolean {
-  return Boolean(localStorage.getItem(AUTH_TOKEN_KEY));
+  return Boolean(tokenStorage.get());
 }
 
 function RootRedirect() {
@@ -52,6 +56,8 @@ export function AppRouter() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/dashboard" element={<DashboardPage />} />
 
         <Route path="/usuarios" element={<UsersListPage />} />
         <Route path="/usuarios/nuevo" element={<CreateUserPage />} />
