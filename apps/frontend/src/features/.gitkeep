@@ -1,0 +1,6 @@
+Carpeta reservada para los módulos funcionales del frontend (auth, activos,
+amenazas, vulnerabilidades, riesgos, evaluaciones, tratamientos, controles,
+dashboard, reportes), organizados como features/<modulo>/{components,hooks,
+services,schemas,pages,types}, a implementar en el orden oficial de la
+Sección 13 de la PROJECT CONSTITUTION. Vacía intencionalmente durante la
+Fase 1 — Infraestructura base.

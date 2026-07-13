@@ -1,0 +1,72 @@
+import express, { Application, Request, Response } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import { env } from "./config/env";
+import { requestLogger } from "./middleware/requestLogger";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+
+/**
+ * Construye y configura la aplicación Express.
+ *
+ * Fase 1 — Infraestructura base: solo se configuran middlewares transversales
+ * de seguridad, logging y parsing. NO se registra ningún módulo funcional
+ * (auth, activos, riesgos, etc.) — eso corresponde a fases posteriores, cada
+ * una montada en app.use("/api/<recurso>", <router>) siguiendo la cadena
+ * obligatoria: Route → JWT → RBAC → Zod → Controller → Service → Repository.
+ */
+export function createApp(): Application {
+  const app = express();
+
+  // Seguridad de cabeceras HTTP
+  app.use(helmet());
+
+  // CORS restringido al origen del frontend configurado
+  app.use(
+    cors({
+      origin: env.CORS_ORIGIN,
+      credentials: true,
+    })
+  );
+
+  // Límite de tasa de peticiones (protección básica ante abuso/DoS)
+  app.use(
+    rateLimit({
+      windowMs: env.RATE_LIMIT_WINDOW_MS,
+      limit: env.RATE_LIMIT_MAX_REQUESTS,
+      standardHeaders: true,
+      legacyHeaders: false,
+    })
+  );
+
+  // Parsing de body JSON
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // Logging HTTP
+  app.use(requestLogger);
+
+  // Endpoint de verificación de salud (infraestructura, no es un módulo de negocio)
+  app.get("/health", (_req: Request, res: Response) => {
+    res.status(200).json({
+      status: "ok",
+      service: "sentinel-isrm-backend",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // ==========================================================================
+  // Módulos funcionales — se montarán aquí en las fases siguientes:
+  // app.use("/api/auth", authRouter);
+  // app.use("/api/usuarios", usuariosRouter);
+  // ... etc, siguiendo el orden oficial de desarrollo (Constitución, Sección 13)
+  // ==========================================================================
+
+  // 404 para cualquier ruta no reconocida
+  app.use(notFoundHandler);
+
+  // Manejo global de errores (debe ser el último middleware registrado)
+  app.use(errorHandler);
+
+  return app;
+}

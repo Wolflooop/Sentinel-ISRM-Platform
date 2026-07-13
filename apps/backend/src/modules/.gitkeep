@@ -1,0 +1,5 @@
+Carpeta reservada para los módulos funcionales (auth, usuarios, organizaciones,
+activos, amenazas, vulnerabilidades, aav-riesgos, evaluaciones, tratamientos,
+controles, dashboard, reportes, auditoria), a implementar en el orden oficial
+definido en la Sección 13 de la PROJECT CONSTITUTION. Vacía intencionalmente
+durante la Fase 1 — Infraestructura base.

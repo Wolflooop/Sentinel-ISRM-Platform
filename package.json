@@ -1,0 +1,22 @@
+{
+  "name": "sentinel-isrm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sentinel ISRM Platform — Plataforma de Gestion de Riesgos de Seguridad de la Informacion (ISO/IEC 27005:2022)",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "prisma:generate": "npm run prisma:generate --workspace=apps/backend",
+    "prisma:migrate:dev": "npm run prisma:migrate:dev --workspace=apps/backend",
+    "prisma:migrate:deploy": "npm run prisma:migrate:deploy --workspace=apps/backend"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

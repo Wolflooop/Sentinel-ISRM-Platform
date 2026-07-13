@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (nunca versionar secretos reales)
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+
+# Cobertura de pruebas
+coverage/
+
+# Prisma
+.prisma/
+
+# Logs
+*.log
+logs/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,558 @@
+// ============================================================================
+// schema.prisma
+// Plataforma de Gestión de Riesgos de Seguridad de la Información
+// Basada en ISO/IEC 27005:2022 — Estancia de Investigación Programa Delfín 2026
+//
+// Generado a partir del modelo de datos aprobado en las Fases 1 a 8:
+//   Fase 1 — Revisión del dominio
+//   Fase 2 — Definición de atributos
+//   Fase 3 — Claves, restricciones e índices
+//   Fase 4 — Relaciones y cardinalidades
+//   Fase 5 — Reglas de integridad
+//   Fase 6 — Normalización (1FN/2FN/3FN, con 3 excepciones documentadas)
+//   Fase 7 — Modelo ER (Mermaid)
+//   Fase 8 — Revisión final
+//
+// Decisión registrada en Fase 8.1: `Riesgo`, `Evaluacion` y `Tratamiento` NO
+// almacenan `organizacionId` directo (a diferencia de `Activo`/`Auditoria`/
+// `Reporte`). El aislamiento multi-tenant sobre estas tres tablas se resuelve
+// mediante JOIN en la capa de repository — ver comentarios en cada modelo.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMERACIONES
+// ============================================================================
+
+enum Sector {
+  PUBLICO
+  PRIVADO
+}
+
+enum TamanoOrganizacion {
+  MICRO
+  PEQUENA
+  MEDIANA
+  GRANDE
+}
+
+enum EstadoOrganizacion {
+  ACTIVA
+  SUSPENDIDA
+  INACTIVA
+}
+
+enum FormatoReporte {
+  PDF
+  XLSX
+  CSV
+}
+
+enum AccionAuditoria {
+  CREAR
+  EDITAR
+  ELIMINAR
+  APROBAR
+}
+
+enum NivelRiesgo {
+  BAJO
+  MEDIO
+  ALTO
+  CRITICO
+}
+
+enum EstadoActivo {
+  ACTIVO
+  INACTIVO
+  RETIRADO
+}
+
+enum OrigenAmenaza {
+  INTERNO
+  EXTERNO
+}
+
+enum EstadoRiesgo {
+  IDENTIFICADO
+  EN_ANALISIS
+  EVALUADO
+  TRATADO
+  CERRADO
+  MONITOREADO
+  ACEPTADO
+}
+
+enum ResultadoEvaluacion {
+  ACEPTABLE
+  NO_ACEPTABLE
+}
+
+enum EstrategiaTratamiento {
+  EVITAR
+  MITIGAR
+  TRANSFERIR
+  ACEPTAR
+}
+
+enum EstadoTratamiento {
+  PLANIFICADO
+  EN_PROGRESO
+  IMPLEMENTADO
+  VENCIDO
+}
+
+enum TipoControl {
+  PREVENTIVO
+  DETECTIVO
+  CORRECTIVO
+}
+
+enum EstadoImplementacionControl {
+  NO_APLICADO
+  PLANIFICADO
+  EN_PROGRESO
+  IMPLEMENTADO
+}
+
+enum TipoReporte {
+  EJECUTIVO
+  TECNICO
+  GENERAL
+}
+
+// ============================================================================
+// 1. ADMINISTRACIÓN
+// ============================================================================
+
+model Organizacion {
+  id                            String             @id @default(uuid())
+  nombre                        String             @unique
+  sector                        Sector
+  tamano                        TamanoOrganizacion
+  paisIso                       String             @db.Char(2)
+  correoContacto                String?
+  telefono                      String?
+  direccion                     String?
+  estado                        EstadoOrganizacion @default(ACTIVA)
+  diasAlertaTratamiento         Int?               @default(15)
+  formatoReportePredeterminado  FormatoReporte?    @default(PDF)
+  creadoEn                      DateTime           @default(now())
+
+  usuarios    Usuario[]
+  contextos   Contexto[]
+  activos     Activo[]
+  amenazas    Amenaza[]
+  controles   Control[]
+  auditorias  Auditoria[]
+  reportes    Reporte[]
+}
+
+model Usuario {
+  id               String    @id @default(uuid())
+  organizacionId   String
+  organizacion     Organizacion @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  rolId            String
+  rol              Rol       @relation(fields: [rolId], references: [id], onDelete: Restrict)
+  nombre           String
+  email            String
+  passwordHash     String
+  intentosFallidos Int       @default(0)
+  bloqueadoHasta   DateTime?
+  activo           Boolean   @default(true)
+  ultimoLogin      DateTime?
+  creadoEn         DateTime  @default(now())
+
+  sesiones               Sesion[]
+  auditorias             Auditoria[]
+  activosResponsable     Activo[]      @relation("ActivoResponsable")
+  evaluaciones           Evaluacion[]
+  tratamientosResponsable Tratamiento[] @relation("TratamientoResponsable")
+  reportes               Reporte[]
+
+  // Nota de implementación (ver Fase 3): al ser (organizacionId, email) una
+  // clave única compuesta, el flujo de login debe identificar primero la
+  // organización antes de validar el correo.
+  @@unique([organizacionId, email])
+  @@index([rolId])
+}
+
+model Rol {
+  id          String  @id @default(uuid())
+  nombre      String  @unique
+  descripcion String?
+  esSistema   Boolean @default(false)
+
+  usuarios Usuario[]
+  permisos RolPermiso[]
+}
+
+model Permiso {
+  id          String  @id @default(uuid())
+  recurso     String
+  accion      String
+  descripcion String?
+
+  roles RolPermiso[]
+
+  @@unique([recurso, accion])
+}
+
+// Entidad puente (N:M) — ver Fase 4, Puente 1
+model RolPermiso {
+  rolId     String
+  rol       Rol     @relation(fields: [rolId], references: [id], onDelete: Restrict)
+  permisoId String
+  permiso   Permiso @relation(fields: [permisoId], references: [id], onDelete: Restrict)
+
+  @@id([rolId, permisoId])
+}
+
+model Sesion {
+  id        String   @id @default(uuid())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiraEn  DateTime
+  revocado  Boolean  @default(false)
+  creadoEn  DateTime @default(now())
+
+  @@index([usuarioId])
+}
+
+model Auditoria {
+  id              String          @id @default(uuid())
+  usuarioId       String
+  usuario         Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  organizacionId  String
+  organizacion    Organizacion    @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  entidad         String
+  entidadId       String
+  accion          AccionAuditoria
+  // Excepción documentada a 1FN (ver Fase 6): estructura serializada, no un
+  // valor atómico. Se mapea a JSONB de forma nativa en PostgreSQL.
+  datosAnteriores Json?
+  datosNuevos     Json?
+  direccionIp     String
+  fecha           DateTime        @default(now())
+
+  // Tabla de solo inserción: no se exponen operaciones de update/delete desde
+  // Prisma Client para este modelo a nivel de aplicación (ver Fase 5).
+}
+
+// ============================================================================
+// 2. CONTEXTO ISO
+// ============================================================================
+
+model Contexto {
+  id                   String   @id @default(uuid())
+  organizacionId       String
+  organizacion         Organizacion @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  alcance              String   @db.Text
+  criteriosAceptacion  String   @db.Text
+  activo               Boolean  @default(false)
+  creadoEn             DateTime @default(now())
+
+  escalasImpacto       EscalaImpacto[]
+  escalasProbabilidad  EscalaProbabilidad[]
+  matricesRiesgo       MatrizRiesgo[]
+  evaluaciones         Evaluacion[]
+
+  @@index([organizacionId])
+  // NOTA DE MIGRACIÓN MANUAL (ver Fase 3 y Fase 5):
+  // Prisma no expresa nativamente un índice único parcial. Debe agregarse
+  // manualmente en la migración generada:
+  //   CREATE UNIQUE INDEX contexto_organizacion_activo_unique
+  //     ON "Contexto" ("organizacionId") WHERE "activo" = true;
+  // Esto garantiza, a nivel de base de datos, que exista como máximo un
+  // Contexto con activo = true por organización.
+}
+
+model EscalaImpacto {
+  id          String   @id @default(uuid())
+  contextoId  String
+  contexto    Contexto @relation(fields: [contextoId], references: [id], onDelete: Cascade)
+  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 5.
+  // Prisma no soporta restricciones CHECK de forma nativa; debe
+  // implementarse mediante una migración SQL personalizada.
+  nivel       Int
+  etiqueta    String
+  descripcion String?
+
+  @@unique([contextoId, nivel])
+}
+
+model EscalaProbabilidad {
+  id          String   @id @default(uuid())
+  contextoId  String
+  contexto    Contexto @relation(fields: [contextoId], references: [id], onDelete: Cascade)
+  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 5.
+  // Prisma no soporta restricciones CHECK de forma nativa; debe
+  // implementarse mediante una migración SQL personalizada.
+  nivel       Int
+  etiqueta    String
+  descripcion String?
+
+  @@unique([contextoId, nivel])
+}
+
+model MatrizRiesgo {
+  id                String      @id @default(uuid())
+  contextoId        String
+  contexto          Contexto    @relation(fields: [contextoId], references: [id], onDelete: Cascade)
+  // Restricción de dominio (ver Fase 2/3): ambos valores válidos entre 1 y 5.
+  // Prisma no soporta restricciones CHECK de forma nativa; deben
+  // implementarse mediante una migración SQL personalizada.
+  nivelProbabilidad Int
+  nivelImpacto      Int
+  nivelResultante   NivelRiesgo
+
+  @@unique([contextoId, nivelProbabilidad, nivelImpacto])
+}
+
+// ============================================================================
+// 3. INVENTARIO, AMENAZAS, VULNERABILIDADES
+// ============================================================================
+
+model CategoriaActivo {
+  id          String  @id @default(uuid())
+  nombre      String  @unique
+  descripcion String?
+
+  activos Activo[]
+}
+
+model Activo {
+  id                     String       @id @default(uuid())
+  organizacionId         String
+  organizacion           Organizacion @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  categoriaId            String
+  categoria              CategoriaActivo @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  nombre                 String
+  descripcion            String?
+  usuarioResponsableId   String
+  usuarioResponsable     Usuario      @relation("ActivoResponsable", fields: [usuarioResponsableId], references: [id], onDelete: Restrict)
+  ubicacion              String?
+  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 5.
+  // Prisma no soporta restricciones CHECK de forma nativa; debe
+  // implementarse mediante una migración SQL personalizada.
+  criticidad             Int
+  valorEconomicoEstimado Decimal?     @db.Decimal(14, 2)
+  estado                 EstadoActivo @default(ACTIVO)
+
+  aavs ActivoAmenazaVulnerabilidad[]
+
+  @@unique([organizacionId, nombre])
+  @@index([categoriaId])
+  @@index([criticidad])
+}
+
+model CategoriaAmenaza {
+  id          String  @id @default(uuid())
+  nombre      String  @unique
+  descripcion String?
+
+  amenazas Amenaza[]
+}
+
+model Amenaza {
+  id             String        @id @default(uuid())
+  // Nullable: NULO = catálogo global administrado por el administrador del
+  // sistema (ver Fase 3).
+  organizacionId String?
+  organizacion   Organizacion? @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  categoriaId    String
+  categoria      CategoriaAmenaza @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  nombre         String
+  descripcion    String?
+  origen         OrigenAmenaza
+  esPredefinida  Boolean       @default(false)
+
+  aavs ActivoAmenazaVulnerabilidad[]
+
+  // IMPORTANTE: en PostgreSQL, dos valores NULL nunca se consideran iguales
+  // a efectos de una restricción UNIQUE. Por lo tanto, esta restricción NO
+  // impide dos amenazas globales (organizacionId = NULL) con el mismo
+  // nombre — solo aplica la unicidad entre amenazas de una misma
+  // organización. La validación de amenazas globales duplicadas es
+  // responsabilidad de la lógica de negocio (capa de aplicación), no del
+  // modelo físico (ver Fase 3).
+  @@unique([organizacionId, nombre])
+  @@index([esPredefinida])
+}
+
+model CategoriaVulnerabilidad {
+  id          String  @id @default(uuid())
+  nombre      String  @unique
+  descripcion String?
+
+  vulnerabilidades Vulnerabilidad[]
+}
+
+model Vulnerabilidad {
+  id             String   @id @default(uuid())
+  categoriaId    String
+  categoria      CategoriaVulnerabilidad @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  nombre         String
+  descripcion    String?
+  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 5.
+  // Prisma no soporta restricciones CHECK de forma nativa; debe
+  // implementarse mediante una migración SQL personalizada.
+  severidad      Int
+  referenciaCVE  String?
+
+  aavs ActivoAmenazaVulnerabilidad[]
+
+  @@index([severidad])
+}
+
+// ============================================================================
+// 4. ANÁLISIS (AAV, RIESGO, EVALUACIÓN)
+// ============================================================================
+
+// Resuelve la asociación ternaria Activo + Amenaza + Vulnerabilidad
+// (ver Fase 4, Puente 2)
+model ActivoAmenazaVulnerabilidad {
+  id                String         @id @default(uuid())
+  activoId          String
+  activo            Activo         @relation(fields: [activoId], references: [id], onDelete: Restrict)
+  amenazaId         String
+  amenaza           Amenaza        @relation(fields: [amenazaId], references: [id], onDelete: Restrict)
+  vulnerabilidadId  String
+  vulnerabilidad    Vulnerabilidad @relation(fields: [vulnerabilidadId], references: [id], onDelete: Restrict)
+
+  riesgo Riesgo?
+
+  @@unique([activoId, amenazaId, vulnerabilidadId])
+  @@index([amenazaId])
+  @@index([vulnerabilidadId])
+}
+
+model Riesgo {
+  id                    String       @id @default(uuid())
+  aavId                 String       @unique
+  aav                   ActivoAmenazaVulnerabilidad @relation(fields: [aavId], references: [id], onDelete: Restrict)
+  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 5.
+  // Prisma no soporta restricciones CHECK de forma nativa; debe
+  // implementarse mediante una migración SQL personalizada.
+  probabilidad          Int
+  impacto               Int
+  // Excepción documentada a 3FN (ver Fase 6): valorRiesgo es un dato
+  // persistido, no calculado automáticamente mediante triggers ni mediante
+  // lógica propia de PostgreSQL. Se sincroniza exclusivamente desde la capa
+  // de servicios de la aplicación, en la misma operación en que cambian
+  // probabilidad/impacto.
+  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 25.
+  // Prisma no soporta restricciones CHECK de forma nativa; debe
+  // implementarse mediante una migración SQL personalizada.
+  valorRiesgo           Int
+  nivelRiesgoInherente  NivelRiesgo
+  nivelRiesgoResidual   NivelRiesgo?
+  fechaUltimoCalculo    DateTime     @default(now())
+  estado                EstadoRiesgo @default(IDENTIFICADO)
+  creadoEn              DateTime     @default(now())
+
+  evaluaciones Evaluacion[]
+
+  // Decisión Fase 8.1: sin organizacionId directo. El aislamiento
+  // multi-tenant se resuelve vía JOIN: Riesgo -> AAV -> Activo -> Organizacion.
+  @@index([estado])
+  @@index([nivelRiesgoInherente])
+}
+
+model Evaluacion {
+  id              String              @id @default(uuid())
+  riesgoId        String
+  riesgo          Riesgo              @relation(fields: [riesgoId], references: [id], onDelete: Restrict)
+  contextoId      String
+  contexto        Contexto            @relation(fields: [contextoId], references: [id], onDelete: Restrict)
+  resultado       ResultadoEvaluacion
+  justificacion   String              @db.Text
+  usuarioId       String
+  usuario         Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  fechaEvaluacion DateTime            @default(now())
+
+  tratamiento Tratamiento?
+
+  // Decisión Fase 8.1: sin organizacionId directo (ver Riesgo).
+  @@index([riesgoId, fechaEvaluacion])
+}
+
+// ============================================================================
+// 5. TRATAMIENTO
+// ============================================================================
+
+model Tratamiento {
+  id                    String                @id @default(uuid())
+  evaluacionId          String                @unique
+  evaluacion            Evaluacion            @relation(fields: [evaluacionId], references: [id], onDelete: Restrict)
+  // Nullable en general; obligatorio a nivel de aplicación cuando
+  // estrategia = MITIGAR (ver Fase 3/5). No es NOT NULL en la base de datos.
+  controlPrincipalId    String?
+  controlPrincipal      Control?              @relation(fields: [controlPrincipalId], references: [id], onDelete: Restrict)
+  estrategia            EstrategiaTratamiento
+  descripcionPlan       String                @db.Text
+  usuarioResponsableId  String
+  usuarioResponsable    Usuario               @relation("TratamientoResponsable", fields: [usuarioResponsableId], references: [id], onDelete: Restrict)
+  fechaLimite           DateTime              @db.Date
+  estado                EstadoTratamiento     @default(PLANIFICADO)
+  // Restricción de dominio (ver Fase 2/3): valores válidos entre 0 y 100.
+  // Prisma no soporta restricciones CHECK de forma nativa; debe
+  // implementarse mediante una migración SQL personalizada.
+  porcentajeAvance      Int                   @default(0)
+
+  // Decisión Fase 8.1: sin organizacionId directo (ver Riesgo).
+  @@index([controlPrincipalId])
+  @@index([estado])
+  @@index([fechaLimite])
+}
+
+model Control {
+  id                          String                       @id @default(uuid())
+  // Nullable: NULO = catálogo global de referencia (ISO/IEC 27001 Anexo A).
+  organizacionId              String?
+  organizacion                Organizacion?                @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  // Sin restricción UNIQUE (ver Fase 3): distintas organizaciones pueden
+  // adaptar un mismo código ISO con nombre/descripción propios.
+  codigoIso27001              String?
+  nombre                      String
+  tipo                        TipoControl
+  estadoImplementacion        EstadoImplementacionControl  @default(NO_APLICADO)
+  // Debe permanecer NULL mientras estadoImplementacion != IMPLEMENTADO
+  // (regla de negocio validada en la capa de aplicación, ver Fase 5).
+  fechaImplementacion         DateTime?                    @db.Date
+  observaciones               String?
+  descripcionImplementacion   String?
+
+  tratamientos Tratamiento[]
+
+  @@index([codigoIso27001])
+  @@index([estadoImplementacion])
+}
+
+// ============================================================================
+// 6. REPORTES
+// ============================================================================
+
+model Reporte {
+  id             String       @id @default(uuid())
+  organizacionId String
+  organizacion   Organizacion @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  usuarioId      String
+  usuario        Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  tipo           TipoReporte
+  formato        FormatoReporte
+  rutaArchivo    String
+  fecha          DateTime     @default(now())
+
+  @@index([organizacionId])
+  @@index([fecha])
+}
