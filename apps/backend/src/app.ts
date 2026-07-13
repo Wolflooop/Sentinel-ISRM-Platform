@@ -9,6 +9,7 @@ import { authRouter } from "./modules/auth/routes/auth.routes";
 import { usersRouter } from "./modules/users/routes/users.routes";
 import { rolesRouter } from "./modules/roles/routes/roles.routes";
 import { permissionsRouter } from "./modules/permissions/routes/permissions.routes";
+import { organizationsRouter } from "./modules/organizations/routes/organizations.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -66,9 +67,9 @@ export function createApp(): Application {
   app.use("/api/usuarios", usersRouter);
   app.use("/api/roles", rolesRouter);
   app.use("/api/permisos", permissionsRouter);
-  // Fases siguientes:
-  // app.use("/api/usuarios", usuariosRouter);
-  // ... etc, siguiendo el orden oficial de desarrollo (Constitución, Sección 13)
+  app.use("/api/organizaciones", organizationsRouter);
+  // Fase 5 en adelante (Contexto ISO, Activos, ...), siguiendo el orden
+  // oficial de desarrollo (Constitución, Sección 13)
   // ==========================================================================
 
   // 404 para cualquier ruta no reconocida

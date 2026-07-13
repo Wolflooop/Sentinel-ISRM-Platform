@@ -27,6 +27,21 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
     descripcion: "Asignar o quitar permisos de un rol",
   },
   { recurso: "permisos", accion: "leer", descripcion: "Consultar el catálogo de permisos" },
+  {
+    recurso: "organizaciones",
+    accion: "leer",
+    descripcion: "Consultar los datos de la propia organización",
+  },
+  {
+    recurso: "organizaciones",
+    accion: "actualizar",
+    descripcion: "Actualizar los datos de la propia organización",
+  },
+  {
+    recurso: "organizaciones",
+    accion: "cambiarEstado",
+    descripcion: "Activar/suspender/desactivar la propia organización",
+  },
 ];
 
 const ROL_ADMINISTRADOR = {

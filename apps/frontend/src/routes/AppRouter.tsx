@@ -5,6 +5,7 @@ import { CreateUserPage } from "../features/users/pages/CreateUserPage";
 import { EditUserPage } from "../features/users/pages/EditUserPage";
 import { RolesListPage } from "../features/roles/pages/RolesListPage";
 import { RolDetailPage } from "../features/roles/pages/RolDetailPage";
+import { OrganizationSettingsPage } from "../features/organizations/pages/OrganizationSettingsPage";
 
 /**
  * Enrutador raíz de la aplicación.
@@ -27,6 +28,8 @@ export function AppRouter() {
 
         <Route path="/roles" element={<RolesListPage />} />
         <Route path="/roles/:id" element={<RolDetailPage />} />
+
+        <Route path="/organizacion" element={<OrganizationSettingsPage />} />
       </Routes>
     </BrowserRouter>
   );
