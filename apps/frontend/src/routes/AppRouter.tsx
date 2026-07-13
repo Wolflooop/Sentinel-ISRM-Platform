@@ -1,13 +1,18 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LoginPage } from "../features/auth/pages/LoginPage";
+import { UsersListPage } from "../features/users/pages/UsersListPage";
+import { CreateUserPage } from "../features/users/pages/CreateUserPage";
+import { EditUserPage } from "../features/users/pages/EditUserPage";
+import { RolesListPage } from "../features/roles/pages/RolesListPage";
+import { RolDetailPage } from "../features/roles/pages/RolDetailPage";
 
 /**
  * Enrutador raíz de la aplicación.
  *
- * Fase 2 — Autenticación: se agrega la ruta pública `/login`. El resto de
- * rutas funcionales (dashboard, activos, riesgos, etc.) se agregan en sus
- * fases correspondientes, montadas dentro de los layouts que se definan en
- * `src/layouts/`.
+ * Fase 3 — Usuarios, Roles y Permisos: se agregan las rutas de gestión de
+ * usuarios y roles. La gestión de permisos no tiene rutas propias — se
+ * accede desde el detalle de un rol (`/roles/:id`), sin crear un módulo de
+ * frontend independiente para "permissions".
  */
 export function AppRouter() {
   return (
@@ -15,6 +20,13 @@ export function AppRouter() {
       <Routes>
         <Route path="/" element={<PlaceholderHome />} />
         <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/usuarios" element={<UsersListPage />} />
+        <Route path="/usuarios/nuevo" element={<CreateUserPage />} />
+        <Route path="/usuarios/:id/editar" element={<EditUserPage />} />
+
+        <Route path="/roles" element={<RolesListPage />} />
+        <Route path="/roles/:id" element={<RolDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

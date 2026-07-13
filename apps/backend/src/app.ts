@@ -6,6 +6,9 @@ import { env } from "./config/env";
 import { requestLogger } from "./middleware/requestLogger";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { authRouter } from "./modules/auth/routes/auth.routes";
+import { usersRouter } from "./modules/users/routes/users.routes";
+import { rolesRouter } from "./modules/roles/routes/roles.routes";
+import { permissionsRouter } from "./modules/permissions/routes/permissions.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -60,6 +63,9 @@ export function createApp(): Application {
   // Módulos funcionales
   // ==========================================================================
   app.use("/api/auth", authRouter);
+  app.use("/api/usuarios", usersRouter);
+  app.use("/api/roles", rolesRouter);
+  app.use("/api/permisos", permissionsRouter);
   // Fases siguientes:
   // app.use("/api/usuarios", usuariosRouter);
   // ... etc, siguiendo el orden oficial de desarrollo (Constitución, Sección 13)
