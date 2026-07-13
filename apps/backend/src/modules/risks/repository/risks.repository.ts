@@ -176,7 +176,7 @@ export async function crearAavYRiesgo(
   intentosRestantes = 3
 ): Promise<RiesgoConRelaciones> {
   try {
-    return await prisma.$transaction(async (tx: typeof prisma) => {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       let aav = await tx.activoAmenazaVulnerabilidad.findUnique({
         where: {
           activoId_amenazaId_vulnerabilidadId: {
