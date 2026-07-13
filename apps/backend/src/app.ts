@@ -10,6 +10,7 @@ import { usersRouter } from "./modules/users/routes/users.routes";
 import { rolesRouter } from "./modules/roles/routes/roles.routes";
 import { permissionsRouter } from "./modules/permissions/routes/permissions.routes";
 import { organizationsRouter } from "./modules/organizations/routes/organizations.routes";
+import { contextRouter } from "./modules/context/routes/context.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -68,7 +69,8 @@ export function createApp(): Application {
   app.use("/api/roles", rolesRouter);
   app.use("/api/permisos", permissionsRouter);
   app.use("/api/organizaciones", organizationsRouter);
-  // Fase 5 en adelante (Contexto ISO, Activos, ...), siguiendo el orden
+  app.use("/api/contexto", contextRouter);
+  // Fase 6 en adelante (Activos, Amenazas, ...), siguiendo el orden
   // oficial de desarrollo (Constitución, Sección 13)
   // ==========================================================================
 

@@ -4,10 +4,11 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 /**
- * Catálogo de permisos necesarios para que el RBAC dinámico de las Fases 2 y
- * 3 funcione. Ningún permiso queda hardcodeado dentro del código de
- * autorización (middleware/authorize.ts) — todo se resuelve consultando
- * estas filas vía Rol → RolPermiso → Permiso.
+ * Catálogo de permisos necesarios para que el RBAC dinámico funcione,
+ * acumulado a través de las fases (auth, usuarios/roles/permisos,
+ * organizaciones, contexto ISO, ...). Ningún permiso queda hardcodeado
+ * dentro del código de autorización (middleware/authorize.ts) — todo se
+ * resuelve consultando estas filas vía Rol → RolPermiso → Permiso.
  */
 const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> = [
   { recurso: "usuarios", accion: "leer", descripcion: "Consultar usuarios de la organización" },
@@ -42,6 +43,14 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
     accion: "cambiarEstado",
     descripcion: "Activar/suspender/desactivar la propia organización",
   },
+  { recurso: "contexto", accion: "leer", descripcion: "Consultar el Contexto ISO y su configuración" },
+  { recurso: "contexto", accion: "crear", descripcion: "Crear un nuevo Contexto ISO" },
+  {
+    recurso: "contexto",
+    accion: "actualizar",
+    descripcion: "Actualizar alcance/criterios y configurar escalas/matriz de un Contexto ISO",
+  },
+  { recurso: "contexto", accion: "activar", descripcion: "Activar un Contexto ISO" },
 ];
 
 const ROL_ADMINISTRADOR = {

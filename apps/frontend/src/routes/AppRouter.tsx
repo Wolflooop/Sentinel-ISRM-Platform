@@ -6,14 +6,15 @@ import { EditUserPage } from "../features/users/pages/EditUserPage";
 import { RolesListPage } from "../features/roles/pages/RolesListPage";
 import { RolDetailPage } from "../features/roles/pages/RolDetailPage";
 import { OrganizationSettingsPage } from "../features/organizations/pages/OrganizationSettingsPage";
+import { ContextListPage } from "../features/context/pages/ContextListPage";
+import { CreateContextPage } from "../features/context/pages/CreateContextPage";
+import { ContextDetailPage } from "../features/context/pages/ContextDetailPage";
 
 /**
  * Enrutador raíz de la aplicación.
  *
- * Fase 3 — Usuarios, Roles y Permisos: se agregan las rutas de gestión de
- * usuarios y roles. La gestión de permisos no tiene rutas propias — se
- * accede desde el detalle de un rol (`/roles/:id`), sin crear un módulo de
- * frontend independiente para "permissions".
+ * Fase 5 — Contexto ISO: se agregan las rutas de listado, creación y
+ * detalle (edición, escalas, matriz y activación) del Contexto ISO.
  */
 export function AppRouter() {
   return (
@@ -30,6 +31,10 @@ export function AppRouter() {
         <Route path="/roles/:id" element={<RolDetailPage />} />
 
         <Route path="/organizacion" element={<OrganizationSettingsPage />} />
+
+        <Route path="/contexto" element={<ContextListPage />} />
+        <Route path="/contexto/nuevo" element={<CreateContextPage />} />
+        <Route path="/contexto/:id" element={<ContextDetailPage />} />
       </Routes>
     </BrowserRouter>
   );
