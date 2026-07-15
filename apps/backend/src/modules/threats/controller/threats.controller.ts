@@ -40,9 +40,8 @@ export async function listarAmenazasController(
 ): Promise<void> {
   try {
     const filtros = filtrosAmenazasSchema.parse(req.query);
-    const organizacionId = organizacionIdDe(req);
-    const amenazas = await listarAmenazas(organizacionId, filtros);
-    res.status(200).json(toAmenazaResponseListDTO(amenazas, organizacionId));
+    const amenazas = await listarAmenazas(organizacionIdDe(req), filtros);
+    res.status(200).json(toAmenazaResponseListDTO(amenazas, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -67,9 +66,8 @@ export async function obtenerAmenazaController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const organizacionId = organizacionIdDe(req);
-    const amenaza = await obtenerAmenaza(req.params.id, organizacionId);
-    res.status(200).json(toAmenazaResponseDTO(amenaza, organizacionId));
+    const amenaza = await obtenerAmenaza(req.params.id, organizacionIdDe(req));
+    res.status(200).json(toAmenazaResponseDTO(amenaza, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -82,9 +80,8 @@ export async function crearAmenazaController(
 ): Promise<void> {
   try {
     const input = crearAmenazaSchema.parse(req.body);
-    const organizacionId = organizacionIdDe(req);
-    const amenaza = await crearNuevaAmenaza(organizacionId, input, actorDe(req));
-    res.status(201).json(toAmenazaResponseDTO(amenaza, organizacionId));
+    const amenaza = await crearNuevaAmenaza(organizacionIdDe(req), input, actorDe(req));
+    res.status(201).json(toAmenazaResponseDTO(amenaza, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -97,14 +94,13 @@ export async function actualizarAmenazaController(
 ): Promise<void> {
   try {
     const input = actualizarAmenazaSchema.parse(req.body);
-    const organizacionId = organizacionIdDe(req);
     const amenaza = await actualizarAmenazaExistente(
       req.params.id,
-      organizacionId,
+      organizacionIdDe(req),
       input,
       actorDe(req)
     );
-    res.status(200).json(toAmenazaResponseDTO(amenaza, organizacionId));
+    res.status(200).json(toAmenazaResponseDTO(amenaza, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -116,8 +112,7 @@ export async function eliminarAmenazaController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const organizacionId = organizacionIdDe(req);
-    await eliminarAmenazaExistente(req.params.id, organizacionId, actorDe(req));
+    await eliminarAmenazaExistente(req.params.id, organizacionIdDe(req), actorDe(req));
     res.status(204).send();
   } catch (err) {
     next(err);

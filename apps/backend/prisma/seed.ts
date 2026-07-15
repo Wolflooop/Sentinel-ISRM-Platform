@@ -89,6 +89,16 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
     accion: "crear",
     descripcion: "Registrar un nuevo riesgo (activo + amenaza + vulnerabilidad)",
   },
+  // NOTA: "controles" ya se usa en controls.routes.ts (authorize("controles", ...))
+  // pero no tenía entradas en este catálogo, por lo que ningún rol —ni
+  // siquiera Administrador— podía obtener el permiso. Se agrega aquí para
+  // que el módulo de Controles sea accesible.
+  { recurso: "controles", accion: "leer", descripcion: "Consultar el catálogo de controles" },
+  { recurso: "controles", accion: "crear", descripcion: "Registrar un nuevo control" },
+  { recurso: "controles", accion: "actualizar", descripcion: "Actualizar un control existente" },
+  { recurso: "controles", accion: "eliminar", descripcion: "Eliminar un control no asociado a tratamientos" },
+  { recurso: "reportes", accion: "leer", descripcion: "Consultar y descargar reportes generados" },
+  { recurso: "reportes", accion: "crear", descripcion: "Generar un nuevo reporte" },
 ];
 
 const ROL_ADMINISTRADOR = {

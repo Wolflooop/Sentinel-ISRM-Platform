@@ -10,12 +10,42 @@ import {
   registrarAuditoriaControl,
 } from "../repository/controls.repository";
 import { CrearControlInput, ActualizarControlInput } from "../schema/controls.schema";
-import { ControlConRelaciones, FiltrosControles } from "../types/controls.types";
+import { ControlConRelaciones, FiltrosControles, EstadoImplementacionControl } from "../types/controls.types";
 
 interface ActorAuditoria {
   usuarioId: string;
   organizacionId: string;
   direccionIp: string;
+}
+
+/**
+ * Regla documentada en schema.prisma sobre Control.fechaImplementacion:
+ * debe permanecer NULL mientras estadoImplementacion !== "IMPLEMENTADO".
+ * Se resuelve aquí, a nivel de aplicación (Zod no puede verlo porque
+ * actualizarControlExistente mezcla un input parcial con el registro
+ * existente):
+ *  - Si el usuario intenta FIJAR una fecha explícita en un estado que no
+ *    es "Implementado" -> se rechaza (error de captura).
+ *  - Si el usuario solo cambia el estado (p. ej. desde el selector rápido
+ *    del detalle) y el control ya tenía una fecha -> se limpia
+ *    automáticamente para no dejar datos inconsistentes, en vez de romper
+ *    esa actualización.
+ */
+function normalizarFechaImplementacion(
+  estadoEfectivo: EstadoImplementacionControl,
+  fechaImplementacionInput: Date | null | undefined,
+  fechaImplementacionAnterior: Date | null
+): Date | null {
+  if (estadoEfectivo !== "IMPLEMENTADO") {
+    if (fechaImplementacionInput) {
+      throw new AppError(
+        "La fecha de implementación solo puede registrarse cuando el estado es 'Implementado'",
+        400
+      );
+    }
+    return null;
+  }
+  return fechaImplementacionInput !== undefined ? fechaImplementacionInput : fechaImplementacionAnterior;
 }
 
 export async function listarControles(
@@ -43,13 +73,16 @@ export async function crearNuevoControl(
     }
   }
 
+  const estadoEfectivo = input.estadoImplementacion ?? "NO_APLICADO";
+  const fechaEfectiva = normalizarFechaImplementacion(estadoEfectivo, input.fechaImplementacion, null);
+
   const control = await crearControl({
     organizacionId: input.organizacionId ?? null,
     codigoIso27001: input.codigoIso27001 ?? null,
     nombre: input.nombre,
     tipo: input.tipo,
-    estadoImplementacion: input.estadoImplementacion ?? "NO_APLICADO",
-    fechaImplementacion: input.fechaImplementacion ?? null,
+    estadoImplementacion: estadoEfectivo,
+    fechaImplementacion: fechaEfectiva,
     observaciones: input.observaciones ?? null,
     descripcionImplementacion: input.descripcionImplementacion ?? null,
   });
@@ -84,13 +117,20 @@ export async function actualizarControlExistente(
     }
   }
 
+  const estadoEfectivo = input.estadoImplementacion ?? anterior.estadoImplementacion;
+  const fechaEfectiva = normalizarFechaImplementacion(
+    estadoEfectivo,
+    input.fechaImplementacion,
+    anterior.fechaImplementacion
+  );
+
   const actualizado = await actualizarControl(id, {
     organizacionId: input.organizacionId,
     codigoIso27001: input.codigoIso27001,
     nombre: input.nombre,
     tipo: input.tipo,
     estadoImplementacion: input.estadoImplementacion,
-    fechaImplementacion: input.fechaImplementacion,
+    fechaImplementacion: fechaEfectiva,
     observaciones: input.observaciones,
     descripcionImplementacion: input.descripcionImplementacion,
   });

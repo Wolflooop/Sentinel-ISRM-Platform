@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "../features/auth/pages/LoginPage";
+import { AppShell } from "../features/shell/components/AppShell";
 import { UsersListPage } from "../features/users/pages/UsersListPage";
 import { CreateUserPage } from "../features/users/pages/CreateUserPage";
 import { EditUserPage } from "../features/users/pages/EditUserPage";
@@ -25,6 +26,11 @@ import { CreateVulnerabilityPage } from "../features/vulnerabilities/pages/Creat
 import { EditVulnerabilityPage } from "../features/vulnerabilities/pages/EditVulnerabilityPage";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 import { RiskMatrixPage } from "../features/risk-matrix/pages/RiskMatrixPage";
+import { ControlsListPage } from "../features/controls/pages/ControlsListPage";
+import { ControlDetailPage } from "../features/controls/pages/ControlDetailPage";
+import { CreateControlPage } from "../features/controls/pages/CreateControlPage";
+import { EditControlPage } from "../features/controls/pages/EditControlPage";
+import { ReportsPage } from "../features/reports/pages/ReportsPage";
 import { tokenStorage } from "../lib/tokenStorage";
 
 /**
@@ -58,39 +64,48 @@ export function AppRouter() {
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
 
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route element={<AppShell />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
 
-        <Route path="/usuarios" element={<UsersListPage />} />
-        <Route path="/usuarios/nuevo" element={<CreateUserPage />} />
-        <Route path="/usuarios/:id/editar" element={<EditUserPage />} />
+          <Route path="/usuarios" element={<UsersListPage />} />
+          <Route path="/usuarios/nuevo" element={<CreateUserPage />} />
+          <Route path="/usuarios/:id/editar" element={<EditUserPage />} />
 
-        <Route path="/roles" element={<RolesListPage />} />
-        <Route path="/roles/:id" element={<RolDetailPage />} />
+          <Route path="/roles" element={<RolesListPage />} />
+          <Route path="/roles/:id" element={<RolDetailPage />} />
 
-        <Route path="/organizacion" element={<OrganizationSettingsPage />} />
+          <Route path="/organizacion" element={<OrganizationSettingsPage />} />
 
-        <Route path="/contexto" element={<ContextListPage />} />
-        <Route path="/contexto/nuevo" element={<CreateContextPage />} />
-        <Route path="/contexto/:id" element={<ContextDetailPage />} />
+          <Route path="/contexto" element={<ContextListPage />} />
+          <Route path="/contexto/nuevo" element={<CreateContextPage />} />
+          <Route path="/contexto/:id" element={<ContextDetailPage />} />
 
-        <Route path="/activos" element={<AssetsListPage />} />
-        <Route path="/activos/nuevo" element={<CreateAssetPage />} />
-        <Route path="/activos/:id/editar" element={<EditAssetPage />} />
+          <Route path="/activos" element={<AssetsListPage />} />
+          <Route path="/activos/nuevo" element={<CreateAssetPage />} />
+          <Route path="/activos/:id/editar" element={<EditAssetPage />} />
 
-        <Route path="/amenazas" element={<ThreatsListPage />} />
-        <Route path="/amenazas/nueva" element={<CreateThreatPage />} />
-        <Route path="/amenazas/:id/editar" element={<EditThreatPage />} />
+          <Route path="/amenazas" element={<ThreatsListPage />} />
+          <Route path="/amenazas/nueva" element={<CreateThreatPage />} />
+          <Route path="/amenazas/:id/editar" element={<EditThreatPage />} />
 
-        <Route path="/vulnerabilidades" element={<VulnerabilitiesListPage />} />
-        <Route path="/vulnerabilidades/nueva" element={<CreateVulnerabilityPage />} />
-        <Route path="/vulnerabilidades/:id/editar" element={<EditVulnerabilityPage />} />
+          <Route path="/vulnerabilidades" element={<VulnerabilitiesListPage />} />
+          <Route path="/vulnerabilidades/nueva" element={<CreateVulnerabilityPage />} />
+          <Route path="/vulnerabilidades/:id/editar" element={<EditVulnerabilityPage />} />
 
-        <Route path="/riesgos" element={<RisksListPage />} />
-        <Route path="/riesgos/matriz" element={<RiskMatrixPage />} />
-        <Route path="/riesgos/nuevo" element={<CreateRiskPage />} />
-        <Route path="/riesgos/:id" element={<RiskDetailPage />} />
-        <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />
-        <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
+          <Route path="/controles" element={<ControlsListPage />} />
+          <Route path="/controles/nuevo" element={<CreateControlPage />} />
+          <Route path="/controles/:id" element={<ControlDetailPage />} />
+          <Route path="/controles/:id/editar" element={<EditControlPage />} />
+
+          <Route path="/riesgos" element={<RisksListPage />} />
+          <Route path="/riesgos/matriz" element={<RiskMatrixPage />} />
+          <Route path="/riesgos/nuevo" element={<CreateRiskPage />} />
+          <Route path="/riesgos/:id" element={<RiskDetailPage />} />
+          <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />
+          <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
+
+          <Route path="/reportes" element={<ReportsPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
