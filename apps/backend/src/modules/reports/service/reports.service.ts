@@ -3,11 +3,10 @@ import path from "path";
 import PDFDocument from "pdfkit";
 import { AppError } from "../../../shared/AppError";
 import {
-  crearReporte,
+  crearReporteConAuditoria,
   findReportePorId,
   findReportes,
   recopilarDatosOrganizacion,
-  registrarAuditoriaReporte,
 } from "../repository/reports.repository";
 import { GenerarReporteInput } from "../schema/reports.schema";
 import {
@@ -236,21 +235,21 @@ export async function generarReporteNuevo(
 
   await construirPDF(input.tipo, datos, rutaAbsoluta);
 
-  const reporte = await crearReporte({
-    organizacionId: actor.organizacionId,
-    usuarioId: actor.usuarioId,
-    tipo: input.tipo,
-    formato: "PDF",
-    rutaArchivo: nombreArchivo,
-  });
-
-  await registrarAuditoriaReporte({
-    usuarioId: actor.usuarioId,
-    organizacionId: actor.organizacionId,
-    entidadId: reporte.id,
-    direccionIp: actor.direccionIp,
-    datosNuevos: { tipo: reporte.tipo, formato: reporte.formato },
-  });
+  const reporte = await crearReporteConAuditoria(
+    {
+      organizacionId: actor.organizacionId,
+      usuarioId: actor.usuarioId,
+      tipo: input.tipo,
+      formato: "PDF",
+      rutaArchivo: nombreArchivo,
+    },
+    {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      direccionIp: actor.direccionIp,
+      datosNuevos: { tipo: input.tipo, formato: "PDF" },
+    }
+  );
 
   return reporte;
 }

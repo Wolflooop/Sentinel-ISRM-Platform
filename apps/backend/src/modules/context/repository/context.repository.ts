@@ -12,7 +12,7 @@ import {
 const INCLUDE_DETALLE = {
   escalasImpacto: true,
   escalasProbabilidad: true,
-  matriz: true,
+   matricesRiesgo: true,
 } as const;
 
 export async function findContextosPorOrganizacion(organizacionId: string): Promise<Contexto[]> {

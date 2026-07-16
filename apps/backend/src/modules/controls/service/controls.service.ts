@@ -1,13 +1,11 @@
 import { AppError } from "../../../shared/AppError";
 import {
-  actualizarControl,
-  crearControl,
-  eliminarControl,
+  actualizarControlConAuditoria,
+  crearControlConAuditoria,
+  eliminarControlConAuditoria,
   existeTratamientoParaControl,
-  findControlPorId,
-  findControles,
-  findOrganizacionPorId,
-  registrarAuditoriaControl,
+  findControlVisiblePorId,
+  findControlesVisiblesParaOrganizacion,
 } from "../repository/controls.repository";
 import { CrearControlInput, ActualizarControlInput } from "../schema/controls.schema";
 import { ControlConRelaciones, FiltrosControles, EstadoImplementacionControl } from "../types/controls.types";
@@ -49,73 +47,82 @@ function normalizarFechaImplementacion(
 }
 
 export async function listarControles(
+  organizacionId: string,
   filtros: FiltrosControles
 ): Promise<ControlConRelaciones[]> {
-  return findControles(filtros);
+  return findControlesVisiblesParaOrganizacion(organizacionId, filtros);
 }
 
-export async function obtenerControl(id: string): Promise<ControlConRelaciones> {
-  const control = await findControlPorId(id);
+/**
+ * Visible tanto para controles globales como propios — 404 (no revela
+ * existencia) si el control pertenece a otra organización, mismo criterio
+ * de aislamiento ya usado en threats/users/roles/context/assets.
+ */
+export async function obtenerControl(
+  id: string,
+  organizacionId: string
+): Promise<ControlConRelaciones> {
+  const control = await findControlVisiblePorId(id, organizacionId);
   if (!control) {
     throw new AppError("Control no encontrado", 404);
   }
   return control;
 }
 
+/**
+ * Ninguna operación de escritura de este módulo actúa sobre el catálogo
+ * global (`organizacionId = NULL`) — mismo criterio ya resuelto en threats
+ * para Amenaza (ver exigirAmenazaPropia).
+ */
+function exigirControlPropio(control: ControlConRelaciones, organizacionId: string): void {
+  if (control.organizacionId !== organizacionId) {
+    throw new AppError("No se puede modificar un control del catálogo global", 403);
+  }
+}
+
 export async function crearNuevoControl(
+  organizacionId: string,
   input: CrearControlInput,
   actor: ActorAuditoria
 ): Promise<ControlConRelaciones> {
-  if (input.organizacionId) {
-    const organizacion = await findOrganizacionPorId(input.organizacionId);
-    if (!organizacion) {
-      throw new AppError("La organización especificada no existe", 404);
-    }
-  }
-
   const estadoEfectivo = input.estadoImplementacion ?? "NO_APLICADO";
   const fechaEfectiva = normalizarFechaImplementacion(estadoEfectivo, input.fechaImplementacion, null);
 
-  const control = await crearControl({
-    organizacionId: input.organizacionId ?? null,
-    codigoIso27001: input.codigoIso27001 ?? null,
-    nombre: input.nombre,
-    tipo: input.tipo,
-    estadoImplementacion: estadoEfectivo,
-    fechaImplementacion: fechaEfectiva,
-    observaciones: input.observaciones ?? null,
-    descripcionImplementacion: input.descripcionImplementacion ?? null,
-  });
-
-  await registrarAuditoriaControl({
-    usuarioId: actor.usuarioId,
-    organizacionId: actor.organizacionId,
-    entidadId: control.id,
-    accion: "CREAR",
-    direccionIp: actor.direccionIp,
-    datosNuevos: {
-      nombre: control.nombre,
-      tipo: control.tipo,
-      estadoImplementacion: control.estadoImplementacion,
+  const control = await crearControlConAuditoria(
+    {
+      organizacionId,
+      codigoIso27001: input.codigoIso27001 ?? null,
+      nombre: input.nombre,
+      tipo: input.tipo,
+      estadoImplementacion: estadoEfectivo,
+      fechaImplementacion: fechaEfectiva,
+      observaciones: input.observaciones ?? null,
+      descripcionImplementacion: input.descripcionImplementacion ?? null,
     },
-  });
+    {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      accion: "CREAR",
+      direccionIp: actor.direccionIp,
+      datosNuevos: {
+        nombre: input.nombre,
+        tipo: input.tipo,
+        estadoImplementacion: estadoEfectivo,
+      },
+    }
+  );
 
   return control;
 }
 
 export async function actualizarControlExistente(
   id: string,
+  organizacionId: string,
   input: ActualizarControlInput,
   actor: ActorAuditoria
 ): Promise<ControlConRelaciones> {
-  const anterior = await obtenerControl(id);
-
-  if (input.organizacionId !== undefined && input.organizacionId) {
-    const organizacion = await findOrganizacionPorId(input.organizacionId);
-    if (!organizacion) {
-      throw new AppError("La organización especificada no existe", 404);
-    }
-  }
+  const anterior = await obtenerControl(id, organizacionId);
+  exigirControlPropio(anterior, organizacionId);
 
   const estadoEfectivo = input.estadoImplementacion ?? anterior.estadoImplementacion;
   const fechaEfectiva = normalizarFechaImplementacion(
@@ -124,51 +131,50 @@ export async function actualizarControlExistente(
     anterior.fechaImplementacion
   );
 
-  const actualizado = await actualizarControl(id, {
-    organizacionId: input.organizacionId,
-    codigoIso27001: input.codigoIso27001,
-    nombre: input.nombre,
-    tipo: input.tipo,
-    estadoImplementacion: input.estadoImplementacion,
-    fechaImplementacion: fechaEfectiva,
-    observaciones: input.observaciones,
-    descripcionImplementacion: input.descripcionImplementacion,
-  });
-
-  await registrarAuditoriaControl({
-    usuarioId: actor.usuarioId,
-    organizacionId: actor.organizacionId,
-    entidadId: id,
-    accion: "EDITAR",
-    direccionIp: actor.direccionIp,
-    datosAnteriores: {
-      nombre: anterior.nombre,
-      tipo: anterior.tipo,
-      estadoImplementacion: anterior.estadoImplementacion,
+  const actualizado = await actualizarControlConAuditoria(
+    id,
+    {
+      codigoIso27001: input.codigoIso27001,
+      nombre: input.nombre,
+      tipo: input.tipo,
+      estadoImplementacion: input.estadoImplementacion,
+      fechaImplementacion: fechaEfectiva,
+      observaciones: input.observaciones,
+      descripcionImplementacion: input.descripcionImplementacion,
     },
-    datosNuevos: input,
-  });
+    {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      accion: "EDITAR",
+      direccionIp: actor.direccionIp,
+      datosAnteriores: {
+        nombre: anterior.nombre,
+        tipo: anterior.tipo,
+        estadoImplementacion: anterior.estadoImplementacion,
+      },
+      datosNuevos: input,
+    }
+  );
 
   return actualizado;
 }
 
 export async function eliminarControlExistente(
   id: string,
+  organizacionId: string,
   actor: ActorAuditoria
 ): Promise<void> {
-  const anterior = await obtenerControl(id);
+  const anterior = await obtenerControl(id, organizacionId);
+  exigirControlPropio(anterior, organizacionId);
 
   const referenciado = await existeTratamientoParaControl(id);
   if (referenciado) {
     throw new AppError("No se puede eliminar un control que está asociado a un tratamiento", 409);
   }
 
-  await eliminarControl(id);
-
-  await registrarAuditoriaControl({
+  await eliminarControlConAuditoria(id, {
     usuarioId: actor.usuarioId,
     organizacionId: actor.organizacionId,
-    entidadId: id,
     accion: "ELIMINAR",
     direccionIp: actor.direccionIp,
     datosAnteriores: {

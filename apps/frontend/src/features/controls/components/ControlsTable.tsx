@@ -51,7 +51,7 @@ export function ControlsTable({ controles }: Props) {
                 <Link to={`/controles/${control.id}`} className="text-sm font-medium text-slate-700 underline">
                   Ver detalle
                 </Link>
-                {control.organizacionId !== null && (
+                {control.esPropia && (
                   <Link
                     to={`/controles/${control.id}/editar`}
                     className="ml-3 text-sm font-medium text-slate-700 underline"

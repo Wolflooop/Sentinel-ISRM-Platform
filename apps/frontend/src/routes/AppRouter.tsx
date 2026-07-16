@@ -31,7 +31,10 @@ import { ControlDetailPage } from "../features/controls/pages/ControlDetailPage"
 import { CreateControlPage } from "../features/controls/pages/CreateControlPage";
 import { EditControlPage } from "../features/controls/pages/EditControlPage";
 import { ReportsPage } from "../features/reports/pages/ReportsPage";
-import { tokenStorage } from "../lib/tokenStorage";
+import { TreatmentCreatePage } from "../features/treatments/pages/TreatmentCreatePage";
+import { TreatmentDetailPage } from "../features/treatments/pages/TreatmentDetailPage";
+import { hasValidSession } from "../lib/authSession";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 /**
  * Enrutador raíz de la aplicación.
@@ -40,19 +43,14 @@ import { tokenStorage } from "../lib/tokenStorage";
  * según el estado de autenticación (ver RootRedirect).
  */
 
-// Corrección: antes se leía la key "token" directamente de localStorage,
-// que nunca coincidió con la key real usada por tokenStorage
-// ("sentinel_isrm_token" — ver lib/tokenStorage.ts). Esto hacía que "/"
-// redirigiera siempre a /login incluso con sesión activa. Se usa
-// tokenStorage como único punto de verdad, igual que el resto de la app.
 const HOME_ROUTE = "/dashboard"; // módulo principal post-login (Fase 8)
 
-function isAuthenticated(): boolean {
-  return Boolean(tokenStorage.get());
-}
-
+// hasValidSession() (lib/authSession.ts) es el único punto de verdad para
+// "¿hay sesión?" — valida presencia del token en tokenStorage y su
+// vigencia (exp). Reutilizado aquí y en ProtectedRoute para no duplicar
+// lógica de autenticación en dos lugares.
 function RootRedirect() {
-  return isAuthenticated()
+  return hasValidSession()
     ? <Navigate to={HOME_ROUTE} replace />
     : <Navigate to="/login" replace />;
 }
@@ -64,6 +62,7 @@ export function AppRouter() {
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
 
+        <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<DashboardPage />} />
 
@@ -103,8 +102,14 @@ export function AppRouter() {
           <Route path="/riesgos/:id" element={<RiskDetailPage />} />
           <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />
           <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
+          <Route
+            path="/riesgos/:riesgoId/evaluaciones/:evaluacionId/tratamiento/nuevo"
+            element={<TreatmentCreatePage />}
+          />
+          <Route path="/tratamientos/:id" element={<TreatmentDetailPage />} />
 
           <Route path="/reportes" element={<ReportsPage />} />
+        </Route>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -18,7 +18,7 @@ export interface ControlConRelaciones {
 }
 
 export interface CrearControlParams {
-  organizacionId: string | null;
+  organizacionId: string;
   codigoIso27001: string | null;
   nombre: string;
   tipo: TipoControl;
@@ -29,7 +29,6 @@ export interface CrearControlParams {
 }
 
 export interface ActualizarControlParams {
-  organizacionId?: string | null;
   codigoIso27001?: string | null;
   nombre?: string;
   tipo?: TipoControl;
@@ -40,7 +39,6 @@ export interface ActualizarControlParams {
 }
 
 export interface FiltrosControles {
-  organizacionId?: string;
   tipo?: TipoControl;
   estadoImplementacion?: EstadoImplementacionControl;
 }

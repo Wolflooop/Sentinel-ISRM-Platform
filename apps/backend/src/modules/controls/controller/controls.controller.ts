@@ -14,6 +14,13 @@ import {
 import { toControlResponseDTO, toControlResponseListDTO } from "../mapper/controls.mapper";
 import { AppError } from "../../../shared/AppError";
 
+function organizacionIdDe(req: Request): string {
+  if (!req.user) {
+    throw new AppError("No autenticado", 401);
+  }
+  return req.user.organizacionId;
+}
+
 function actorDe(req: Request) {
   if (!req.user) {
     throw new AppError("No autenticado", 401);
@@ -32,8 +39,8 @@ export async function listarControlesController(
 ): Promise<void> {
   try {
     const filtros = filtrosControlesSchema.parse(req.query);
-    const controles = await listarControles(filtros);
-    res.status(200).json(toControlResponseListDTO(controles));
+    const controles = await listarControles(organizacionIdDe(req), filtros);
+    res.status(200).json(toControlResponseListDTO(controles, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -45,8 +52,8 @@ export async function obtenerControlController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const control = await obtenerControl(req.params.id);
-    res.status(200).json(toControlResponseDTO(control));
+    const control = await obtenerControl(req.params.id, organizacionIdDe(req));
+    res.status(200).json(toControlResponseDTO(control, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -59,8 +66,8 @@ export async function crearControlController(
 ): Promise<void> {
   try {
     const input = crearControlSchema.parse(req.body);
-    const control = await crearNuevoControl(input, actorDe(req));
-    res.status(201).json(toControlResponseDTO(control));
+    const control = await crearNuevoControl(organizacionIdDe(req), input, actorDe(req));
+    res.status(201).json(toControlResponseDTO(control, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -73,8 +80,13 @@ export async function actualizarControlController(
 ): Promise<void> {
   try {
     const input = actualizarControlSchema.parse(req.body);
-    const control = await actualizarControlExistente(req.params.id, input, actorDe(req));
-    res.status(200).json(toControlResponseDTO(control));
+    const control = await actualizarControlExistente(
+      req.params.id,
+      organizacionIdDe(req),
+      input,
+      actorDe(req)
+    );
+    res.status(200).json(toControlResponseDTO(control, organizacionIdDe(req)));
   } catch (err) {
     next(err);
   }
@@ -86,7 +98,7 @@ export async function eliminarControlController(
   next: NextFunction
 ): Promise<void> {
   try {
-    await eliminarControlExistente(req.params.id, actorDe(req));
+    await eliminarControlExistente(req.params.id, organizacionIdDe(req), actorDe(req));
     res.status(204).send();
   } catch (err) {
     next(err);

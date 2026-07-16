@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import {
   Activo,
@@ -113,59 +114,106 @@ export async function existeRiesgoAbiertoParaActivo(activoId: string): Promise<b
   return aavConRiesgoAbierto !== null;
 }
 
-export async function crearActivo(params: CrearActivoParams): Promise<ActivoConRelaciones> {
-  const activo = await prisma.activo.create({
-    data: {
-      organizacionId: params.organizacionId,
-      categoriaId: params.categoriaId,
-      nombre: params.nombre,
-      descripcion: params.descripcion,
-      usuarioResponsableId: params.usuarioResponsableId,
-      ubicacion: params.ubicacion,
-      criticidad: params.criticidad,
-      valorEconomicoEstimado: params.valorEconomicoEstimado,
-      estado: "ACTIVO",
-    },
-    include: INCLUDE_RELACIONES,
-  });
-  return serializarActivo(activo);
-}
-
-export async function actualizarActivo(
-  id: string,
-  params: ActualizarActivoParams
+/**
+ * Corrección de auditoría (mismo patrón que risks.repository.ts): create +
+ * registro de Auditoria deben quedar en la MISMA transacción, para que un
+ * Activo nunca pueda quedar persistido sin su registro de auditoría
+ * correspondiente.
+ */
+export async function crearActivoConAuditoria(
+  params: CrearActivoParams,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
 ): Promise<ActivoConRelaciones> {
-  const activo = await prisma.activo.update({
-    where: { id },
-    data: params,
-    include: INCLUDE_RELACIONES,
+  const activo = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const creado = await tx.activo.create({
+      data: {
+        organizacionId: params.organizacionId,
+        categoriaId: params.categoriaId,
+        nombre: params.nombre,
+        descripcion: params.descripcion,
+        usuarioResponsableId: params.usuarioResponsableId,
+        ubicacion: params.ubicacion,
+        criticidad: params.criticidad,
+        valorEconomicoEstimado: params.valorEconomicoEstimado,
+        estado: "ACTIVO",
+      },
+      include: INCLUDE_RELACIONES,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Activo",
+        entidadId: creado.id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return creado;
   });
   return serializarActivo(activo);
 }
 
-export async function cambiarEstadoActivo(
+export async function actualizarActivoConAuditoria(
   id: string,
-  estado: Activo["estado"]
+  params: ActualizarActivoParams,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
 ): Promise<ActivoConRelaciones> {
-  const activo = await prisma.activo.update({
-    where: { id },
-    data: { estado },
-    include: INCLUDE_RELACIONES,
+  const activo = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const actualizado = await tx.activo.update({
+      where: { id },
+      data: params,
+      include: INCLUDE_RELACIONES,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Activo",
+        entidadId: id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return actualizado;
   });
   return serializarActivo(activo);
 }
 
-export async function registrarAuditoria(params: RegistrarAuditoriaParams): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: params.entidad,
-      entidadId: params.entidadId,
-      accion: params.accion,
-      datosAnteriores: params.datosAnteriores as never,
-      datosNuevos: params.datosNuevos as never,
-      direccionIp: params.direccionIp,
-    },
+export async function cambiarEstadoActivoConAuditoria(
+  id: string,
+  estado: Activo["estado"],
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
+): Promise<ActivoConRelaciones> {
+  const activo = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const actualizado = await tx.activo.update({
+      where: { id },
+      data: { estado },
+      include: INCLUDE_RELACIONES,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Activo",
+        entidadId: id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return actualizado;
   });
+  return serializarActivo(activo);
 }

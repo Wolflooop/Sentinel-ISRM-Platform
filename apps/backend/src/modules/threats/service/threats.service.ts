@@ -6,10 +6,9 @@ import {
   existeCategoriaAmenaza,
   findCategoriasAmenaza,
   existeAavParaAmenaza,
-  crearAmenaza,
-  actualizarAmenaza,
-  eliminarAmenaza,
-  registrarAuditoria,
+  crearAmenazaConAuditoria,
+  actualizarAmenazaConAuditoria,
+  eliminarAmenazaConAuditoria,
 } from "../repository/threats.repository";
 import {
   AmenazaConRelaciones,
@@ -18,7 +17,6 @@ import {
 } from "../types/threats.types";
 import { CrearAmenazaInput, ActualizarAmenazaInput } from "../schema/threats.schema";
 
-const ENTIDAD = "Amenaza";
 
 interface ActorAuditoria {
   usuarioId: string;
@@ -86,21 +84,20 @@ export async function crearNuevaAmenaza(
     throw new AppError("Ya existe una amenaza con ese nombre en la organización", 409);
   }
 
-  const amenaza = await crearAmenaza({ organizacionId, ...input });
-
-  await registrarAuditoria({
-    usuarioId: actor.usuarioId,
-    organizacionId,
-    entidad: ENTIDAD,
-    entidadId: amenaza.id,
-    accion: "CREAR",
-    datosNuevos: {
-      nombre: amenaza.nombre,
-      categoriaId: amenaza.categoria.id,
-      origen: amenaza.origen,
-    },
-    direccionIp: actor.direccionIp,
-  });
+  const amenaza = await crearAmenazaConAuditoria(
+    { organizacionId, ...input },
+    {
+      usuarioId: actor.usuarioId,
+      organizacionId,
+      accion: "CREAR",
+      datosNuevos: {
+        nombre: input.nombre,
+        categoriaId: input.categoriaId,
+        origen: input.origen,
+      },
+      direccionIp: actor.direccionIp,
+    }
+  );
 
   return amenaza;
 }
@@ -128,13 +125,9 @@ export async function actualizarAmenazaExistente(
     }
   }
 
-  const actualizada = await actualizarAmenaza(id, input);
-
-  await registrarAuditoria({
+  const actualizada = await actualizarAmenazaConAuditoria(id, input, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
     accion: "EDITAR",
     datosAnteriores: {
       nombre: anterior.nombre,
@@ -169,13 +162,9 @@ export async function eliminarAmenazaExistente(
     );
   }
 
-  await eliminarAmenaza(id);
-
-  await registrarAuditoria({
+  await eliminarAmenazaConAuditoria(id, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
     accion: "ELIMINAR",
     datosAnteriores: { nombre: amenaza.nombre, categoriaId: amenaza.categoria.id },
     direccionIp: actor.direccionIp,

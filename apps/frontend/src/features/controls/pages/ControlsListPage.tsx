@@ -3,20 +3,14 @@ import { useControles } from "../hooks/useControls";
 import { ControlsTable } from "../components/ControlsTable";
 import { ControlsFilterBar } from "../components/ControlsFilterBar";
 import { FiltrosControles } from "../types/controls.types";
-import { getOrganizacionIdActual } from "../../../lib/authSession";
 import { Link } from "react-router-dom";
 
 export function ControlsListPage() {
   const [filtros, setFiltros] = useState<FiltrosControles>({});
-  // organizacionId nunca es editable por el usuario: siempre es la de su
-  // sesión. El backend solo filtra por organización si el query param viene
-  // explícito (ver controls.repository.ts) — sin esto, la lista mostraba
-  // controles de todas las organizaciones del sistema.
-  const filtrosConOrganizacion: FiltrosControles = {
-    ...filtros,
-    organizacionId: getOrganizacionIdActual() ?? undefined,
-  };
-  const { data: controles, isLoading, isError } = useControles(filtrosConOrganizacion);
+  // El aislamiento por organización ya no depende de un parámetro enviado
+  // por el cliente: el backend resuelve la organización del solicitante
+  // directamente desde el JWT (ver controls.service.ts / listarControles).
+  const { data: controles, isLoading, isError } = useControles(filtros);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">

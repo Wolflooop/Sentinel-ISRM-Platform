@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const crearControlSchema = z.object({
-  organizacionId: z.string().min(1).nullable().optional(),
   codigoIso27001: z.string().min(1).nullable().optional(),
   nombre: z.string().min(1),
   tipo: z.enum(["PREVENTIVO", "DETECTIVO", "CORRECTIVO"]),
@@ -14,7 +13,6 @@ export const crearControlSchema = z.object({
 export type CrearControlInput = z.infer<typeof crearControlSchema>;
 
 export const actualizarControlSchema = z.object({
-  organizacionId: z.string().min(1).nullable().optional(),
   codigoIso27001: z.string().min(1).nullable().optional(),
   nombre: z.string().min(1).optional(),
   tipo: z.enum(["PREVENTIVO", "DETECTIVO", "CORRECTIVO"]).optional(),
@@ -27,7 +25,6 @@ export const actualizarControlSchema = z.object({
 export type ActualizarControlInput = z.infer<typeof actualizarControlSchema>;
 
 export const filtrosControlesSchema = z.object({
-  organizacionId: z.string().min(1).optional(),
   tipo: z.enum(["PREVENTIVO", "DETECTIVO", "CORRECTIVO"]).optional(),
   estadoImplementacion: z.enum(["NO_APLICADO", "PLANIFICADO", "EN_PROGRESO", "IMPLEMENTADO"]).optional(),
 });

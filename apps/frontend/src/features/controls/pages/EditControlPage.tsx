@@ -37,10 +37,10 @@ export function EditControlPage() {
     return <p className="p-8 text-sm text-red-600">No se pudo cargar el control.</p>;
   }
 
-  // Un control sin organizacionId pertenece al catálogo global (seed/admin),
-  // no a una organización específica — mismo criterio de solo-lectura que
+  // Un control que no es propio pertenece al catálogo global (seed/admin),
+  // no a la organización del usuario — mismo criterio de solo-lectura que
   // usa el catálogo global de Amenazas/Vulnerabilidades.
-  if (control.organizacionId === null) {
+  if (!control.esPropia) {
     return (
       <main className="mx-auto max-w-lg px-4 py-8">
         <h1 className="text-lg font-semibold text-slate-800">Control del catálogo global</h1>

@@ -7,7 +7,7 @@ export type EstadoImplementacionControl =
 
 export interface Control {
   id: string;
-  organizacionId: string | null;
+  esPropia: boolean;
   codigoIso27001: string | null;
   nombre: string;
   tipo: TipoControl;
@@ -22,13 +22,11 @@ export interface Control {
 }
 
 export interface FiltrosControles {
-  organizacionId?: string;
   tipo?: TipoControl;
   estadoImplementacion?: EstadoImplementacionControl;
 }
 
 export interface ActualizarControlInput {
-  organizacionId?: string | null;
   codigoIso27001?: string | null;
   nombre?: string;
   tipo?: TipoControl;

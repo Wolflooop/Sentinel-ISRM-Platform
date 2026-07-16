@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { ControlForm } from "../components/ControlForm";
 import { useCrearControl } from "../hooks/useControls";
-import { getOrganizacionIdActual } from "../../../lib/authSession";
 import { ControlFormValues } from "../schemas/controlsSchema";
 
 /** Convierte "" a undefined/null — el backend rechaza cadenas vacías en campos con min(1). */
@@ -37,16 +36,9 @@ export function CreateControlPage() {
           isSubmittingRequest={crearControl.isPending}
           errorMessage={errorMessage}
           onSubmit={(values) => {
-            crearControl.mutate(
-              {
-                ...normalizar(values),
-                // Un control creado por un usuario de organización siempre
-                // queda ligado a su propia organización, nunca al catálogo
-                // global (organizacionId null es exclusivo de seed/admin).
-                organizacionId: getOrganizacionIdActual(),
-              },
-              { onSuccess: () => navigate("/controles", { replace: true }) }
-            );
+            crearControl.mutate(normalizar(values), {
+              onSuccess: () => navigate("/controles", { replace: true }),
+            });
           }}
         />
       </div>

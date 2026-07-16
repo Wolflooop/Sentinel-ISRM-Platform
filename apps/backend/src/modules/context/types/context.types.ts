@@ -43,11 +43,11 @@ export interface MatrizCelda {
   nivelResultante: NivelRiesgo;
 }
 
-export interface ContextoConDetalle extends Contexto {
+export type ContextoConDetalle = Contexto & {
   escalasImpacto: EscalaImpacto[];
   escalasProbabilidad: EscalaProbabilidad[];
-  matriz: MatrizCelda[];
-}
+  matricesRiesgo: MatrizCelda[];
+};
 
 export interface CrearContextoParams {
   organizacionId: string;

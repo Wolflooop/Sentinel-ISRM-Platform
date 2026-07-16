@@ -11,7 +11,7 @@ export async function loginController(
 ): Promise<void> {
   try {
     const input = loginSchema.parse(req.body);
-    const result = await loginService(input);
+    const result = await loginService(input, req.ip ?? "desconocida");
     res.status(200).json(toLoginResponseDTO(result));
   } catch (err) {
     next(err);
@@ -31,7 +31,13 @@ export async function logoutController(
       throw new AppError("Token no proporcionado", 401);
     }
 
-    await logoutService(token);
+    // req.user está disponible: la ruta /auth/logout pasa por `authenticate`
+    // antes de este controller (ver auth.routes.ts).
+    await logoutService(token, {
+      usuarioId: req.user?.sub,
+      organizacionId: req.user?.organizacionId,
+      direccionIp: req.ip ?? "desconocida",
+    });
     res.status(204).send();
   } catch (err) {
     next(err);

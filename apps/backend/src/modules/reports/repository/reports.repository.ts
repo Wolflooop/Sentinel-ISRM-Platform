@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import {
   CrearReporteParams,
@@ -34,18 +35,48 @@ export async function findReportePorId(
   });
 }
 
-export async function crearReporte(
-  params: CrearReporteParams
+/**
+ * Corrección de auditoría (mismo patrón que risks.repository.ts): create +
+ * registro de Auditoria en la MISMA transacción. La escritura del archivo
+ * PDF al disco (fuera de esta función, en el Service) no participa de la
+ * transacción de base de datos — es un recurso externo, no una escritura
+ * de Prisma; su atomicidad frente al registro en BD queda fuera del
+ * alcance de esta corrección.
+ */
+export async function crearReporteConAuditoria(
+  params: CrearReporteParams,
+  auditoria: {
+    usuarioId: string;
+    organizacionId: string;
+    direccionIp: string;
+    datosNuevos?: unknown;
+  }
 ): Promise<ReporteConRelaciones> {
-  return prisma.reporte.create({
-    data: {
-      organizacionId: params.organizacionId,
-      usuarioId: params.usuarioId,
-      tipo: params.tipo,
-      formato: params.formato,
-      rutaArchivo: params.rutaArchivo,
-    },
-    include: REPORTE_INCLUDE,
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const reporte = await tx.reporte.create({
+      data: {
+        organizacionId: params.organizacionId,
+        usuarioId: params.usuarioId,
+        tipo: params.tipo,
+        formato: params.formato,
+        rutaArchivo: params.rutaArchivo,
+      },
+      include: REPORTE_INCLUDE,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Reporte",
+        entidadId: reporte.id,
+        accion: "CREAR",
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return reporte;
   });
 }
 
@@ -166,22 +197,3 @@ export async function recopilarDatosOrganizacion(
   };
 }
 
-export async function registrarAuditoriaReporte(params: {
-  usuarioId: string;
-  organizacionId: string;
-  entidadId: string;
-  direccionIp: string;
-  datosNuevos?: unknown;
-}): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: "Reporte",
-      entidadId: params.entidadId,
-      accion: "CREAR",
-      datosNuevos: params.datosNuevos as never,
-      direccionIp: params.direccionIp,
-    },
-  });
-}

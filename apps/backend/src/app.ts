@@ -19,6 +19,8 @@ import { evaluationsRouter } from "./modules/evaluations/routes/evaluations.rout
 import { treatmentsRouter } from "./modules/treatments/routes/treatments.routes";
 import { controlsRouter } from "./modules/controls/routes/controls.routes";
 import { reportsRouter } from "./modules/reports/routes/reports.routes";
+import { auditRouter } from "./modules/audit/routes/audit.routes";
+import { securityEventsRouter } from "./modules/security-events/routes/security-events.routes";
 
 /**
  * Construye y configura la aplicación Express.
@@ -85,6 +87,8 @@ export function createApp(): Application {
   app.use("/api/tratamientos", treatmentsRouter);
   app.use("/api/controles", controlsRouter);
   app.use("/api/reportes", reportsRouter);
+  app.use("/api/auditoria", auditRouter);
+  app.use("/api/eventos-seguridad", securityEventsRouter);
   // ==========================================================================
 
   // 404 para cualquier ruta no reconocida

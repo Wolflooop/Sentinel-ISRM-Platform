@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import {
   AmenazaConRelaciones,
@@ -93,28 +94,71 @@ export async function existeAavParaAmenaza(amenazaId: string): Promise<boolean> 
   return aav !== null;
 }
 
-export async function crearAmenaza(params: CrearAmenazaParams): Promise<AmenazaConRelaciones> {
-  return prisma.amenaza.create({
-    data: {
-      organizacionId: params.organizacionId,
-      categoriaId: params.categoriaId,
-      nombre: params.nombre,
-      descripcion: params.descripcion,
-      origen: params.origen,
-      esPredefinida: false,
-    },
-    include: INCLUDE_RELACIONES,
+/**
+ * Corrección de auditoría (mismo patrón que risks.repository.ts): la
+ * escritura de negocio y el registro de Auditoria quedan en la MISMA
+ * transacción.
+ */
+export async function crearAmenazaConAuditoria(
+  params: CrearAmenazaParams,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
+): Promise<AmenazaConRelaciones> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const amenaza = await tx.amenaza.create({
+      data: {
+        organizacionId: params.organizacionId,
+        categoriaId: params.categoriaId,
+        nombre: params.nombre,
+        descripcion: params.descripcion,
+        origen: params.origen,
+        esPredefinida: false,
+      },
+      include: INCLUDE_RELACIONES,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Amenaza",
+        entidadId: amenaza.id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return amenaza;
   });
 }
 
-export async function actualizarAmenaza(
+export async function actualizarAmenazaConAuditoria(
   id: string,
-  params: ActualizarAmenazaParams
+  params: ActualizarAmenazaParams,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
 ): Promise<AmenazaConRelaciones> {
-  return prisma.amenaza.update({
-    where: { id },
-    data: params,
-    include: INCLUDE_RELACIONES,
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const actualizada = await tx.amenaza.update({
+      where: { id },
+      data: params,
+      include: INCLUDE_RELACIONES,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Amenaza",
+        entidadId: id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return actualizada;
   });
 }
 
@@ -122,21 +166,25 @@ export async function actualizarAmenaza(
  * Eliminación física — `Amenaza` no tiene campo `estado` (a diferencia de
  * `Activo`), por lo que no existe baja lógica para este modelo.
  */
-export async function eliminarAmenaza(id: string): Promise<void> {
-  await prisma.amenaza.delete({ where: { id } });
-}
+export async function eliminarAmenazaConAuditoria(
+  id: string,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
+): Promise<void> {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.amenaza.delete({ where: { id } });
 
-export async function registrarAuditoria(params: RegistrarAuditoriaParams): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: params.entidad,
-      entidadId: params.entidadId,
-      accion: params.accion,
-      datosAnteriores: params.datosAnteriores as never,
-      datosNuevos: params.datosNuevos as never,
-      direccionIp: params.direccionIp,
-    },
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Amenaza",
+        entidadId: id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
   });
 }
+

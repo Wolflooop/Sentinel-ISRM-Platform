@@ -64,28 +64,36 @@ export function ControlDetailPage() {
 
         <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
           <h2 className="text-sm font-semibold text-slate-800">Actualizar estado</h2>
-          <form className="mt-3 flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
-            <select
-              name="estado"
-              defaultValue={control.estadoImplementacion}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            >
-              {estados.map((estado) => (
-                <option key={estado} value={estado}>
-                  {estado}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              disabled={actualizarControl.isPending}
-              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              {actualizarControl.isPending ? "Guardando..." : "Guardar cambios"}
-            </button>
-          </form>
-          {actualizarControl.isError && (
-            <p className="mt-2 text-sm text-red-600">No se pudo actualizar el estado del control.</p>
+          {control.esPropia ? (
+            <>
+              <form className="mt-3 flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
+                <select
+                  name="estado"
+                  defaultValue={control.estadoImplementacion}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  {estados.map((estado) => (
+                    <option key={estado} value={estado}>
+                      {estado}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={actualizarControl.isPending}
+                  className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                >
+                  {actualizarControl.isPending ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </form>
+              {actualizarControl.isError && (
+                <p className="mt-2 text-sm text-red-600">No se pudo actualizar el estado del control.</p>
+              )}
+            </>
+          ) : (
+            <p className="mt-3 text-sm text-slate-500">
+              Este control pertenece al catálogo global y es de solo lectura para tu organización.
+            </p>
           )}
         </div>
       </div>

@@ -59,7 +59,7 @@ export function toContextoDetalleResponseDTO(
       .slice()
       .sort((a, b) => a.nivel - b.nivel)
       .map(toEscalaItemResponseDTO),
-    matriz: contexto.matriz
+    matriz: contexto.matricesRiesgo
       .slice()
       .sort((a, b) => a.nivelProbabilidad - b.nivelProbabilidad || a.nivelImpacto - b.nivelImpacto)
       .map(toMatrizCeldaResponseDTO),

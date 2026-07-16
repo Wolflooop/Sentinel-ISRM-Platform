@@ -129,6 +129,29 @@ enum TipoReporte {
   GENERAL
 }
 
+// Fase 3 (Security Events): dominio separado de AccionAuditoria — estos son
+// eventos de ciclo de vida de sesión/autenticación, no verbos CRUD sobre una
+// entidad de negocio (ver EventoSeguridad más abajo).
+enum TipoEventoSeguridad {
+  AUTH_LOGIN_SUCCESS
+  AUTH_LOGIN_FAILED
+  AUTH_LOGOUT
+  AUTH_SESSION_EXPIRED
+  AUTH_ACCESS_DENIED
+}
+
+enum ResultadoEventoSeguridad {
+  EXITO
+  FALLIDO
+}
+
+enum SeveridadEventoSeguridad {
+  INFO
+  ADVERTENCIA
+  ALTA
+  CRITICA
+}
+
 // ============================================================================
 // 1. ADMINISTRACIÓN
 // ============================================================================
@@ -154,6 +177,7 @@ model Organizacion {
   controles   Control[]
   auditorias  Auditoria[]
   reportes    Reporte[]
+  eventosSeguridad EventoSeguridad[]
 }
 
 model Usuario {
@@ -177,6 +201,7 @@ model Usuario {
   evaluaciones           Evaluacion[]
   tratamientosResponsable Tratamiento[] @relation("TratamientoResponsable")
   reportes               Reporte[]
+  eventosSeguridad        EventoSeguridad[]
 
   // Nota de implementación (ver Fase 3): al ser (organizacionId, email) una
   // clave única compuesta, el flujo de login debe identificar primero la
@@ -556,3 +581,50 @@ model Reporte {
   @@index([organizacionId])
   @@index([fecha])
 }
+
+// ============================================================================
+// 7. SEGURIDAD (EVENTOS DE AUTENTICACIÓN/SESIÓN)
+// ============================================================================
+
+// Trazabilidad de eventos de seguridad (login, logout, sesión expirada,
+// acceso denegado) — deliberadamente separada de `Auditoria`.
+//
+// `Auditoria` es una tabla de auditoría CRUD sobre entidades de negocio
+// (Activo, Amenaza, Control, etc.): usuarioId/organizacionId son NOT NULL con
+// onDelete: Restrict porque un registro de auditoría siempre corresponde a
+// una acción ya autenticada y exitosa sobre una entidad existente.
+//
+// `EventoSeguridad` registra eventos de ciclo de vida de sesión, incluyendo
+// los que ocurren ANTES de que exista una identidad confiable (p. ej. un
+// login fallido con organización o email inexistentes). Forzar estos casos
+// dentro de `Auditoria` habría requerido relajar sus constraints (NOT NULL +
+// Restrict), afectando a los 7 módulos que ya la usan tal como está. Por eso
+// usuarioId/organizacionId aquí son nullable con onDelete: SetNull — el
+// registro debe poder crearse sin una identidad resuelta y debe sobrevivir
+// aunque el usuario/organización se elimine después (valor forense).
+//
+// Tabla de solo inserción, igual que Auditoria: no se exponen operaciones de
+// update/delete desde Prisma Client para este modelo a nivel de aplicación.
+model EventoSeguridad {
+  id             String                   @id @default(uuid())
+  usuarioId      String?
+  usuario        Usuario?                 @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  organizacionId String?
+  organizacion   Organizacion?            @relation(fields: [organizacionId], references: [id], onDelete: SetNull)
+  evento         TipoEventoSeguridad
+  resultado      ResultadoEventoSeguridad
+  severidad      SeveridadEventoSeguridad
+  direccionIp    String
+  descripcion    String
+  // Contexto técnico adicional (p. ej. ruta solicitada, motivo específico de
+  // rechazo del token) que no debe saturar `descripcion` en texto libre.
+  detalles       Json?
+  fecha          DateTime                 @default(now())
+
+  @@index([usuarioId])
+  @@index([organizacionId])
+  @@index([evento])
+  @@index([fecha])
+  @@index([severidad])
+}
+

@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useLogout } from "../../auth/hooks/useAuth";
-import { tokenStorage } from "../../../lib/tokenStorage";
+import { hasValidSession } from "../../../lib/authSession";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard" },
@@ -20,7 +20,7 @@ const navItems = [
 export function AppShell() {
   const logoutMutation = useLogout();
   const navigate = useNavigate();
-  const isAuthenticated = Boolean(tokenStorage.get());
+  const isAuthenticated = hasValidSession();
 
   const handleLogout = () => {
     logoutMutation.mutate();

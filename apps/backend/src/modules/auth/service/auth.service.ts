@@ -10,6 +10,7 @@ import {
   crearSesion,
   revocarSesionPorTokenHash,
 } from "../repository/auth.repository";
+import { registrarEventoSeguridad } from "../../security-events/service/security-events.service";
 import { LoginInput } from "../schema/auth.schema";
 import { LoginResult } from "../types/auth.types";
 
@@ -48,24 +49,61 @@ function parseExpiresInToMs(expiresIn: string): number {
   return value * unitMs[unit];
 }
 
-export async function login(input: LoginInput): Promise<LoginResult> {
+export async function login(input: LoginInput, direccionIp: string): Promise<LoginResult> {
   const usuario = await findUsuarioByOrganizacionYEmail(input.organizacion, input.email);
 
   // Mensaje genérico e idéntico sin importar cuál dato es incorrecto
   // (organización, email o password), para no revelar cuál falló.
   if (!usuario) {
+    await registrarEventoSeguridad({
+      evento: "AUTH_LOGIN_FAILED",
+      resultado: "FALLIDO",
+      severidad: "ADVERTENCIA",
+      direccionIp,
+      descripcion: "Intento de login con organización o email inexistentes",
+      detalles: { organizacion: input.organizacion, email: input.email },
+    });
     throw new AppError(MENSAJE_CREDENCIALES_INVALIDAS, 401);
   }
 
   if (!usuario.activo) {
+    await registrarEventoSeguridad({
+      evento: "AUTH_LOGIN_FAILED",
+      resultado: "FALLIDO",
+      severidad: "ADVERTENCIA",
+      direccionIp,
+      descripcion: "Intento de login sobre un usuario inactivo",
+      usuarioId: usuario.id,
+      organizacionId: usuario.organizacionId,
+    });
     throw new AppError(MENSAJE_CREDENCIALES_INVALIDAS, 401);
   }
 
   if (usuario.organizacion.estado !== "ACTIVA") {
+    await registrarEventoSeguridad({
+      evento: "AUTH_LOGIN_FAILED",
+      resultado: "FALLIDO",
+      severidad: "ALTA",
+      direccionIp,
+      descripcion: "Intento de login sobre una organización no activa",
+      usuarioId: usuario.id,
+      organizacionId: usuario.organizacionId,
+      detalles: { estadoOrganizacion: usuario.organizacion.estado },
+    });
     throw new AppError("La organización no se encuentra activa", 403);
   }
 
   if (usuario.bloqueadoHasta && usuario.bloqueadoHasta.getTime() > Date.now()) {
+    await registrarEventoSeguridad({
+      evento: "AUTH_LOGIN_FAILED",
+      resultado: "FALLIDO",
+      severidad: "ALTA",
+      direccionIp,
+      descripcion: "Intento de login sobre una cuenta bloqueada temporalmente",
+      usuarioId: usuario.id,
+      organizacionId: usuario.organizacionId,
+      detalles: { bloqueadoHasta: usuario.bloqueadoHasta },
+    });
     throw new AppError(
       "Cuenta bloqueada temporalmente por múltiples intentos fallidos",
       423
@@ -83,14 +121,30 @@ export async function login(input: LoginInput): Promise<LoginResult> {
     const maxIntentos = env.AUTH_MAX_INTENTOS_FALLIDOS;
     const minutosBloqueo = env.AUTH_BLOQUEO_MINUTOS;
 
+    let disparaBloqueo = false;
     if (maxIntentos !== undefined && minutosBloqueo !== undefined) {
       if (intentosPrevios + 1 >= maxIntentos) {
+        disparaBloqueo = true;
         await bloquearUsuarioTemporalmente(
           usuario.id,
           new Date(Date.now() + minutosBloqueo * 60 * 1000)
         );
       }
     }
+
+    await registrarEventoSeguridad({
+      evento: "AUTH_LOGIN_FAILED",
+      resultado: "FALLIDO",
+      // Sube a ALTA cuando este intento fue el que disparó el bloqueo de
+      // cuenta — reutiliza el cálculo ya existente, no duplica la lógica.
+      severidad: disparaBloqueo ? "ALTA" : "ADVERTENCIA",
+      direccionIp,
+      descripcion: disparaBloqueo
+        ? "Password inválida — este intento provocó el bloqueo temporal de la cuenta"
+        : "Password inválida",
+      usuarioId: usuario.id,
+      organizacionId: usuario.organizacionId,
+    });
 
     throw new AppError(MENSAJE_CREDENCIALES_INVALIDAS, 401);
   }
@@ -111,9 +165,32 @@ export async function login(input: LoginInput): Promise<LoginResult> {
     expiraEn,
   });
 
+  await registrarEventoSeguridad({
+    evento: "AUTH_LOGIN_SUCCESS",
+    resultado: "EXITO",
+    severidad: "INFO",
+    direccionIp,
+    descripcion: "Login exitoso",
+    usuarioId: usuario.id,
+    organizacionId: usuario.organizacionId,
+  });
+
   return { usuario, token, expiraEn };
 }
 
-export async function logout(token: string): Promise<void> {
+export async function logout(
+  token: string,
+  actor: { usuarioId?: string; organizacionId?: string; direccionIp: string }
+): Promise<void> {
   await revocarSesionPorTokenHash(hashToken(token));
+
+  await registrarEventoSeguridad({
+    evento: "AUTH_LOGOUT",
+    resultado: "EXITO",
+    severidad: "INFO",
+    direccionIp: actor.direccionIp,
+    descripcion: "Logout exitoso",
+    usuarioId: actor.usuarioId,
+    organizacionId: actor.organizacionId,
+  });
 }

@@ -7,10 +7,9 @@ import {
   findCategoriasActivo,
   existeUsuarioEnOrganizacion,
   existeRiesgoAbiertoParaActivo,
-  crearActivo,
-  actualizarActivo,
-  cambiarEstadoActivo,
-  registrarAuditoria,
+  crearActivoConAuditoria,
+  actualizarActivoConAuditoria,
+  cambiarEstadoActivoConAuditoria,
 } from "../repository/assets.repository";
 import {
   ActivoConRelaciones,
@@ -20,7 +19,6 @@ import {
 } from "../types/assets.types";
 import { CrearActivoInput, ActualizarActivoInput } from "../schema/assets.schema";
 
-const ENTIDAD = "Activo";
 
 interface ActorAuditoria {
   usuarioId: string;
@@ -87,17 +85,16 @@ export async function crearNuevoActivo(
     throw new AppError("Ya existe un activo con ese nombre en la organización", 409);
   }
 
-  const activo = await crearActivo({ organizacionId, ...input });
-
-  await registrarAuditoria({
-    usuarioId: actor.usuarioId,
-    organizacionId,
-    entidad: ENTIDAD,
-    entidadId: activo.id,
-    accion: "CREAR",
-    datosNuevos: { nombre: activo.nombre, categoriaId: activo.categoria.id },
-    direccionIp: actor.direccionIp,
-  });
+  const activo = await crearActivoConAuditoria(
+    { organizacionId, ...input },
+    {
+      usuarioId: actor.usuarioId,
+      organizacionId,
+      accion: "CREAR",
+      datosNuevos: { nombre: input.nombre, categoriaId: input.categoriaId },
+      direccionIp: actor.direccionIp,
+    }
+  );
 
   return activo;
 }
@@ -123,13 +120,9 @@ export async function actualizarActivoExistente(
     }
   }
 
-  const actualizado = await actualizarActivo(id, input);
-
-  await registrarAuditoria({
+  const actualizado = await actualizarActivoConAuditoria(id, input, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
     accion: "EDITAR",
     datosAnteriores: {
       nombre: anterior.nombre,
@@ -166,13 +159,9 @@ export async function cambiarEstadoActivoExistente(
     }
   }
 
-  const actualizado = await cambiarEstadoActivo(id, estado);
-
-  await registrarAuditoria({
+  const actualizado = await cambiarEstadoActivoConAuditoria(id, estado, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
     accion: "EDITAR",
     datosAnteriores: { estado: anterior.estado },
     datosNuevos: { estado },
