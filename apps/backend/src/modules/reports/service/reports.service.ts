@@ -130,6 +130,147 @@ function dibujarTabla(
   doc.moveDown(0.5);
 }
 
+const COLORES_NIVEL_RIESGO: Record<string, string> = {
+  BAJO: "#2E7D32",
+  MEDIO: "#F2A93B",
+  ALTO: "#E2793D",
+  CRITICO: "#C0392B",
+};
+
+const ORDEN_NIVEL_RIESGO = ["BAJO", "MEDIO", "ALTO", "CRITICO"];
+const ETIQUETA_NIVEL_RIESGO: Record<string, string> = {
+  BAJO: "Bajo",
+  MEDIO: "Medio",
+  ALTO: "Alto",
+  CRITICO: "Crítico",
+};
+
+// Agrupación de presentación para el gráfico: no altera el estado real
+// guardado, solo lo agrupa en 3 categorías visuales pedidas por el
+// backlog (PLANIFICADO/EN_PROGRESO se muestran juntos como "Pendiente").
+const CATEGORIA_ESTADO_CONTROL: Record<string, string> = {
+  IMPLEMENTADO: "Implementado",
+  PLANIFICADO: "Pendiente",
+  EN_PROGRESO: "Pendiente",
+  NO_APLICADO: "No aplicado",
+};
+
+const ORDEN_CATEGORIA_CONTROL = ["Implementado", "Pendiente", "No aplicado"];
+const COLOR_CATEGORIA_CONTROL: Record<string, string> = {
+  Implementado: "#2E7D32",
+  Pendiente: "#F2A93B",
+  "No aplicado": "#8A8698",
+};
+
+/**
+ * Dibuja un gráfico de barras verticales simple usando primitivas de
+ * pdfkit (rect/text/stroke). No depende de ninguna librería de charting:
+ * mismo enfoque vectorial que ya usa dibujarTabla más abajo.
+ */
+function dibujarGraficoBarras(
+  doc: PDFKit.PDFDocument,
+  datos: Array<{ etiqueta: string; valor: number; color: string }>
+): void {
+  const anchoDisponible = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const altoGrafico = 110;
+  const anchoBarra = 46;
+  const espacio = (anchoDisponible - anchoBarra * datos.length) / (datos.length + 1);
+  const xBase = doc.page.margins.left;
+  const yBase = doc.y + altoGrafico;
+  const valorMaximo = Math.max(1, ...datos.map((d) => d.valor));
+
+  if (yBase + 30 > doc.page.height - doc.page.margins.bottom) {
+    doc.addPage();
+  }
+
+  const yBaseFinal = doc.y + altoGrafico;
+
+  // Línea base del eje
+  doc
+    .strokeColor("#E0DDEB")
+    .moveTo(xBase, yBaseFinal)
+    .lineTo(xBase + anchoDisponible, yBaseFinal)
+    .stroke();
+
+  datos.forEach((d, i) => {
+    const x = xBase + espacio * (i + 1) + anchoBarra * i;
+    const alturaBarra = valorMaximo === 0 ? 0 : (d.valor / valorMaximo) * (altoGrafico - 20);
+    const y = yBaseFinal - alturaBarra;
+
+    doc.rect(x, y, anchoBarra, alturaBarra).fill(d.color);
+
+    doc
+      .fontSize(9)
+      .fillColor("#353B4D")
+      .text(String(d.valor), x, y - 12, { width: anchoBarra, align: "center" });
+
+    doc
+      .fontSize(8)
+      .fillColor("#353B4D")
+      .text(d.etiqueta, x - 5, yBaseFinal + 4, { width: anchoBarra + 10, align: "center" });
+  });
+
+  doc.x = xBase;
+  doc.y = yBaseFinal + 20;
+}
+
+function dibujarGraficoDistribucionRiesgos(
+  doc: PDFKit.PDFDocument,
+  datos: DatosReporteOrganizacion
+): void {
+  dibujarSeccionTitulo(doc, "Distribución de riesgos por nivel");
+
+  const conteos: Record<string, number> = { BAJO: 0, MEDIO: 0, ALTO: 0, CRITICO: 0 };
+  datos.riesgos.forEach((r) => {
+    if (conteos[r.nivelInherente] !== undefined) {
+      conteos[r.nivelInherente] += 1;
+    }
+  });
+
+  if (datos.riesgos.length === 0) {
+    doc.fontSize(9).fillColor("#8A8698").text("Sin riesgos registrados para graficar.").moveDown(0.5);
+    return;
+  }
+
+  dibujarGraficoBarras(
+    doc,
+    ORDEN_NIVEL_RIESGO.map((nivel) => ({
+      etiqueta: ETIQUETA_NIVEL_RIESGO[nivel],
+      valor: conteos[nivel],
+      color: COLORES_NIVEL_RIESGO[nivel],
+    }))
+  );
+}
+
+function dibujarGraficoEstadoControles(
+  doc: PDFKit.PDFDocument,
+  datos: DatosReporteOrganizacion
+): void {
+  dibujarSeccionTitulo(doc, "Estado de implementación de controles");
+
+  const conteos: Record<string, number> = { Implementado: 0, Pendiente: 0, "No aplicado": 0 };
+  datos.controles.forEach((c) => {
+    const categoria = CATEGORIA_ESTADO_CONTROL[c.estadoImplementacion];
+    if (categoria) {
+      conteos[categoria] += 1;
+    }
+  });
+
+  if (datos.controles.length === 0) {
+    doc.fontSize(9).fillColor("#8A8698").text("Sin controles registrados para graficar.").moveDown(0.5);
+    return;
+  }
+
+  dibujarGraficoBarras(
+    doc,
+    ORDEN_CATEGORIA_CONTROL.map((categoria) => ({
+      etiqueta: categoria,
+      valor: conteos[categoria],
+      color: COLOR_CATEGORIA_CONTROL[categoria],
+    }))
+  );
+}
+
 function construirPDF(
   tipo: string,
   datos: DatosReporteOrganizacion,
@@ -182,6 +323,8 @@ function construirPDF(
       );
     }
 
+    dibujarGraficoDistribucionRiesgos(doc, datos);
+
     // Matriz de riesgos: solo en TECNICO/GENERAL.
     if (tipo !== "EJECUTIVO") {
       dibujarSeccionTitulo(doc, "Matriz de riesgos");
@@ -214,6 +357,8 @@ function construirPDF(
       ]),
       [190, 110, 100, 90]
     );
+
+    dibujarGraficoEstadoControles(doc, datos);
 
     doc.end();
     stream.on("finish", () => resolve());
