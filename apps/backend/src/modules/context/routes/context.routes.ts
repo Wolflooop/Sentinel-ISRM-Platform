@@ -17,8 +17,7 @@ const router = Router();
 
 router.use(authenticate);
 
-// "/activo" debe declararse ANTES de "/:id" para que Express no lo confunda
-// con un parámetro de ruta.
+
 router.get("/activo", authorize("contexto", "leer"), obtenerContextoActivoController);
 router.get("/", authorize("contexto", "leer"), listarContextosController);
 router.get("/:id", authorize("contexto", "leer"), obtenerContextoController);

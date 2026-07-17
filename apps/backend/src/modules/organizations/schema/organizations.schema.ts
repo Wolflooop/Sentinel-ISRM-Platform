@@ -1,12 +1,6 @@
 import { z } from "zod";
 
-/**
- * `organizacionId` nunca se acepta desde el cliente en ningún esquema de este
- * módulo — siempre se resuelve desde `req.user.organizacionId` (JWT), igual
- * que en `users`/`roles`. No existen rutas con `:id` — la única organización
- * accesible es siempre la propia (Constitución, Sección 9: "Nunca permitir
- * acceso entre organizaciones").
- */
+
 
 const sectorEnum = z.enum(["PUBLICO", "PRIVADO"]);
 const tamanoEnum = z.enum(["MICRO", "PEQUENA", "MEDIANA", "GRANDE"]);
@@ -34,11 +28,7 @@ export const actualizarOrganizacionSchema = z
   });
 export type ActualizarOrganizacionInput = z.infer<typeof actualizarOrganizacionSchema>;
 
-/**
- * Cambio de estado — regla de negocio de la Fase 5 (Reglas de Integridad):
- * mover a SUSPENDIDA o INACTIVA revoca todas las sesiones activas de la
- * organización (aplicado en el service, no aquí).
- */
+
 export const cambiarEstadoOrganizacionSchema = z.object({
   estado: estadoOrganizacionEnum,
 });

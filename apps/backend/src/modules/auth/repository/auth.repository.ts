@@ -1,10 +1,7 @@
 import { prisma } from "../../../config/prisma";
 import { UsuarioConRol, UsuarioPerfil } from "../types/auth.types";
 
-/**
- * Único lugar autorizado para Prisma Client dentro del módulo auth
- * (Constitución: "Repository — Único lugar autorizado para Prisma Client").
- */
+
 
 export async function findUsuarioByOrganizacionYEmail(
   organizacionNombre: string,
@@ -67,20 +64,13 @@ export async function findSesionActivaPorTokenHash(tokenHash: string) {
 }
 
 export async function revocarSesionPorTokenHash(tokenHash: string): Promise<void> {
-  // No se elimina el registro — solo se marca revocado (regla de la Constitución
-  // y de la Fase 5: Sesion es de baja lógica, no de eliminación física).
-  await prisma.sesion.updateMany({
+ await prisma.sesion.updateMany({
     where: { tokenHash },
     data: { revocado: true },
   });
 }
 
-/**
- * Perfil para GET /auth/me — select explícito y mínimo (sin `passwordHash`,
- * `intentosFallidos` ni `bloqueadoHasta`), a diferencia de
- * `findUsuarioByOrganizacionYEmail` que sí necesita esos campos para el
- * flujo de login.
- */
+
 export async function findUsuarioPorId(id: string): Promise<UsuarioPerfil | null> {
   return prisma.usuario.findUnique({
     where: { id },

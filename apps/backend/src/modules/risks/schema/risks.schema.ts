@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-/**
- * `activoId`/`amenazaId`/`vulnerabilidadId` identifican la combinación sobre
- * la que se crea (o reutiliza) internamente el AAV — el cliente nunca
- * envía ni recibe un `aavId`; esa entidad no se expone (ver PASO 1).
- * `probabilidad`/`impacto`: enteros 1–5 (schema.prisma, no 0–100% como
- * sugiere "Pantallas descriptivas" — contradicción ya resuelta por
- * jerarquía documental desde la Constitución, Sección 3.3).
- */
+
 export const crearRiesgoSchema = z.object({
   activoId: z.string().uuid("activoId debe ser un identificador válido"),
   amenazaId: z.string().uuid("amenazaId debe ser un identificador válido"),

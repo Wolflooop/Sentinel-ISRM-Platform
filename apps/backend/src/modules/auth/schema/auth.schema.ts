@@ -1,12 +1,6 @@
 import { z } from "zod";
 
-/**
- * Decisión aprobada (Fase 2): el login identifica la organización mediante
- * Organizacion + Email + Password, usando únicamente campos existentes en
- * schema.prisma. Se envía el nombre de la organización tal como está
- * modelado (`Organizacion.nombre`, con restricción @unique), no un slug ni
- * un identificador nuevo.
- */
+
 export const loginSchema = z.object({
   organizacion: z
     .string({ required_error: "La organización es obligatoria" })

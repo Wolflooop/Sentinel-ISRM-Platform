@@ -1,14 +1,5 @@
 import { z } from "zod";
 
-/**
- * `organizacionId` nunca se acepta desde el cliente — siempre se resuelve
- * desde `req.user.organizacionId` (JWT), igual que en el resto de módulos.
- * `esPredefinida` tampoco se acepta desde el cliente: toda amenaza creada
- * por una organización nace con `esPredefinida = false` (solo el catálogo
- * global, fuera de alcance de este módulo, puede tener `true`).
- * `origen` es obligatorio porque schema.prisma lo define como NOT NULL,
- * aunque "Pantallas descriptivas" no lo mencione explícitamente.
- */
 
 export const crearAmenazaSchema = z.object({
   categoriaId: z.string().uuid("categoriaId debe ser un identificador válido"),

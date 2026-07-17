@@ -40,9 +40,7 @@ export async function quitarPermisoRequest(
   return data;
 }
 
-// Catálogo de permisos disponibles (endpoint /api/permisos, ya existente) —
-// se consume desde aquí para la pantalla de asignación, sin crear un feature
-// independiente de "permissions" en el frontend.
+
 export async function listarPermisosDisponiblesRequest(): Promise<Permiso[]> {
   const { data } = await apiClient.get<Permiso[]>("/permisos");
   return data;

@@ -5,25 +5,7 @@ import { tokenStorage } from "../lib/tokenStorage";
 
 type EstadoSesion = "verificando" | "autenticado" | "no-autenticado";
 
-/**
- * Guard de rutas privadas.
- *
- * Se monta como elemento padre de todas las rutas internas en AppRouter
- * (dashboard, activos, riesgos, etc.). No implementa lógica de auth propia:
- * delega por completo en `hasValidSession()` (lib/authSession.ts), que a su
- * vez usa `tokenStorage` como única fuente de verdad — igual que el resto de
- * la aplicación.
- *
- * La verificación es local/síncrona (no hay endpoint /me en el backend),
- * pero se resuelve dentro de un efecto para garantizar que nunca se
- * renderiza contenido protegido en el mismo ciclo en que aún no se ha
- * confirmado la sesión, y para dejar preparado el punto de extensión si en
- * el futuro se agrega una validación contra el servidor.
- *
- * Si el token está ausente o vencido, se limpia el estado local antes de
- * redirigir — nunca se deja una sesión a medias ni se muestra una pantalla
- * interna vacía o parcial.
- */
+
 export function ProtectedRoute() {
   const [estado, setEstado] = useState<EstadoSesion>("verificando");
 
@@ -33,9 +15,7 @@ export function ProtectedRoute() {
       return;
     }
 
-    // Sesión ausente o vencida: se limpia cualquier resto de estado local
-    // (p. ej. un token expirado que seguía en localStorage) antes de
-    // redirigir, para no dejar datos temporales huérfanos.
+  
     tokenStorage.clear();
     setEstado("no-autenticado");
   }, []);

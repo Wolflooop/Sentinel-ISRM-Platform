@@ -5,16 +5,9 @@ import { useRolConPermisos } from "../hooks/useRoles";
 
 interface RoleCardProps {
   rol: Rol;
-  /** null cuando no se pudo calcular (p. ej. el usuario no tiene permiso "usuarios:leer"). */
   totalUsuarios: number | null;
 }
 
-/**
- * Tarjeta de un rol para la vista en grid de RolesListPage — reemplaza a la
- * antigua RolesTable. No existe (ni se crea) un endpoint de listado que
- * traiga permisos agrupados: cada tarjeta pide sus propios permisos vía
- * GET /roles/:id/permisos (el mismo endpoint que ya usa RolDetailPage).
- */
 export function RoleCard({ rol, totalUsuarios }: RoleCardProps) {
   const { data: rolConPermisos } = useRolConPermisos(rol.id);
 

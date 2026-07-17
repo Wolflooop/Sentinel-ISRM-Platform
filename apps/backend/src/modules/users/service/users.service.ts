@@ -19,11 +19,7 @@ export async function listarUsuarios(organizacionId: string): Promise<UsuarioCon
   return findUsuariosPorOrganizacion(organizacionId);
 }
 
-/**
- * Aislamiento multi-tenant: si el usuario existe pero pertenece a otra
- * organización, se responde 404 (no 403) para no revelar la existencia de
- * recursos de otras organizaciones.
- */
+
 export async function obtenerUsuario(
   id: string,
   organizacionId: string

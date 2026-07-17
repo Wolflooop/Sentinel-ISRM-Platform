@@ -34,11 +34,7 @@ export async function listarCategorias(): Promise<CategoriaAmenaza[]> {
   return findCategoriasAmenaza();
 }
 
-/**
- * Visible tanto para amenazas globales como propias — 404 (no revela
- * existencia) si la amenaza pertenece a otra organización, mismo criterio
- * de aislamiento ya usado en users/roles/context/assets.
- */
+
 export async function obtenerAmenaza(
   id: string,
   organizacionId: string
@@ -57,12 +53,7 @@ async function validarCategoria(categoriaId: string): Promise<void> {
   }
 }
 
-/**
- * Ninguna operación de escritura de este módulo actúa sobre el catálogo
- * global (`organizacionId = NULL`) — no se inventa un rol de plataforma
- * (mismo criterio ya resuelto en la Fase 4 para `Organizacion`; ver PASO 1
- * de esta fase).
- */
+
 function exigirAmenazaPropia(amenaza: AmenazaConRelaciones, organizacionId: string): void {
   if (amenaza.organizacionId !== organizacionId) {
     throw new AppError("No se puede modificar una amenaza del catálogo global", 403);
@@ -141,11 +132,7 @@ export async function actualizarAmenazaExistente(
   return actualizada;
 }
 
-/**
- * Eliminación física (Amenaza no tiene campo `estado`) — bloqueada si
- * participa en cualquier combinación AAV (Fase 5 §5.4, criterio análogo al
- * ya aplicado a Activo en la Fase 6).
- */
+
 export async function eliminarAmenazaExistente(
   id: string,
   organizacionId: string,

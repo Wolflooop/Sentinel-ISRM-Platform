@@ -28,13 +28,7 @@ export interface FiltrosReportes {
   tipo?: TipoReporte;
 }
 
-/**
- * Datos agregados de la organización que alimentan la generación del
- * reporte. Se ensamblan en el repository (única capa autorizada a tocar
- * Prisma) a partir de los módulos ya existentes (activos, riesgos,
- * controles, contexto), sin duplicar su lógica de negocio: son consultas
- * de solo lectura, no reimplementaciones de las reglas de esos módulos.
- */
+
 export interface DatosReporteOrganizacion {
   organizacion: {
     nombre: string;

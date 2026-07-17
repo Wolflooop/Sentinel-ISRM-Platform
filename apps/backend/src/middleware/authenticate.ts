@@ -5,16 +5,7 @@ import { AppError } from "../shared/AppError";
 import { findSesionActivaPorTokenHash } from "../modules/auth/repository/auth.repository";
 import { registrarEventoSeguridad } from "../modules/security-events/service/security-events.service";
 
-/**
- * Middleware JWT (primer eslabón de la cadena obligatoria de la Constitución:
- * Route → JWT Middleware → RBAC Middleware → Zod Validation → Controller →
- * Service → Repository → Prisma → PostgreSQL).
- *
- * Verifica la firma/expiración del JWT y, además, que la Sesion asociada
- * exista y no haya sido revocada (logout) — el JWT por sí solo no puede
- * invalidarse antes de su expiración natural, por eso la revocación se
- * verifica contra la tabla Sesion en cada petición.
- */
+
 export async function authenticate(
   req: Request,
   _res: Response,
@@ -52,7 +43,6 @@ export async function authenticate(
           detalles: { ruta: req.originalUrl },
         });
       } else {
-        // Firma inválida o token malformado — posible manipulación.
         await registrarEventoSeguridad({
           evento: "AUTH_ACCESS_DENIED",
           resultado: "FALLIDO",
@@ -116,7 +106,6 @@ export async function authenticate(
       next(err);
       return;
     }
-    // jsonwebtoken lanza sus propios errores (TokenExpiredError, JsonWebTokenError)
     next(new AppError("Token inválido o expirado", 401));
   }
 }

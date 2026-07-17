@@ -1,23 +1,7 @@
 // ============================================================================
 // schema.prisma
 // Plataforma de Gestión de Riesgos de Seguridad de la Información
-// Basada en ISO/IEC 27005:2022 — Estancia de Investigación Programa Delfín 2026
 //
-// Generado a partir del modelo de datos aprobado en las Fases 1 a 8:
-//   Fase 1 — Revisión del dominio
-//   Fase 2 — Definición de atributos
-//   Fase 3 — Claves, restricciones e índices
-//   Fase 4 — Relaciones y cardinalidades
-//   Fase 5 — Reglas de integridad
-//   Fase 6 — Normalización (1FN/2FN/3FN, con 3 excepciones documentadas)
-//   Fase 7 — Modelo ER (Mermaid)
-//   Fase 8 — Revisión final
-//
-// Decisión registrada en Fase 8.1: `Riesgo`, `Evaluacion` y `Tratamiento` NO
-// almacenan `organizacionId` directo (a diferencia de `Activo`/`Auditoria`/
-// `Reporte`). El aislamiento multi-tenant sobre estas tres tablas se resuelve
-// mediante JOIN en la capa de repository — ver comentarios en cada modelo.
-// ============================================================================
 
 generator client {
   provider = "prisma-client-js"

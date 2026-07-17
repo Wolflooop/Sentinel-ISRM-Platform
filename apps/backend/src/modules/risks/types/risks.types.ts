@@ -1,12 +1,4 @@
-/**
- * Tipos internos del módulo risks. No se importa `@prisma/client` aquí —
- * los enums se redefinen como uniones de string literal, igual que en el
- * resto de módulos. Solo repository.ts toca Prisma.
- *
- * IMPORTANTE: `ActivoAmenazaVulnerabilidad` (AAV) NO tiene tipo/DTO propio
- * expuesto — es un detalle interno de `crearAavYRiesgo` en el repository.
- * Estos tipos modelan únicamente lo que el módulo Riesgos expone.
- */
+
 export type EstadoRiesgo =
   | "IDENTIFICADO"
   | "EN_ANALISIS"
@@ -40,15 +32,7 @@ export interface FiltrosRiesgos {
   nivelRiesgoInherente?: NivelRiesgo;
 }
 
-/**
- * Entrada del caso de uso de creación. `nivelRiesgoInherente` ya viene
- * resuelto por el Service (consultando la MatrizRiesgo del Contexto activo)
- * antes de llegar al repository transaccional. Incluye `organizacionId` y
- * `actor` porque la Auditoría se registra DENTRO de la misma transacción
- * que crea el AAV/Riesgo (corrección de auditoría: el flujo obligatorio de
- * la Fase 9 exige "crear Riesgo → registrar Auditoría → COMMIT", no una
- * escritura de auditoría posterior al commit).
- */
+
 export interface CrearRiesgoParams {
   organizacionId: string;
   activoId: string;

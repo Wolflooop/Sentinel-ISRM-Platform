@@ -6,8 +6,7 @@ export const crearRolSchema = z.object({
 });
 export type CrearRolInput = z.infer<typeof crearRolSchema>;
 
-// `esSistema` nunca es parte del payload de actualización: es un atributo de
-// origen (definido al crear el catálogo base), no editable por API.
+
 export const actualizarRolSchema = z
   .object({
     nombre: z.string().trim().min(1).optional(),

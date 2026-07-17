@@ -22,14 +22,7 @@ import { reportsRouter } from "./modules/reports/routes/reports.routes";
 import { auditRouter } from "./modules/audit/routes/audit.routes";
 import { securityEventsRouter } from "./modules/security-events/routes/security-events.routes";
 
-/**
- * Construye y configura la aplicación Express.
- *
- * Configura middlewares transversales de seguridad, logging y parsing, y
- * monta todos los módulos funcionales en app.use("/api/<recurso>", <router>)
- * siguiendo la cadena obligatoria: Route → JWT → RBAC → Zod → Controller →
- * Service → Repository.
- */
+
 export function createApp(): Application {
   const app = express();
 

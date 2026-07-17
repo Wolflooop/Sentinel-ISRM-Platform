@@ -14,8 +14,6 @@ const router = Router();
 
 router.use(authenticate);
 
-// "/categorias" debe declararse ANTES de "/:id" para que Express no lo
-// confunda con un parámetro de ruta (mismo criterio ya usado en /contexto/activo).
 router.get("/categorias", authorize("activos", "leer"), listarCategoriasController);
 router.get("/", authorize("activos", "leer"), listarActivosController);
 router.get("/:id", authorize("activos", "leer"), obtenerActivoController);

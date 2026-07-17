@@ -13,11 +13,7 @@ const INCLUDE_RELACIONES = {
   categoria: { select: { id: true, nombre: true } },
 } as const;
 
-/**
- * Catálogo híbrido (Fase 4 §4.3 / schema.prisma): incluye las amenazas
- * globales (`organizacionId = NULL`) junto con las propias de la
- * organización solicitante.
- */
+
 export async function findAmenazasVisiblesParaOrganizacion(
   organizacionId: string,
   filtros: FiltrosAmenazas
@@ -46,12 +42,7 @@ export async function findAmenazaVisiblePorId(
   });
 }
 
-/**
- * Unicidad de `nombre` solo entre las amenazas PROPIAS de la organización
- * (el `@@unique([organizacionId, nombre])` físico ya lo garantiza a nivel
- * de DB para filas con organizacionId no nulo; esta consulta da un mensaje
- * de error amigable en Service antes de llegar a esa restricción).
- */
+
 export async function existeOtraAmenazaConNombreEnOrganizacion(
   organizacionId: string,
   nombre: string,
@@ -80,12 +71,7 @@ export async function findCategoriasAmenaza(): Promise<CategoriaAmenaza[]> {
   return prisma.categoriaAmenaza.findMany({ orderBy: { nombre: "asc" } });
 }
 
-/**
- * Equivalente, para Amenaza, del criterio ya aplicado a Activo en la
- * Fase 6: no puede eliminarse mientras participe en cualquier combinación
- * AAV vigente (Fase 5 §5.4: "una amenaza no puede eliminarse mientras
- * participe en combinaciones AAV vigentes").
- */
+
 export async function existeAavParaAmenaza(amenazaId: string): Promise<boolean> {
   const aav = await prisma.activoAmenazaVulnerabilidad.findFirst({
     where: { amenazaId },
@@ -94,11 +80,7 @@ export async function existeAavParaAmenaza(amenazaId: string): Promise<boolean> 
   return aav !== null;
 }
 
-/**
- * Corrección de auditoría (mismo patrón que risks.repository.ts): la
- * escritura de negocio y el registro de Auditoria quedan en la MISMA
- * transacción.
- */
+
 export async function crearAmenazaConAuditoria(
   params: CrearAmenazaParams,
   auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
@@ -162,10 +144,7 @@ export async function actualizarAmenazaConAuditoria(
   });
 }
 
-/**
- * Eliminación física — `Amenaza` no tiene campo `estado` (a diferencia de
- * `Activo`), por lo que no existe baja lógica para este modelo.
- */
+
 export async function eliminarAmenazaConAuditoria(
   id: string,
   auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">

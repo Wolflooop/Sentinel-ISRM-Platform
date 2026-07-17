@@ -35,14 +35,7 @@ export async function findReportePorId(
   });
 }
 
-/**
- * Corrección de auditoría (mismo patrón que risks.repository.ts): create +
- * registro de Auditoria en la MISMA transacción. La escritura del archivo
- * PDF al disco (fuera de esta función, en el Service) no participa de la
- * transacción de base de datos — es un recurso externo, no una escritura
- * de Prisma; su atomicidad frente al registro en BD queda fuera del
- * alcance de esta corrección.
- */
+
 export async function crearReporteConAuditoria(
   params: CrearReporteParams,
   auditoria: {
@@ -80,12 +73,7 @@ export async function crearReporteConAuditoria(
   });
 }
 
-/**
- * Ensambla los datos de solo lectura necesarios para construir el
- * contenido de un reporte, reutilizando las relaciones ya modeladas por
- * los módulos existentes (activos, riesgos, controles, contexto). No
- * duplica reglas de negocio de esos módulos: solo lee.
- */
+
 export async function recopilarDatosOrganizacion(
   organizacionId: string
 ): Promise<DatosReporteOrganizacion> {

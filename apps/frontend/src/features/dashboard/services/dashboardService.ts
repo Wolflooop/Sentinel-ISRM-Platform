@@ -19,12 +19,7 @@ const ESTADOS_CONTROL: EstadoImplementacionControl[] = [
   "IMPLEMENTADO",
 ];
 
-/**
- * Un riesgo se cuenta por su nivel residual cuando ya fue evaluado tras
- * tratamiento; si aún no tiene nivel residual, se usa el inherente. Esto
- * refleja el nivel de riesgo vigente en cada momento, consistente con cómo
- * el módulo de Riesgos expone ambos campos.
- */
+
 function nivelVigente(riesgo: RiesgoResumen): NivelRiesgo {
   return riesgo.nivelRiesgoResidual ?? riesgo.nivelRiesgoInherente;
 }

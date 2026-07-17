@@ -18,11 +18,6 @@ const ESTILOS_BADGE: Record<EstadoOrganizacion, string> = {
   INACTIVA: "bg-slate-200 text-slate-700",
 };
 
-/**
- * Cambiar a SUSPENDIDA o INACTIVA revoca todas las sesiones activas de la
- * organización (regla de negocio de la Fase 5) — incluida, casi siempre, la
- * sesión de quien ejecuta la acción. Se pide confirmación explícita.
- */
 export function OrganizationStatusPanel({
   organizacion,
   onCambiarEstado,

@@ -1,9 +1,4 @@
-/**
- * Tipos internos del módulo threats (Amenazas). No se importa
- * `@prisma/client` aquí — el enum se redefine como unión de string literal,
- * igual que en assets.types.ts / context.types.ts. Solo repository.ts toca
- * Prisma.
- */
+
 export type OrigenAmenaza = "INTERNO" | "EXTERNO";
 
 export interface CategoriaAmenaza {
@@ -12,11 +7,7 @@ export interface CategoriaAmenaza {
   descripcion: string | null;
 }
 
-/**
- * `organizacionId: null` = catálogo global (administrado fuera de este
- * módulo — ver schema.prisma). No confundir con "sin organización
- * asignada": es un estado válido y permanente para las entradas globales.
- */
+
 export interface Amenaza {
   id: string;
   organizacionId: string | null;

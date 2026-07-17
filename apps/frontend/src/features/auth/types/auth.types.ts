@@ -13,7 +13,6 @@ export interface LoginResponse {
   };
 }
 
-/** Par (recurso, accion) tal como lo devuelve GET /auth/me. */
 export interface PermisoActual {
   recurso: string;
   accion: string;

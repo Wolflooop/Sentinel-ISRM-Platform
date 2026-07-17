@@ -7,9 +7,7 @@ import { Link } from "react-router-dom";
 
 export function ControlsListPage() {
   const [filtros, setFiltros] = useState<FiltrosControles>({});
-  // El aislamiento por organización ya no depende de un parámetro enviado
-  // por el cliente: el backend resuelve la organización del solicitante
-  // directamente desde el JWT (ver controls.service.ts / listarControles).
+  
   const { data: controles, isLoading, isError } = useControles(filtros);
 
   return (

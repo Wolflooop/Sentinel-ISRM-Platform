@@ -87,17 +87,7 @@ export async function findContextoActivoPorOrganizacion(
   });
 }
 
-/**
- * Crea la Evaluacion y, en la MISMA transaccion, actualiza Riesgo.estado
- * segun el resultado (Hallazgo #2 de auditoria: EstadoRiesgo era
- * inalcanzable mas alla de IDENTIFICADO). Mapeo de dominio:
- *   - resultado = NO_ACEPTABLE -> Riesgo pasa a EVALUADO (requiere
- *     tratamiento, ver treatments.repository.ts::crearTratamiento).
- *   - resultado = ACEPTABLE    -> Riesgo pasa a ACEPTADO (se acepta sin
- *     necesidad de tratamiento).
- * Debe ser atomico: una Evaluacion nunca puede quedar persistida sin que
- * el Riesgo refleje la transicion correspondiente.
- */
+
 export async function crearEvaluacion(params: CrearEvaluacionParams): Promise<EvaluacionConRelaciones> {
   const nuevoEstadoRiesgo = params.resultado === "ACEPTABLE" ? "ACEPTADO" : "EVALUADO";
 

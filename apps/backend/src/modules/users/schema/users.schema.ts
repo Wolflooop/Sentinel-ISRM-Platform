@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-/**
- * `organizacionId` nunca se acepta desde el cliente en ningún esquema de este
- * módulo — siempre se resuelve desde `req.user.organizacionId` (JWT), para
- * garantizar el aislamiento multi-tenant.
- */
+
 
 export const crearUsuarioSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio"),

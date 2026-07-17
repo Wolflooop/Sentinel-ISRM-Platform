@@ -82,12 +82,7 @@ export async function findCategoriasActivo(): Promise<CategoriaActivo[]> {
   return prisma.categoriaActivo.findMany({ orderBy: { nombre: "asc" } });
 }
 
-/**
- * Fase 5 §5.3: "Todo activo debe tener un usuario responsable válido,
- * perteneciente a la misma organización que el activo" — se valida aquí
- * contra Usuario, no mediante una FK compuesta (Prisma no lo soporta para
- * este caso sin duplicar organizacionId en la relación).
- */
+
 export async function existeUsuarioEnOrganizacion(
   usuarioId: string,
   organizacionId: string
@@ -99,10 +94,6 @@ export async function existeUsuarioEnOrganizacion(
   return usuario !== null;
 }
 
-/**
- * Fase 5 §5.4: un activo no puede pasar a RETIRADO si participa en
- * combinaciones AAV con un Riesgo en estado distinto de CERRADO.
- */
 export async function existeRiesgoAbiertoParaActivo(activoId: string): Promise<boolean> {
   const aavConRiesgoAbierto = await prisma.activoAmenazaVulnerabilidad.findFirst({
     where: {
@@ -114,12 +105,7 @@ export async function existeRiesgoAbiertoParaActivo(activoId: string): Promise<b
   return aavConRiesgoAbierto !== null;
 }
 
-/**
- * Corrección de auditoría (mismo patrón que risks.repository.ts): create +
- * registro de Auditoria deben quedar en la MISMA transacción, para que un
- * Activo nunca pueda quedar persistido sin su registro de auditoría
- * correspondiente.
- */
+
 export async function crearActivoConAuditoria(
   params: CrearActivoParams,
   auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">

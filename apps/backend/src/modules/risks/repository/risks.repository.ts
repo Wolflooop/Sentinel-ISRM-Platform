@@ -11,12 +11,7 @@ import {
   CeldaMatrizResumen,
 } from "../types/risks.types";
 
-/**
- * `ActivoAmenazaVulnerabilidad` (AAV) se maneja EXCLUSIVAMENTE dentro de
- * este archivo, nunca se expone como recurso propio (routes/controller/dto)
- * — es un detalle interno de la creación de un Riesgo (ver PASO 1 de esta
- * fase). Ningún otro módulo importa `prisma.activoAmenazaVulnerabilidad`.
- */
+
 
 const RIESGO_INCLUDE = {
   aav: {
@@ -28,11 +23,7 @@ const RIESGO_INCLUDE = {
   },
 } as const;
 
-/**
- * Riesgo no tiene `organizacionId` directo (Decisión Fase 8.1 / schema.prisma:
- * el aislamiento multi-tenant se resuelve vía JOIN Riesgo -> AAV -> Activo
- * -> Organizacion). Este filtro se reutiliza en list/detail.
- */
+
 function whereOrganizacion(organizacionId: string) {
   return { aav: { activo: { organizacionId } } };
 }
@@ -129,15 +120,7 @@ export async function findCeldaMatriz(
   });
 }
 
-/**
- * Señal de dominio para "ya existe un Riesgo para este AAV" (relación 1:1,
- * Fase 4 §4.4). Deliberadamente SIN propiedad `.status`: el Repository no
- * decide semántica HTTP — es el Service quien atrapa esta clase y la
- * traduce a `AppError(409, ...)`, igual que en el resto de módulos del
- * proyecto (corrección de auditoría: antes se lanzaba un `Error` genérico
- * con `.status` inyectado por type assertion, mezclando una decisión HTTP
- * dentro de la capa de Prisma).
- */
+
 export class RiesgoDuplicadoParaAavError extends Error {
   constructor() {
     super(
@@ -151,26 +134,7 @@ function esViolacionDeUnicidad(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
-/**
- * Flujo obligatorio (ver encabezado de la Fase 9):
- *   BEGIN TRANSACTION
- *   → buscar AAV existente
- *   → si no existe, crearlo
- *   → crear Riesgo (1:1 con AAV, aavId es @unique)
- *   → COMMIT
- *
- * Manejo de concurrencia: si dos peticiones intentan crear el mismo AAV en
- * paralelo, la segunda `create` viola `@@unique([activoId, amenazaId,
- * vulnerabilidadId])` (P2002). En PostgreSQL, una vez que una sentencia
- * dentro de una transacción falla, esa transacción completa queda abortada
- * — no es válido "atrapar el error y seguir consultando" dentro de la MISMA
- * transacción. Por eso la estrategia correcta es reintentar la
- * TRANSACCIÓN COMPLETA (no solo el create): en el reintento, el
- * `findUnique` inicial encontrará el AAV que la otra petición ya confirmó,
- * y se continúa normalmente. Lo mismo cubre una segunda fuente de carrera:
- * dos peticiones que reutilizan el mismo AAV e intentan crear su Riesgo
- * (1:1, `aavId` único) al mismo tiempo.
- */
+
 export async function crearAavYRiesgo(
   params: CrearRiesgoParams,
   intentosRestantes = 3
@@ -199,14 +163,7 @@ export async function crearAavYRiesgo(
 
       const riesgoExistente = await tx.riesgo.findUnique({ where: { aavId: aav.id } });
       if (riesgoExistente) {
-        // No es una condición de carrera transitoria en sí misma — es un
-        // conflicto de negocio real (AAV -> Riesgo es 1:1, Fase 4 §4.4).
-        // Nota: si dos peticiones concurrentes llegan hasta aquí a la vez,
-        // la segunda `tx.riesgo.create` de abajo también violaría el
-        // `@unique` físico de `Riesgo.aavId` (P2002) y activaría el reintento
-        // completo de la transacción; en ese reintento, este mismo chequeo
-        // encontrará el riesgo ya creado y lanzará este error de negocio
-        // (no un P2002), terminando el reintento de forma natural.
+
         throw new RiesgoDuplicadoParaAavError();
       }
 
@@ -224,11 +181,6 @@ export async function crearAavYRiesgo(
         include: RIESGO_INCLUDE,
       });
 
-      // Corrección de auditoría: el flujo obligatorio de la Fase 9 es
-      // "crear Riesgo → registrar Auditoría → COMMIT" — ambas escrituras
-      // deben quedar dentro de la MISMA transacción (`tx`, no `prisma`),
-      // para que un Riesgo nunca pueda quedar persistido sin su registro
-      // de auditoría correspondiente.
       await tx.auditoria.create({
         data: {
           usuarioId: params.actor.usuarioId,

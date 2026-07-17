@@ -2,18 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/**
- * Tokens de color como variables CSS, mapeadas a nombres semánticos en
- * tailwind.config.js (bg-surface, text-ink, border-border, bg-primary...).
- * El interruptor real es la clase `.dark` en <html> (ver
- * lib/theme/ThemeProvider.tsx) — los componentes usan siempre el mismo
- * nombre de clase de Tailwind; el color cambia solo porque cambia la
- * variable detrás de `.dark`.
- *
- * Formato "R G B" (sin rgb(), sin comas) porque tailwind.config.js las
- * consume como `rgb(var(--color-x) / <alpha-value>)`, lo que permite además
- * usar opacidad (p. ej. bg-primary/10) sin definir una variable aparte.
- */
+
 :root {
   --color-surface: 248 250 252; /* fondo general — slate-50 */
   --color-surface-elevated: 255 255 255; /* tarjetas, paneles, header — white */

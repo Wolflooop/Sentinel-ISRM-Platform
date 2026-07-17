@@ -22,9 +22,7 @@ export function useLogout() {
   return useMutation({
     mutationFn: logoutRequest,
     onSettled: () => {
-      // Se limpia el token localmente incluso si la petición de logout falla
-      // (p. ej. red caída) — el usuario no debe quedar atrapado en el estado
-      // autenticado del cliente.
+    
       tokenStorage.clear();
       navigate("/login", { replace: true });
     },

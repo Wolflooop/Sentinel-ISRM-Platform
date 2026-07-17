@@ -11,10 +11,7 @@ export async function findOrganizacionPorId(
   return prisma.organizacion.findUnique({ where: { id } });
 }
 
-/**
- * `Organizacion.nombre` es único (schema.prisma). Verifica duplicado
- * excluyendo la propia organización que se está actualizando.
- */
+
 export async function existeOtraOrganizacionConNombre(
   nombre: string,
   organizacionId: string
@@ -40,12 +37,7 @@ export async function cambiarEstadoOrganizacion(
   return prisma.organizacion.update({ where: { id }, data: { estado } });
 }
 
-/**
- * Regla de negocio de la Fase 5 (Reglas de Integridad, sección 5.1):
- * "Al cambiar Organizacion.estado a 'Inactiva' o 'Suspendida', el sistema
- * debe revocar las sesiones activas de todos sus usuarios." Usa únicamente
- * la entidad `Sesion` ya existente — ninguna entidad nueva.
- */
+
 export async function revocarSesionesActivasDeOrganizacion(
   organizacionId: string
 ): Promise<void> {

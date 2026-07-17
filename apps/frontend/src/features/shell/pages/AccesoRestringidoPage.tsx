@@ -1,11 +1,7 @@
 import { Link } from "react-router-dom";
 import { ShieldOff } from "lucide-react";
 
-/**
- * Se muestra cuando `RequierePermiso` bloquea el acceso a una ruta —
- * navegar a mano a un módulo sin permiso lleva aquí en vez de a un error
- * técnico (403 crudo, pantalla en blanco, etc.).
- */
+
 export function AccesoRestringidoPage() {
   return (
     <main className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">

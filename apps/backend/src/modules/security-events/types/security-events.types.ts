@@ -4,11 +4,7 @@ import {
   SeveridadEventoSeguridad,
 } from "@prisma/client";
 
-/**
- * Tipos internos del módulo security-events, compartidos entre service y
- * repository, más los tipos de la capa de lectura (controller/mapper/dto)
- * agregada por el Hallazgo de auditoría §3.10.
- */
+
 
 export interface RegistrarEventoSeguridadParams {
   evento: TipoEventoSeguridad;
@@ -30,12 +26,7 @@ export type {
   SeveridadEventoSeguridad,
 };
 
-/**
- * Capa de lectura (Hallazgo de auditoría §3.10, ALTA). El comentario
- * original de este archivo ("no hay DTO de respuesta ni controller en esta
- * fase: este módulo solo escribe") queda desactualizado por decisión
- * explícita: sí se expone lectura ahora.
- */
+
 export interface EventoSeguridadConUsuario {
   id: string;
   evento: TipoEventoSeguridad;

@@ -1,8 +1,4 @@
-/**
- * Tipos internos del módulo assets (Activos). No se importa `@prisma/client`
- * aquí — el enum se redefine como unión de string literal, igual que en
- * organizations.types.ts / context.types.ts. Solo repository.ts toca Prisma.
- */
+
 export type EstadoActivo = "ACTIVO" | "INACTIVO" | "RETIRADO";
 
 export interface CategoriaActivo {

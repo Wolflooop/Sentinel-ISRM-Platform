@@ -1,12 +1,6 @@
 import { z } from "zod";
 
-/**
- * Hallazgo #4 de auditoría: la estrategia MITIGAR requiere un control
- * principal (sin él, calcularNivelResidual no tiene información para
- * reducir probabilidad/impacto — ver comentario en treatments.repository.ts).
- * EVITAR/TRANSFERIR/ACEPTAR no dependen de ningún control, por lo que no
- * se exige aquí.
- */
+
 const ESTRATEGIA_MITIGAR_REQUIERE_CONTROL =
   "La estrategia MITIGAR requiere especificar un controlPrincipalId";
 
@@ -28,15 +22,7 @@ export const crearTratamientoSchema = z
 
 export type CrearTratamientoInput = z.infer<typeof crearTratamientoSchema>;
 
-/**
- * En actualización, controlPrincipalId/estrategia pueden venir parciales o
- * ausentes (se conserva el valor existente en BD), así que este refine solo
- * cubre el caso en que la MISMA petición fija estrategia=MITIGAR junto con
- * controlPrincipalId null explícito. El caso "ya era MITIGAR en BD y esta
- * petición solo quita el control" o "cambia a MITIGAR sin tocar
- * controlPrincipalId porque ya había uno" depende del estado previo en BD y
- * se valida en el Service (actualizarTratamientoExistente), no aquí.
- */
+
 export const actualizarTratamientoSchema = z
   .object({
     controlPrincipalId: z.string().min(1).nullable().optional(),

@@ -75,8 +75,7 @@ export async function asignarPermisoARol(rolId: string, permisoId: string): Prom
 }
 
 export async function quitarPermisoDeRol(rolId: string, permisoId: string): Promise<void> {
-  // Eliminación física de la fila puente — operación normal de administración
-  // ya documentada en fases previas del modelo de datos (no es baja lógica).
+
   await prisma.rolPermiso.delete({
     where: { rolId_permisoId: { rolId, permisoId } },
   });

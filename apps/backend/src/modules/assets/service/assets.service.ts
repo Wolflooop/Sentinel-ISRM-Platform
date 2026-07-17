@@ -36,10 +36,6 @@ export async function listarCategorias(): Promise<CategoriaActivo[]> {
   return findCategoriasActivo();
 }
 
-/**
- * Aislamiento multi-tenant: 404 (no 403) si el activo existe pero pertenece
- * a otra organización — mismo criterio ya usado en users/roles/context.
- */
 export async function obtenerActivo(
   id: string,
   organizacionId: string
@@ -58,10 +54,7 @@ async function validarCategoria(categoriaId: string): Promise<void> {
   }
 }
 
-/**
- * Fase 5 §5.3: el usuario responsable debe pertenecer a la misma
- * organización que el activo.
- */
+
 async function validarResponsable(usuarioId: string, organizacionId: string): Promise<void> {
   const existe = await existeUsuarioEnOrganizacion(usuarioId, organizacionId);
   if (!existe) {
@@ -137,10 +130,7 @@ export async function actualizarActivoExistente(
   return actualizado;
 }
 
-/**
- * Fase 5 §5.4: un activo no puede pasar a RETIRADO si participa en
- * combinaciones AAV con un Riesgo en estado distinto de CERRADO.
- */
+
 export async function cambiarEstadoActivoExistente(
   id: string,
   organizacionId: string,

@@ -28,12 +28,7 @@ interface ActorAuditoria {
   direccionIp: string;
 }
 
-/**
- * Sin filtro de organización (a diferencia de threats/assets/context):
- * `Vulnerabilidad` es un catálogo 100% global (ver PASO 1 de esta fase y
- * types/vulnerabilities.types.ts) — visible por igual para cualquier
- * organización autenticada.
- */
+
 export async function listarVulnerabilidades(
   filtros: FiltrosVulnerabilidades
 ): Promise<VulnerabilidadConRelaciones[]> {
@@ -59,18 +54,7 @@ async function validarCategoria(categoriaId: string): Promise<void> {
   }
 }
 
-/**
- * Sin validación de nombre duplicado: schema.prisma no define ningún
- * `@@unique` sobre `nombre` en `Vulnerabilidad` (a diferencia de `Amenaza`,
- * que sí tiene `@@unique([organizacionId, nombre])`) — no existe base física
- * ni documental para inventar esa restricción aquí (ver PASO 1 de esta
- * fase).
- *
- * Auditoría: `Auditoria.organizacionId` se atribuye a la organización del
- * usuario que ejecuta la acción (actor), no a la vulnerabilidad —
- * congruente con que el recurso es global y no pertenece a ninguna
- * organización en particular.
- */
+
 export async function crearNuevaVulnerabilidad(
   input: CrearVulnerabilidadInput,
   actor: ActorAuditoria
@@ -127,11 +111,7 @@ export async function actualizarVulnerabilidadExistente(
   return actualizada;
 }
 
-/**
- * Eliminación física (Vulnerabilidad no tiene campo `estado`) — bloqueada si
- * participa en cualquier combinación AAV (Fase 5 §5.4, mismo criterio ya
- * aplicado a Activo y Amenaza).
- */
+
 export async function eliminarVulnerabilidadExistente(
   id: string,
   actor: ActorAuditoria

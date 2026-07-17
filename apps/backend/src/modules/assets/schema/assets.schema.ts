@@ -1,13 +1,6 @@
 import { z } from "zod";
+ 
 
-/**
- * `organizacionId` nunca se acepta desde el cliente — siempre se resuelve
- * desde `req.user.organizacionId` (JWT), igual que en el resto de módulos.
- *
- * `criticidad` (1-5): restricción de dominio que schema.prisma documenta
- * explícitamente como no aplicable vía CHECK nativo de Prisma — se valida
- * aquí en Zod, como indica el propio comentario del schema.
- */
 
 export const crearActivoSchema = z.object({
   categoriaId: z.string().uuid("categoriaId debe ser un identificador válido"),

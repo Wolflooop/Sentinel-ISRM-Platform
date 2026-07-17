@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-/**
- * Debe reflejar exactamente el contrato de entrada del backend
- * (apps/backend/src/modules/users/schema/users.schema.ts).
- */
+
 export const crearUsuarioFormSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio"),
   email: z.string().trim().email("El correo no tiene un formato válido"),

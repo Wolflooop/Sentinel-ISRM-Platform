@@ -1,9 +1,6 @@
 import bcrypt from "bcrypt";
 
-/**
- * Utilidades de contraseña compartidas. Único punto autorizado en todo el
- * backend para invocar bcrypt directamente (Constitución, Sección "Seguridad").
- */
+
 
 const SALT_ROUNDS = 10;
 

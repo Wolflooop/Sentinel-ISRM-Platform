@@ -6,12 +6,6 @@ interface ItemProps {
   evaluacion: Evaluacion;
 }
 
-/**
- * Un tratamiento solo tiene sentido para una evaluación NO_ACEPTABLE (el
- * backend además impide más de un tratamiento por evaluación — 409). Este
- * subcomponente resuelve, por evaluación, si ya existe un tratamiento para
- * enlazar a su detalle, o si falta crear uno.
- */
 function TratamientoDeEvaluacion({ evaluacion }: ItemProps) {
   const esNoAceptable = evaluacion.resultado === "NO_ACEPTABLE";
   const { data: tratamiento, isLoading } = useTratamientoPorEvaluacion(

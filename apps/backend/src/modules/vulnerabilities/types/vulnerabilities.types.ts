@@ -1,12 +1,4 @@
-/**
- * Tipos internos del módulo vulnerabilities (Vulnerabilidades). No se
- * importa `@prisma/client` aquí; solo repository.ts toca Prisma.
- *
- * A diferencia de `Amenaza` (modelo híbrido global/organización),
- * `Vulnerabilidad` en schema.prisma es un catálogo 100% global: no tiene
- * `organizacionId` ni `esPredefinida`. No se agrega ninguno de los dos aquí
- * — sería crear un campo inexistente en el modelo físico.
- */
+
 export interface CategoriaVulnerabilidad {
   id: string;
   nombre: string;

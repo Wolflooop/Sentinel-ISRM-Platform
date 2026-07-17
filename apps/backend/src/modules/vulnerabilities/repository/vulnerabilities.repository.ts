@@ -12,13 +12,7 @@ const INCLUDE_RELACIONES = {
   categoria: { select: { id: true, nombre: true } },
 } as const;
 
-/**
- * Catálogo 100% global (a diferencia de threats.repository.ts, que combina
- * `organizacionId: null` con la propia): `Vulnerabilidad` no tiene
- * `organizacionId` en schema.prisma, por lo que no existe ningún filtro de
- * tenant que aplicar aquí — es visible por igual para cualquier
- * organización autenticada.
- */
+
 export async function findVulnerabilidades(
   filtros: FiltrosVulnerabilidades
 ): Promise<VulnerabilidadConRelaciones[]> {
@@ -56,12 +50,7 @@ export async function findCategoriasVulnerabilidad(): Promise<CategoriaVulnerabi
   return prisma.categoriaVulnerabilidad.findMany({ orderBy: { nombre: "asc" } });
 }
 
-/**
- * Igual criterio ya aplicado a Activo (Fase 6) y Amenaza (Fase 7): no puede
- * eliminarse mientras participe en cualquier combinación AAV vigente (Fase 5
- * §5.4: "una vulnerabilidad no puede eliminarse mientras participe en
- * combinaciones AAV vigentes").
- */
+
 export async function existeAavParaVulnerabilidad(vulnerabilidadId: string): Promise<boolean> {
   const aav = await prisma.activoAmenazaVulnerabilidad.findFirst({
     where: { vulnerabilidadId },
@@ -96,10 +85,7 @@ export async function actualizarVulnerabilidad(
   });
 }
 
-/**
- * Eliminación física — `Vulnerabilidad` no tiene campo `estado`, igual que
- * `Amenaza`; no existe baja lógica para este modelo.
- */
+
 export async function eliminarVulnerabilidad(id: string): Promise<void> {
   await prisma.vulnerabilidad.delete({ where: { id } });
 }

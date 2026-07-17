@@ -14,13 +14,6 @@ const ESTILO_SEVERIDAD: Record<number, string> = {
   5: "bg-red-100 text-red-800",
 };
 
-/**
- * Sin distinción "Propia"/"Predefinida" (a diferencia de ThreatsTable): el
- * catálogo de Vulnerabilidad es 100% global y editable por igual por
- * cualquier organización con el permiso correspondiente (ver PASO 1 de esta
- * fase — schema.prisma no define `organizacionId` ni `esPredefinida` para
- * este modelo).
- */
 export function VulnerabilitiesTable({ vulnerabilidades }: Props) {
   const eliminarVulnerabilidad = useEliminarVulnerabilidad();
 

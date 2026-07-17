@@ -1,8 +1,4 @@
-/**
- * Tipos internos del módulo auth, compartidos entre repository y service.
- * No son DTO de respuesta (ver dto/auth.dto.ts) ni esquemas de validación de
- * entrada (ver schema/auth.schema.ts).
- */
+
 
 export interface UsuarioConRol {
   id: string;
@@ -31,13 +27,6 @@ export interface LoginResult {
   expiraEn: Date;
 }
 
-/**
- * Perfil mínimo para GET /auth/me — a diferencia de `UsuarioConRol` (usado
- * internamente para login), nunca incluye `passwordHash`,
- * `intentosFallidos` ni `bloqueadoHasta`: no son necesarios para que el
- * frontend sepa "quién soy y qué puedo hacer", y no tiene sentido
- * transportarlos ni un paso más de lo estrictamente necesario.
- */
 export interface UsuarioPerfil {
   id: string;
   nombre: string;

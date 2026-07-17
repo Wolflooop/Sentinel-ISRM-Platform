@@ -3,15 +3,6 @@ import { HttpNotification, subscribeHttpNotifications } from "../lib/httpNotific
 
 const DURACION_MS = 6000;
 
-/**
- * Banner global para errores HTTP transversales (403 y 500).
- *
- * Se monta una sola vez en App.tsx, fuera de cualquier módulo funcional.
- * No decide nada de negocio: solo refleja lo que el interceptor de Axios
- * publica en lib/httpNotifications.ts. Los errores de negocio (400, 404,
- * 409, etc.) nunca llegan aquí — siguen manejándose donde ya se manejaban,
- * dentro de cada módulo.
- */
 export function GlobalHttpBanner() {
   const [notification, setNotification] = useState<HttpNotification | null>(null);
 

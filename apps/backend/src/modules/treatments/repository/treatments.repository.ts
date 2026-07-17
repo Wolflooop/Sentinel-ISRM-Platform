@@ -148,24 +148,6 @@ export async function findUsuarioResponsablePorOrganizacion(
   });
 }
 
-/**
- * Fórmula de riesgo residual (Hallazgo #3 de auditoría, diseño confirmado):
- *   - estrategia EVITAR/TRANSFERIR   -> residual fijo en BAJO.
- *   - estrategia ACEPTAR             -> residual = nivel inherente (sin cambio,
- *     se acepta el riesgo tal cual).
- *   - estrategia MITIGAR             -> depende del tipo del control principal:
- *       PREVENTIVO           reduce 1 nivel de PROBABILIDAD (mínimo 1)
- *       DETECTIVO/CORRECTIVO reduce 1 nivel de IMPACTO (mínimo 1)
- *     y se resuelve la celda resultante en la MISMA MatrizRiesgo (mismo
- *     Contexto) que ya se usa para nivelRiesgoInherente.
- * Si estrategia = MITIGAR sin controlPrincipal no hay información suficiente
- * para calcular — se retorna null y el Riesgo simplemente no actualiza su
- * nivelRiesgoResidual. Este caso ya está bloqueado en el borde de entrada
- * (Zod en creación, Service en actualización — Hallazgo #4), así que aquí
- * queda solo como defensa en profundidad, no como camino esperado.
- * Debe llamarse siempre dentro de la transacción `tx` que persiste el
- * cambio de estado del Tratamiento (ver crearTratamiento/actualizarTratamiento).
- */
 async function calcularNivelResidual(
   tx: Prisma.TransactionClient,
   evaluacionId: string,
@@ -219,15 +201,7 @@ async function calcularNivelResidual(
   return celda?.nivelResultante ?? null;
 }
 
-/**
- * Crea el Tratamiento y, en la MISMA transaccion:
- *   1. Transiciona Riesgo.estado (Hallazgo #2): TRATADO por defecto, o
- *      MONITOREADO/CERRADO si el Tratamiento ya se crea con estado
- *      EN_PROGRESO/IMPLEMENTADO respectivamente.
- *   2. Si el estado resultante es IMPLEMENTADO, calcula y persiste
- *      nivelRiesgoResidual + fechaUltimoCalculo (Hallazgo #3).
- * `riesgoId` y `controlPrincipalTipo` se resuelven en el Service.
- */
+
 export async function crearTratamiento(
   params: CrearTratamientoParams & { riesgoId: string; controlPrincipalTipo: string | null }
 ): Promise<TratamientoConRelaciones> {
@@ -264,17 +238,7 @@ export async function crearTratamiento(
   });
 }
 
-/**
- * Actualiza el Tratamiento y, en la MISMA transaccion:
- *   1. Cuando el nuevo estado del tratamiento es EN_PROGRESO o IMPLEMENTADO,
- *      transiciona Riesgo.estado a MONITOREADO/CERRADO respectivamente
- *      (Hallazgo #2). PLANIFICADO/VENCIDO no disparan ninguna transicion.
- *   2. Cuando el nuevo estado es IMPLEMENTADO, además calcula y persiste
- *      nivelRiesgoResidual + fechaUltimoCalculo (Hallazgo #3), usando la
- *      estrategia/tipo de control YA RESUELTOS (incluyendo cualquier
- *      cambio de estrategia/controlPrincipalId que venga en esta misma
- *      actualización) — resuelto en el Service.
- */
+
 export async function actualizarTratamiento(
   id: string,
   params: ActualizarTratamientoParams,

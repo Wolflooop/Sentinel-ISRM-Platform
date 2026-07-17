@@ -1,11 +1,6 @@
 export type NivelRiesgo = "BAJO" | "MEDIO" | "ALTO" | "CRITICO";
 export type EstadoImplementacionControl = "NO_APLICADO" | "PLANIFICADO" | "EN_PROGRESO" | "IMPLEMENTADO";
 
-/**
- * Subconjuntos mínimos de cada recurso — el dashboard solo necesita contar
- * y clasificar, no el DTO completo de cada módulo. Evita acoplar este
- * feature a los tipos internos de activos/riesgos/controles.
- */
 export interface ActivoResumen {
   id: string;
 }

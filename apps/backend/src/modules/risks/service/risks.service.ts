@@ -36,14 +36,7 @@ export async function obtenerRiesgo(
   return riesgo;
 }
 
-/**
- * Orquesta todas las validaciones de negocio ANTES de entrar a la
- * transacción atómica del repository (que solo se ocupa de la creación
- * AAV+Riesgo y la concurrencia). Ninguna de estas validaciones necesita
- * repetirse dentro de la transacción: activo/amenaza/vulnerabilidad no
- * cambian de existencia entre esta validación y el commit, y el nivel de
- * riesgo ya viene resuelto como dato de entrada.
- */
+
 export async function crearNuevoRiesgo(
   organizacionId: string,
   input: CrearRiesgoInput,
@@ -67,11 +60,7 @@ export async function crearNuevoRiesgo(
     throw new AppError("La vulnerabilidad especificada no existe", 404);
   }
 
-  // Requisito estructural (extensión directa de Fase 5 §5.2, que exige un
-  // Contexto activo para poder crear una Evaluacion): sin un Contexto
-  // activo no existe una MatrizRiesgo de la cual derivar
-  // nivelRiesgoInherente, por lo que tampoco puede calcularse un Riesgo.
-  const contexto = await findContextoActivoDeOrganizacion(organizacionId);
+   const contexto = await findContextoActivoDeOrganizacion(organizacionId);
   if (!contexto) {
     throw new AppError(
       "La organización no tiene un Contexto ISO activo; no es posible calcular el nivel de riesgo",
@@ -81,10 +70,7 @@ export async function crearNuevoRiesgo(
 
   const celda = await findCeldaMatriz(contexto.id, input.probabilidad, input.impacto);
   if (!celda) {
-    // No debería ocurrir si el contexto se activó correctamente (Fase 5
-    // exige la matriz completa 5x5 antes de activar un Contexto — módulo
-    // context, Fase 5 de este proyecto), pero se maneja explícitamente.
-    throw new AppError(
+      throw new AppError(
       "El contexto activo no tiene definida esa combinación de probabilidad/impacto en su matriz de riesgo",
       409
     );

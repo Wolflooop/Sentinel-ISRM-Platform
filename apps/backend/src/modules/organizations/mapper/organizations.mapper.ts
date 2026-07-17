@@ -1,10 +1,7 @@
 import { OrganizacionCompleta } from "../types/organizations.types";
 import { OrganizacionResponseDTO } from "../dto/organizations.dto";
 
-/**
- * Prisma Model → Mapper → DTO. Único punto autorizado para construir la
- * respuesta de organización a partir del modelo Prisma.
- */
+
 export function toOrganizacionResponseDTO(
   organizacion: OrganizacionCompleta
 ): OrganizacionResponseDTO {

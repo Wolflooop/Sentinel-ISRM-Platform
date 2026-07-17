@@ -5,11 +5,7 @@ import { RoleCard } from "../components/RoleCard";
 export function RolesListPage() {
   const { data: roles, isLoading, isError } = useRoles();
 
-  // Conteo de usuarios por rol calculado en frontend a partir de GET
-  // /usuarios (ya existente) — no se crea un endpoint nuevo solo para este
-  // contador. Si el rol del usuario actual no tiene permiso "usuarios:leer"
-  // esta consulta falla, y las tarjetas simplemente no muestran el conteo
-  // (ver RoleCard, prop totalUsuarios = null) en vez de romper la página.
+
   const { data: usuarios, isError: isUsuariosError } = useUsuarios();
 
   const conteoPorRol = new Map<string, number>();

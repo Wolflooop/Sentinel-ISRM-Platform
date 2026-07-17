@@ -1,7 +1,4 @@
-/**
- * Debe reflejar exactamente el DTO devuelto por el backend
- * (apps/backend/src/modules/organizations/dto/organizations.dto.ts).
- */
+
 export interface Organizacion {
   id: string;
   nombre: string;

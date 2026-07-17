@@ -8,7 +8,6 @@ import { ThemeToggle } from "../../../components/ThemeToggle";
 interface NavItem {
   to: string;
   label: string;
-  /** null = visible para cualquier sesión autenticada, sin permiso adicional. */
   recurso: string | null;
   accion: string;
 }
@@ -43,10 +42,7 @@ export function AppShell() {
     logoutMutation.mutate();
   };
 
-  // Menú dinámico: un ítem sin `recurso` (Dashboard) siempre se muestra a
-  // cualquier sesión autenticada; el resto solo aparece si el perfil real
-  // (GET /auth/me) confirma el permiso correspondiente — ya no una lista
-  // fija igual para todos los roles.
+
   const navItems = NAV_ITEMS.filter(
     (item) => item.recurso === null || tienePermiso(perfil?.permisos, item.recurso, item.accion)
   );

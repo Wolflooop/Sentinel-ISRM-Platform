@@ -14,12 +14,7 @@ export function useTratamientos(filtros: FiltrosTratamientos) {
   });
 }
 
-/**
- * Un Tratamiento es 1:1 con su Evaluación (el backend rechaza con 409 un
- * segundo tratamiento para la misma evaluación — ver
- * treatments.service.ts::crearNuevoTratamiento). Se usa para decidir si la
- * evaluación en pantalla ya tiene tratamiento o falta crearlo.
- */
+
 export function useTratamientoPorEvaluacion(evaluacionId: string | undefined) {
   const query = useQuery({
     queryKey: ["tratamientos", { evaluacionId }],

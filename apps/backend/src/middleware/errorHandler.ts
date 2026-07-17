@@ -3,13 +3,7 @@ import { ZodError } from "zod";
 import { logger } from "../config/logger";
 import { env } from "../config/env";
 
-/**
- * Middleware global de manejo de errores.
- *
- * Nota de alcance (Fase 1): esta es la infraestructura genérica de captura de
- * errores. Códigos de error de negocio específicos por módulo (p. ej. reglas
- * ISO/IEC 27005) se definirán en sus fases correspondientes, no aquí.
- */
+
 export function errorHandler(
   err: unknown,
   req: Request,
@@ -42,10 +36,7 @@ export function errorHandler(
   });
 }
 
-/**
- * Middleware para rutas no encontradas (404). Debe registrarse después de
- * todas las rutas y antes del errorHandler.
- */
+
 export function notFoundHandler(req: Request, res: Response): void {
   res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
 }

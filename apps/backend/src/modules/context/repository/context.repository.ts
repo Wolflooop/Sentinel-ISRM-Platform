@@ -71,11 +71,7 @@ export async function contarMatriz(contextoId: string): Promise<number> {
   return prisma.matrizRiesgo.count({ where: { contextoId } });
 }
 
-/**
- * Reemplazo atómico de la escala completa (elimina lo existente y crea los 5
- * niveles nuevos en una sola transacción) — ver justificación en
- * schema/context.schema.ts.
- */
+
 export async function reemplazarEscalasImpacto(
   contextoId: string,
   niveles: EscalaItemParams[]
@@ -112,13 +108,7 @@ export async function reemplazarMatriz(
   ]);
 }
 
-/**
- * Fase 5 — Reglas de Integridad: "Debe existir, como máximo, un Contexto con
- * activo=true por organización; al activar uno nuevo, debe desactivarse
- * automáticamente el anterior en la misma operación". Se implementa como
- * transacción atómica: desactivar cualquier contexto activo de la
- * organización + activar el solicitado.
- */
+
 export async function activarContextoTransaccion(
   id: string,
   organizacionId: string

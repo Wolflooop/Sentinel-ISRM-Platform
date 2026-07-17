@@ -1,17 +1,5 @@
 import { z } from "zod";
 
-/**
- * `severidad` (1-5): restricción de dominio que schema.prisma documenta
- * explícitamente como no aplicable vía CHECK nativo de Prisma (mismo
- * comentario que en `Activo.criticidad`) — se valida aquí en Zod.
- *
- * `referenciaCVE`: opcional, sin formato exigido por ningún documento — no
- * se inventa un patrón/regex de validación no especificado.
- *
- * A diferencia de threats.schema.ts, no existe `organizacionId` que excluir
- * del payload del cliente: `Vulnerabilidad` no tiene ese campo en
- * schema.prisma (catálogo 100% global, ver types/vulnerabilities.types.ts).
- */
 
 export const crearVulnerabilidadSchema = z.object({
   categoriaId: z.string().uuid("categoriaId debe ser un identificador válido"),

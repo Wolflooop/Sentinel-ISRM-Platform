@@ -19,11 +19,7 @@ import {
 } from "../mapper/vulnerabilities.mapper";
 import { AppError } from "../../../shared/AppError";
 
-/**
- * A diferencia de threats.controller.ts, no existe `organizacionIdDe(req)`
- * para filtrar el recurso (el catálogo es global) — solo se usa para
- * atribuir la auditoría a la organización del actor.
- */
+
 function actorDe(req: Request) {
   if (!req.user) {
     throw new AppError("No autenticado", 401);

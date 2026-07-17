@@ -12,20 +12,13 @@ import {
 } from "../schema/organizations.schema";
 import { OrganizacionCompleta } from "../types/organizations.types";
 
-/**
- * Resuelve siempre la organización desde `organizacionId` (derivado de
- * `req.user.organizacionId` en el Controller) — nunca desde un parámetro de
- * ruta ni del body del cliente (Constitución, Sección 9: aislamiento
- * multi-tenant, "nunca permitir acceso entre organizaciones").
- */
+
 export async function obtenerOrganizacionActual(
   organizacionId: string
 ): Promise<OrganizacionCompleta> {
   const organizacion = await findOrganizacionPorId(organizacionId);
   if (!organizacion) {
-    // No debería ocurrir en operación normal (Usuario.organizacionId es
-    // obligatorio y la relación es Restrict), pero se maneja explícitamente.
-    throw new AppError("Organización no encontrada", 404);
+   throw new AppError("Organización no encontrada", 404);
   }
   return organizacion;
 }
@@ -57,9 +50,7 @@ export async function cambiarEstadoOrganizacionActual(
     input.estado
   );
 
-  // Regla de negocio de la Fase 5 — no se implementa condicionalmente por
-  // conveniencia, es una obligación ya documentada del modelo.
-  if (input.estado === "SUSPENDIDA" || input.estado === "INACTIVA") {
+ if (input.estado === "SUSPENDIDA" || input.estado === "INACTIVA") {
     await revocarSesionesActivasDeOrganizacion(organizacionId);
   }
 

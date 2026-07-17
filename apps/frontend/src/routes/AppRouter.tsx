@@ -38,19 +38,11 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { RequierePermiso } from "./RequierePermiso";
 import { AccesoRestringidoPage } from "../features/shell/pages/AccesoRestringidoPage";
 
-/**
- * Enrutador raíz de la aplicación.
- *
- * La ruta raíz no renderiza un componente estático: actúa como despachador
- * según el estado de autenticación (ver RootRedirect).
- */
 
-const HOME_ROUTE = "/dashboard"; // módulo principal post-login (Fase 8)
 
-// hasValidSession() (lib/authSession.ts) es el único punto de verdad para
-// "¿hay sesión?" — valida presencia del token en tokenStorage y su
-// vigencia (exp). Reutilizado aquí y en ProtectedRoute para no duplicar
-// lógica de autenticación en dos lugares.
+const HOME_ROUTE = "/dashboard"; 
+
+
 function RootRedirect() {
   return hasValidSession()
     ? <Navigate to={HOME_ROUTE} replace />

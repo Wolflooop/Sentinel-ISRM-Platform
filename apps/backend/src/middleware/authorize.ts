@@ -3,14 +3,7 @@ import { AppError } from "../shared/AppError";
 import { findPermisosPorRol } from "../modules/auth/repository/auth.repository";
 import { registrarEventoSeguridad } from "../modules/security-events/service/security-events.service";
 
-/**
- * Middleware RBAC (segundo eslabón de la cadena obligatoria). Debe ejecutarse
- * siempre después de `authenticate`, ya que depende de `req.user.rolId`.
- *
- * Consulta Rol → RolPermiso → Permiso (regla explícita de la Constitución)
- * para verificar que el rol del usuario autenticado tenga el permiso
- * requerido, expresado como par (recurso, accion).
- */
+
 export function authorize(recurso: string, accion: string) {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {

@@ -100,16 +100,7 @@ export async function actualizarContextoExistente(
   return actualizado;
 }
 
-/**
- * Interpretación aplicada (a confirmar): una vez `activo = true`, la
- * configuración metodológica (escalas de impacto/probabilidad y matriz de
- * riesgo) queda bloqueada — un contexto activo es el que están usando las
- * evaluaciones en curso, y alterar sus escalas en caliente cambiaría
- * silenciosamente el criterio ya aplicado. Ningún documento fuente lo
- * prohíbe explícitamente para el contexto en sí (sí lo hace, indirectamente,
- * para las evaluaciones que lo referencian — Fase 5, sección 5.2). Se
- * reporta como información pendiente de definición en el resumen final.
- */
+
 async function verificarContextoNoActivo(id: string, organizacionId: string): Promise<void> {
   const contexto = await obtenerContexto(id, organizacionId);
   if (contexto.activo) {

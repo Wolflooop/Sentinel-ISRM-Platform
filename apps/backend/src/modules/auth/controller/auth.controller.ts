@@ -35,9 +35,7 @@ export async function logoutController(
       throw new AppError("Token no proporcionado", 401);
     }
 
-    // req.user está disponible: la ruta /auth/logout pasa por `authenticate`
-    // antes de este controller (ver auth.routes.ts).
-    await logoutService(token, {
+     await logoutService(token, {
       usuarioId: req.user?.sub,
       organizacionId: req.user?.organizacionId,
       direccionIp: req.ip ?? "desconocida",
@@ -48,12 +46,7 @@ export async function logoutController(
   }
 }
 
-/**
- * GET /auth/me — protegido únicamente por `authenticate` (no `authorize`):
- * es lectura de lo propio, no un recurso que requiera un permiso adicional.
- * `req.user` está disponible porque esta ruta pasa por `authenticate` antes
- * de llegar aquí (ver auth.routes.ts).
- */
+
 export async function perfilActualController(
   req: Request,
   res: Response,

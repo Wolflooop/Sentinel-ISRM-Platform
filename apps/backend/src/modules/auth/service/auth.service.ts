@@ -16,25 +16,10 @@ import { registrarEventoSeguridad } from "../../security-events/service/security
 import { LoginInput } from "../schema/auth.schema";
 import { LoginResult, PerfilActualResult } from "../types/auth.types";
 
-/**
- * Política de bloqueo por intentos fallidos — INFORMACIÓN PENDIENTE DE
- * DEFINICIÓN (Constitución: "no inventar número máximo de intentos ni
- * tiempo de bloqueo"). El modelo (`Usuario.intentosFallidos`,
- * `Usuario.bloqueadoHasta`) soporta la funcionalidad, pero el umbral no está
- * definido en ningún documento fuente.
- *
- * No existen valores mágicos en este archivo: los umbrales se leen
- * exclusivamente de `env.AUTH_MAX_INTENTOS_FALLIDOS` y
- * `env.AUTH_BLOQUEO_MINUTOS` (ambos opcionales, sin default — ver
- * config/env.ts). Mientras no se configuren, la lógica de bloqueo queda
- * preparada pero inactiva: los intentos fallidos se siguen contando, pero
- * nunca se aplica un bloqueo hasta que exista una decisión oficial.
- */
 
 const MENSAJE_CREDENCIALES_INVALIDAS = "Credenciales inválidas";
 
 function parseExpiresInToMs(expiresIn: string): number {
-  // Soporta el formato usado en .env.example (p. ej. "1h", "15m", "30s").
   const match = /^(\d+)(s|m|h|d)$/.exec(expiresIn.trim());
   if (!match) {
     const asNumber = Number(expiresIn);
@@ -54,8 +39,6 @@ function parseExpiresInToMs(expiresIn: string): number {
 export async function login(input: LoginInput, direccionIp: string): Promise<LoginResult> {
   const usuario = await findUsuarioByOrganizacionYEmail(input.organizacion, input.email);
 
-  // Mensaje genérico e idéntico sin importar cuál dato es incorrecto
-  // (organización, email o password), para no revelar cuál falló.
   if (!usuario) {
     await registrarEventoSeguridad({
       evento: "AUTH_LOGIN_FAILED",
@@ -118,8 +101,6 @@ export async function login(input: LoginInput, direccionIp: string): Promise<Log
     const intentosPrevios = usuario.intentosFallidos;
     await incrementarIntentosFallidos(usuario.id);
 
-    // Bloqueo condicionado a que exista configuración explícita (ver nota
-    // arriba). Sin ambas variables definidas, no se aplica ningún bloqueo.
     const maxIntentos = env.AUTH_MAX_INTENTOS_FALLIDOS;
     const minutosBloqueo = env.AUTH_BLOQUEO_MINUTOS;
 
@@ -137,8 +118,6 @@ export async function login(input: LoginInput, direccionIp: string): Promise<Log
     await registrarEventoSeguridad({
       evento: "AUTH_LOGIN_FAILED",
       resultado: "FALLIDO",
-      // Sube a ALTA cuando este intento fue el que disparó el bloqueo de
-      // cuenta — reutiliza el cálculo ya existente, no duplica la lógica.
       severidad: disparaBloqueo ? "ALTA" : "ADVERTENCIA",
       direccionIp,
       descripcion: disparaBloqueo
@@ -180,16 +159,7 @@ export async function login(input: LoginInput, direccionIp: string): Promise<Log
   return { usuario, token, expiraEn };
 }
 
-/**
- * Perfil y permisos reales del usuario autenticado (GET /auth/me).
- *
- * Motivación (hallazgo de la Fase 6 de estabilización): ningún rol no-admin
- * podía leer sus propios permisos, porque `GET /roles/:id/permisos` exige
- * el permiso `roles:leer`, que solo tiene el rol "Administrador". Este
- * endpoint resuelve "¿qué permisos tengo yo?" sin depender de ningún otro
- * permiso — solo de estar autenticado — reutilizando `findPermisosPorRol`,
- * la misma función que ya usa el middleware `authorize` para decidir acceso.
- */
+
 export async function obtenerPerfilActual(
   usuarioId: string,
   rolId: string

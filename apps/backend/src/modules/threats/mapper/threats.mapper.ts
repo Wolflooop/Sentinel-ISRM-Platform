@@ -1,11 +1,7 @@
 import { AmenazaConRelaciones, CategoriaAmenaza } from "../types/threats.types";
 import { AmenazaResponseDTO, CategoriaAmenazaResponseDTO } from "../dto/threats.dto";
 
-/**
- * Prisma Model → Mapper → DTO. Requiere `organizacionId` del solicitante
- * (no de la amenaza) para poder derivar `esPropia` sin exponer
- * `organizacionId` crudo en la respuesta.
- */
+
 export function toAmenazaResponseDTO(
   amenaza: AmenazaConRelaciones,
   organizacionIdSolicitante: string

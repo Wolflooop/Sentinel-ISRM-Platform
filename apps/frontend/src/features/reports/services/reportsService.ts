@@ -11,11 +11,7 @@ export async function generarReporteRequest(input: GenerarReporteInput): Promise
   return data;
 }
 
-/**
- * Descarga el PDF del reporte y dispara la descarga en el navegador.
- * No usa <a href> directo porque la petición requiere el header
- * Authorization (JWT) inyectado por apiClient.
- */
+
 export async function descargarReporteRequest(reporte: Reporte): Promise<void> {
   const response = await apiClient.get(`/reportes/${reporte.id}/descargar`, {
     responseType: "blob",

@@ -14,9 +14,7 @@ const router = Router();
 
 router.use(authenticate);
 
-// "/categorias" debe declararse ANTES de "/:id" para que Express no lo
-// confunda con un parámetro de ruta (mismo criterio ya usado en
-// assets/context/threats).
+
 router.get(
   "/categorias",
   authorize("vulnerabilidades", "leer"),

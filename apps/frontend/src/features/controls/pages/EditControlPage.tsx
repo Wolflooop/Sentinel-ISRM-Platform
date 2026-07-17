@@ -37,9 +37,7 @@ export function EditControlPage() {
     return <p className="p-8 text-sm text-red-600">No se pudo cargar el control.</p>;
   }
 
-  // Un control que no es propio pertenece al catálogo global (seed/admin),
-  // no a la organización del usuario — mismo criterio de solo-lectura que
-  // usa el catálogo global de Amenazas/Vulnerabilidades.
+
   if (!control.esPropia) {
     return (
       <main className="mx-auto max-w-lg px-4 py-8">

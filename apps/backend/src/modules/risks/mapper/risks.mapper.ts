@@ -1,11 +1,7 @@
 import { RiesgoConRelaciones } from "../types/risks.types";
 import { RiesgoResponseDTO } from "../dto/risks.dto";
 
-/**
- * Prisma Model → Mapper → DTO. Aplana `riesgo.aav.{activo,amenaza,
- * vulnerabilidad}` en el nivel superior de la respuesta y descarta
- * cualquier identificador de AAV — el cliente nunca ve esa entidad.
- */
+
 export function toRiesgoResponseDTO(riesgo: RiesgoConRelaciones): RiesgoResponseDTO {
   return {
     id: riesgo.id,

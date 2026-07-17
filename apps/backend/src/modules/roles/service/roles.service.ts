@@ -42,11 +42,7 @@ export async function crearNuevoRol(input: CrearRolInput): Promise<Rol> {
   return crearRol(input);
 }
 
-/**
- * Regla aprobada (Fase 3, punto 2): si `Rol.esSistema = true`, no se permite
- * cambiar el nombre del rol. `descripcion` sí puede actualizarse (no forma
- * parte de la restricción aprobada).
- */
+
 export async function actualizarRolExistente(
   id: string,
   input: ActualizarRolInput
@@ -84,12 +80,7 @@ export async function asignarPermiso(rolId: string, permisoId: string): Promise<
   return obtenerRolConPermisos(rolId);
 }
 
-/**
- * Regla aprobada (corrección de cierre de Fase 3): si `Rol.esSistema = true`,
- * no se puede quitar su último permiso asignado — el rol protegido no puede
- * quedar sin ningún permiso. Consultar permisos y agregar nuevos permisos
- * siguen permitidos sin restricción.
- */
+
 export async function quitarPermiso(rolId: string, permisoId: string): Promise<RolConPermisos> {
   const rol = await obtenerRol(rolId); // valida existencia del rol
 

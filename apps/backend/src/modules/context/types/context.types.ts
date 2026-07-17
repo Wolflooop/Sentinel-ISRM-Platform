@@ -1,13 +1,4 @@
-/**
- * Tipos internos del módulo context (Contexto ISO), compartidos entre
- * repository y service. No son DTO de respuesta (ver dto/context.dto.ts) ni
- * esquemas de validación de entrada (ver schema/context.schema.ts).
- *
- * Reflejan exactamente los modelos `Contexto`, `EscalaImpacto`,
- * `EscalaProbabilidad` y `MatrizRiesgo` de schema.prisma — ningún campo
- * agregado ni omitido. El enum se redefine como unión de string literal (no
- * se importa `@prisma/client` aquí), igual que en organizations.types.ts.
- */
+
 export type NivelRiesgo = "BAJO" | "MEDIO" | "ALTO" | "CRITICO";
 
 export interface Contexto {

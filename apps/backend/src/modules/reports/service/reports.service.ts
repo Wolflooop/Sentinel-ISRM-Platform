@@ -21,10 +21,6 @@ interface ActorAuditoria {
   direccionIp: string;
 }
 
-// Carpeta física donde se guardan los archivos generados. No se sirve
-// como directorio estático: la descarga siempre pasa por el endpoint
-// autenticado (ver reports.controller.ts) para respetar RBAC por
-// organización.
 const STORAGE_DIR = path.resolve(__dirname, "../../../../storage/reports");
 
 function asegurarDirectorioStorage(): void {
@@ -39,12 +35,7 @@ const TITULOS_TIPO: Record<string, string> = {
   GENERAL: "Reporte General",
 };
 
-/**
- * Solo PDF está implementado en esta fase (prioridad explícita del
- * backlog). XLSX/CSV quedan con la arquitectura lista (mismo
- * repository/service) pero sin implementación de render todavía: se
- * rechazan explícitamente en vez de fingir soporte.
- */
+
 function validarFormatoSoportado(formato: string): void {
   if (formato !== "PDF") {
     throw new AppError(

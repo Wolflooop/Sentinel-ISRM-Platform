@@ -4,7 +4,6 @@ import { ControlForm } from "../components/ControlForm";
 import { useCrearControl } from "../hooks/useControls";
 import { ControlFormValues } from "../schemas/controlsSchema";
 
-/** Convierte "" a undefined/null — el backend rechaza cadenas vacías en campos con min(1). */
 function normalizar(input: ControlFormValues) {
   return {
     codigoIso27001: input.codigoIso27001?.trim() || undefined,

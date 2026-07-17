@@ -1,11 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme/ThemeProvider";
 
-/**
- * Botón visible de cambio de tema (sol/luna), pensado para vivir en el
- * header de AppShell. No mantiene estado propio: delega por completo en
- * `useTheme()` (ThemeProvider), que es quien persiste la elección.
- */
+
 export function ThemeToggle() {
   const { tema, alternarTema } = useTheme();
   const esOscuro = tema === "dark";

@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-/**
- * Debe reflejar exactamente el contrato de entrada del backend
- * (apps/backend/src/modules/organizations/schema/organizations.schema.ts).
- */
+
 export const actualizarOrganizacionFormSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio"),
   sector: z.enum(["PUBLICO", "PRIVADO"], {
