@@ -30,3 +30,29 @@ export interface LoginResult {
   token: string;
   expiraEn: Date;
 }
+
+/**
+ * Perfil mínimo para GET /auth/me — a diferencia de `UsuarioConRol` (usado
+ * internamente para login), nunca incluye `passwordHash`,
+ * `intentosFallidos` ni `bloqueadoHasta`: no son necesarios para que el
+ * frontend sepa "quién soy y qué puedo hacer", y no tiene sentido
+ * transportarlos ni un paso más de lo estrictamente necesario.
+ */
+export interface UsuarioPerfil {
+  id: string;
+  nombre: string;
+  email: string;
+  rol: {
+    id: string;
+    nombre: string;
+  };
+  organizacion: {
+    id: string;
+    nombre: string;
+  };
+}
+
+export interface PerfilActualResult {
+  usuario: UsuarioPerfil;
+  permisos: Array<{ recurso: string; accion: string }>;
+}

@@ -27,21 +27,21 @@ export function LoginPage() {
     : null;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-800">Sentinel ISRM Platform</h1>
-        <p className="mt-1 text-sm text-slate-500">Inicia sesión para continuar</p>
+    <main className="flex min-h-screen items-center justify-center bg-surface px-4">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-surface-elevated p-8 shadow-sm">
+        <h1 className="text-xl font-semibold text-ink">Sentinel ISRM Platform</h1>
+        <p className="mt-1 text-sm text-muted">Inicia sesión para continuar</p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div>
-            <label htmlFor="organizacion" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="organizacion" className="block text-sm font-medium text-ink">
               Organización
             </label>
             <input
               id="organizacion"
               type="text"
               autoComplete="organization"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
               {...register("organizacion")}
             />
             {errors.organizacion && (
@@ -50,14 +50,14 @@ export function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="email" className="block text-sm font-medium text-ink">
               Correo
             </label>
             <input
               id="email"
               type="email"
               autoComplete="email"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
               {...register("email")}
             />
             {errors.email && (
@@ -66,14 +66,14 @@ export function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="password" className="block text-sm font-medium text-ink">
               Contraseña
             </label>
             <input
               id="password"
               type="password"
               autoComplete="current-password"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
               {...register("password")}
             />
             {errors.password && (
@@ -82,7 +82,7 @@ export function LoginPage() {
           </div>
 
           {errorMessage && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">
               {errorMessage}
             </p>
           )}
@@ -90,7 +90,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting || loginMutation.isPending}
-            className="w-full rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
+            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-60"
           >
             {loginMutation.isPending ? "Ingresando..." : "Iniciar sesión"}
           </button>

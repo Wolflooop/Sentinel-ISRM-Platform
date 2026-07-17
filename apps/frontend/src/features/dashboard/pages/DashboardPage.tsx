@@ -6,11 +6,11 @@ import { ControlsStatusChart } from "../components/ControlsStatusChart";
 
 function SkeletonCard() {
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="h-11 w-11 shrink-0 animate-pulse rounded-md bg-slate-100" />
+    <div className="flex items-center gap-4 rounded-lg border border-border bg-surface-elevated p-5 shadow-sm">
+      <div className="h-11 w-11 shrink-0 animate-pulse rounded-md bg-surface" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
-        <div className="h-6 w-10 animate-pulse rounded bg-slate-100" />
+        <div className="h-3 w-20 animate-pulse rounded bg-surface" />
+        <div className="h-6 w-10 animate-pulse rounded bg-surface" />
       </div>
     </div>
   );
@@ -22,8 +22,8 @@ export function DashboardPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div>
-        <h1 className="text-lg font-semibold text-slate-800">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-lg font-semibold text-ink">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted">
           Resumen general del estado de riesgos de seguridad de la información de tu organización.
         </p>
       </div>
@@ -61,8 +61,8 @@ export function DashboardPage() {
 
       {isLoading ? (
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="h-72 animate-pulse rounded-lg border border-slate-200 bg-slate-50" />
-          <div className="h-72 animate-pulse rounded-lg border border-slate-200 bg-slate-50" />
+          <div className="h-72 animate-pulse rounded-lg border border-border bg-surface" />
+          <div className="h-72 animate-pulse rounded-lg border border-border bg-surface" />
         </div>
       ) : (
         indicadores && (

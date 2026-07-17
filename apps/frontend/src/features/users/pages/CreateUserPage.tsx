@@ -16,7 +16,7 @@ export function CreateUserPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Nuevo usuario</h1>
+      <h1 className="text-lg font-semibold text-ink">Nuevo usuario</h1>
       <div className="mt-6">
         <CreateUserForm
           isSubmittingRequest={crearUsuario.isPending}

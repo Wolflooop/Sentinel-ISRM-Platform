@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { loginSchema } from "../schema/auth.schema";
-import { login as loginService, logout as logoutService } from "../service/auth.service";
-import { toLoginResponseDTO } from "../mapper/auth.mapper";
+import {
+  login as loginService,
+  logout as logoutService,
+  obtenerPerfilActual,
+} from "../service/auth.service";
+import { toLoginResponseDTO, toPerfilActualResponseDTO } from "../mapper/auth.mapper";
 import { AppError } from "../../../shared/AppError";
 
 export async function loginController(
@@ -39,6 +43,29 @@ export async function logoutController(
       direccionIp: req.ip ?? "desconocida",
     });
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /auth/me — protegido únicamente por `authenticate` (no `authorize`):
+ * es lectura de lo propio, no un recurso que requiera un permiso adicional.
+ * `req.user` está disponible porque esta ruta pasa por `authenticate` antes
+ * de llegar aquí (ver auth.routes.ts).
+ */
+export async function perfilActualController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      throw new AppError("No autenticado", 401);
+    }
+
+    const perfil = await obtenerPerfilActual(req.user.sub, req.user.rolId);
+    res.status(200).json(toPerfilActualResponseDTO(perfil));
   } catch (err) {
     next(err);
   }

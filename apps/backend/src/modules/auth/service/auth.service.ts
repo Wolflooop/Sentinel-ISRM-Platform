@@ -9,10 +9,12 @@ import {
   bloquearUsuarioTemporalmente,
   crearSesion,
   revocarSesionPorTokenHash,
+  findUsuarioPorId,
+  findPermisosPorRol,
 } from "../repository/auth.repository";
 import { registrarEventoSeguridad } from "../../security-events/service/security-events.service";
 import { LoginInput } from "../schema/auth.schema";
-import { LoginResult } from "../types/auth.types";
+import { LoginResult, PerfilActualResult } from "../types/auth.types";
 
 /**
  * Política de bloqueo por intentos fallidos — INFORMACIÓN PENDIENTE DE
@@ -176,6 +178,30 @@ export async function login(input: LoginInput, direccionIp: string): Promise<Log
   });
 
   return { usuario, token, expiraEn };
+}
+
+/**
+ * Perfil y permisos reales del usuario autenticado (GET /auth/me).
+ *
+ * Motivación (hallazgo de la Fase 6 de estabilización): ningún rol no-admin
+ * podía leer sus propios permisos, porque `GET /roles/:id/permisos` exige
+ * el permiso `roles:leer`, que solo tiene el rol "Administrador". Este
+ * endpoint resuelve "¿qué permisos tengo yo?" sin depender de ningún otro
+ * permiso — solo de estar autenticado — reutilizando `findPermisosPorRol`,
+ * la misma función que ya usa el middleware `authorize` para decidir acceso.
+ */
+export async function obtenerPerfilActual(
+  usuarioId: string,
+  rolId: string
+): Promise<PerfilActualResult> {
+  const usuario = await findUsuarioPorId(usuarioId);
+  if (!usuario) {
+    throw new AppError("Usuario no encontrado", 404);
+  }
+
+  const permisos = await findPermisosPorRol(rolId);
+
+  return { usuario, permisos };
 }
 
 export async function logout(

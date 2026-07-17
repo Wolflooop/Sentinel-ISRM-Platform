@@ -1,5 +1,5 @@
 import { prisma } from "../../../config/prisma";
-import { UsuarioConRol } from "../types/auth.types";
+import { UsuarioConRol, UsuarioPerfil } from "../types/auth.types";
 
 /**
  * Único lugar autorizado para Prisma Client dentro del módulo auth
@@ -72,6 +72,25 @@ export async function revocarSesionPorTokenHash(tokenHash: string): Promise<void
   await prisma.sesion.updateMany({
     where: { tokenHash },
     data: { revocado: true },
+  });
+}
+
+/**
+ * Perfil para GET /auth/me — select explícito y mínimo (sin `passwordHash`,
+ * `intentosFallidos` ni `bloqueadoHasta`), a diferencia de
+ * `findUsuarioByOrganizacionYEmail` que sí necesita esos campos para el
+ * flujo de login.
+ */
+export async function findUsuarioPorId(id: string): Promise<UsuarioPerfil | null> {
+  return prisma.usuario.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      nombre: true,
+      email: true,
+      rol: { select: { id: true, nombre: true } },
+      organizacion: { select: { id: true, nombre: true } },
+    },
   });
 }
 

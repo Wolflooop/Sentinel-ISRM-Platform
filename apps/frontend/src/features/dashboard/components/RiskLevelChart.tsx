@@ -1,6 +1,7 @@
 import { ArcElement, Chart as ChartJS, Legend, Tooltip } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { ConteoPorNivel } from "../types/dashboard.types";
+import { useTheme } from "../../../lib/theme/ThemeProvider";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -23,12 +24,17 @@ interface RiskLevelChartProps {
 }
 
 export function RiskLevelChart({ riesgosPorNivel }: RiskLevelChartProps) {
+  // <canvas> no hereda CSS ni las variables de tema, así que Chart.js
+  // necesita el color de texto/leyenda explícito según el tema activo.
+  const { tema } = useTheme();
+  const colorTexto = tema === "dark" ? "#e2e8f0" : "#334155";
+
   const total = ORDEN_NIVELES.reduce((suma, nivel) => suma + riesgosPorNivel[nivel], 0);
 
   if (total === 0) {
     return (
-      <div className="flex h-56 items-center justify-center rounded-lg border border-slate-200 bg-white p-5">
-        <p className="text-sm text-slate-500">No hay riesgos registrados todavía.</p>
+      <div className="flex h-56 items-center justify-center rounded-lg border border-border bg-surface-elevated p-5">
+        <p className="text-sm text-muted">No hay riesgos registrados todavía.</p>
       </div>
     );
   }
@@ -45,15 +51,18 @@ export function RiskLevelChart({ riesgosPorNivel }: RiskLevelChartProps) {
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-medium text-slate-700">Distribución de riesgos por nivel</h2>
+    <div className="rounded-lg border border-border bg-surface-elevated p-5 shadow-sm">
+      <h2 className="text-sm font-medium text-ink">Distribución de riesgos por nivel</h2>
       <div className="mx-auto mt-4 h-56">
         <Doughnut
           data={data}
           options={{
             maintainAspectRatio: false,
             plugins: {
-              legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 12 } } },
+              legend: {
+                position: "bottom",
+                labels: { boxWidth: 10, font: { size: 12 }, color: colorTexto },
+              },
             },
           }}
         />

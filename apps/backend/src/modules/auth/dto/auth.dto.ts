@@ -17,3 +17,23 @@ export interface LoginResponseDTO {
     };
   };
 }
+
+/**
+ * Respuesta de GET /auth/me: perfil del usuario autenticado + permisos
+ * reales de su rol, expresados como pares (recurso, accion) — el mismo
+ * formato que ya consume `authorize` en el backend, para que el frontend
+ * pueda razonar sobre permisos sin traducir ningún formato intermedio.
+ */
+export interface PerfilActualResponseDTO {
+  usuario: {
+    id: string;
+    nombre: string;
+    email: string;
+    rol: string;
+    organizacion: {
+      id: string;
+      nombre: string;
+    };
+  };
+  permisos: Array<{ recurso: string; accion: string }>;
+}

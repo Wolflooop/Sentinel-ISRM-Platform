@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sentinel ISRM Platform</title>
+    <script>
+      // Aplica la clase `dark` antes de que React monte, para evitar el
+      // parpadeo de un frame en modo claro cuando el tema guardado (o la
+      // preferencia del sistema) es oscuro. Debe ejecutarse de forma
+      // síncrona y en <head>, nunca dentro de un componente React.
+      // La clave "sentinel-theme" es la misma que usa ThemeProvider
+      // (src/lib/theme/ThemeProvider.tsx) — un único punto de verdad.
+      (function () {
+        try {
+          var TEMA_GUARDADO = window.localStorage.getItem("sentinel-theme");
+          var prefiereOscuro =
+            window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var esOscuro = TEMA_GUARDADO === "dark" || (!TEMA_GUARDADO && prefiereOscuro);
+          if (esOscuro) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (error) {
+          // localStorage puede fallar en navegación privada muy restrictiva;
+          // en ese caso simplemente se arranca en modo claro por defecto.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
