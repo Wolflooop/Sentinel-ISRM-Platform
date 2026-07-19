@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import { CrearEvaluacionParams, EvaluacionConRelaciones, FiltrosEvaluaciones } from "../types/evaluations.types";
+import { transicionarEstadoRiesgo } from "../../history/service/history.service";
 
 const EVALUACION_INCLUDE = {
   riesgo: {
@@ -92,9 +93,14 @@ export async function crearEvaluacion(params: CrearEvaluacionParams): Promise<Ev
   const nuevoEstadoRiesgo = params.resultado === "ACEPTABLE" ? "ACEPTADO" : "EVALUADO";
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    await tx.riesgo.update({
-      where: { id: params.riesgoId },
-      data: { estado: nuevoEstadoRiesgo },
+    // Único punto responsable de transicionar Riesgo.estado y registrar su
+    // historial: ver modules/history/service/history.service.ts. Usa el
+    // campo `comentario` independiente (Prioridad 2) — nunca `justificacion`.
+    await transicionarEstadoRiesgo(tx, {
+      riesgoId: params.riesgoId,
+      usuarioId: params.usuarioId,
+      estadoNuevo: nuevoEstadoRiesgo,
+      comentario: params.comentario,
     });
 
     return tx.evaluacion.create({

@@ -2,6 +2,7 @@ import { EstadoOrganizacion } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import {
   ActualizarOrganizacionParams,
+  CrearOrganizacionParams,
   OrganizacionCompleta,
 } from "../types/organizations.types";
 
@@ -47,5 +48,51 @@ export async function revocarSesionesActivasDeOrganizacion(
       usuario: { organizacionId },
     },
     data: { revocado: true },
+  });
+}
+
+export async function existeOrganizacionConNombre(nombre: string): Promise<boolean> {
+  const existente = await prisma.organizacion.findUnique({
+    where: { nombre },
+    select: { id: true },
+  });
+  return existente !== null;
+}
+
+export async function crearOrganizacion(
+  params: CrearOrganizacionParams
+): Promise<OrganizacionCompleta> {
+  return prisma.organizacion.create({ data: params });
+}
+
+// Solo la usa un SUPER_ADMIN: visión completa de todas las organizaciones
+// de la plataforma.
+export async function findOrganizaciones(): Promise<OrganizacionCompleta[]> {
+  return prisma.organizacion.findMany({ orderBy: { creadoEn: "desc" } });
+}
+
+export interface RegistrarAuditoriaParams {
+  usuarioId: string;
+  organizacionId: string;
+  entidad: string;
+  entidadId: string;
+  accion: "CREAR" | "EDITAR" | "ELIMINAR" | "APROBAR";
+  datosAnteriores?: unknown;
+  datosNuevos?: unknown;
+  direccionIp: string;
+}
+
+export async function registrarAuditoria(params: RegistrarAuditoriaParams): Promise<void> {
+  await prisma.auditoria.create({
+    data: {
+      usuarioId: params.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: params.entidad,
+      entidadId: params.entidadId,
+      accion: params.accion,
+      datosAnteriores: params.datosAnteriores as never,
+      datosNuevos: params.datosNuevos as never,
+      direccionIp: params.direccionIp,
+    },
   });
 }

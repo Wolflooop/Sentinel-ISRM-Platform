@@ -7,10 +7,12 @@ export interface LoginResponseDTO {
     nombre: string;
     email: string;
     rol: string;
+    tipoRol: string;
+    // null para el Administrador Principal (SUPER_ADMIN).
     organizacion: {
       id: string;
       nombre: string;
-    };
+    } | null;
   };
 }
 
@@ -21,10 +23,11 @@ export interface PerfilActualResponseDTO {
     nombre: string;
     email: string;
     rol: string;
+    tipoRol: string;
     organizacion: {
       id: string;
       nombre: string;
-    };
+    } | null;
   };
   permisos: Array<{ recurso: string; accion: string }>;
 }

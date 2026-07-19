@@ -1,21 +1,48 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useControl, useActualizarControl } from "../hooks/useControls";
+import { isAxiosError } from "axios";
+import { useControl, useActualizarControl, useHistorialControl } from "../hooks/useControls";
+import { Timeline } from "../../../components/Timeline";
 
 const estados = ["NO_APLICADO", "PLANIFICADO", "EN_PROGRESO", "IMPLEMENTADO"] as const;
+
+const ETIQUETA_ESTADO_CONTROL: Record<string, string> = {
+  NO_APLICADO: "No aplicado",
+  PLANIFICADO: "Planificado",
+  EN_PROGRESO: "En progreso",
+  IMPLEMENTADO: "Implementado",
+};
 
 export function ControlDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: control, isLoading, isError } = useControl(id);
+  const { data: historial } = useHistorialControl(id);
   const actualizarControl = useActualizarControl(id ?? "");
+  const [estadoSeleccionado, setEstadoSeleccionado] = useState<string | null>(null);
+  const [comentario, setComentario] = useState("");
+  const [errorComentario, setErrorComentario] = useState<string | null>(null);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!control) return;
     const form = event.currentTarget;
     const estado = (form.elements.namedItem("estado") as HTMLSelectElement).value;
+    const cambiaEstado = estado !== control.estadoImplementacion;
+
+    // Comentario obligatorio SOLO cuando el estado realmente cambia (ver
+    // Objetivo 3). Ediciones sin cambiar el estado no lo requieren.
+    if (cambiaEstado && !comentario.trim()) {
+      setErrorComentario("No puede cambiar el estado sin ingresar un comentario.");
+      return;
+    }
+    setErrorComentario(null);
 
     actualizarControl.mutate(
-      { estadoImplementacion: estado as typeof estados[number] },
+      {
+        estadoImplementacion: estado as typeof estados[number],
+        ...(cambiaEstado ? { comentario: comentario.trim() } : {}),
+      },
       {
         onSuccess: () => navigate("/controles", { replace: true }),
       }
@@ -29,6 +56,10 @@ export function ControlDetailPage() {
   if (isError || !control) {
     return <p className="px-4 py-8 text-sm text-red-600">No se pudo cargar el control.</p>;
   }
+
+  const errorServidor = isAxiosError(actualizarControl.error)
+    ? (actualizarControl.error.response?.data as { error?: string } | undefined)?.error
+    : null;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
@@ -66,28 +97,55 @@ export function ControlDetailPage() {
           <h2 className="text-sm font-semibold text-slate-800">Actualizar estado</h2>
           {control.esPropia ? (
             <>
-              <form className="mt-3 flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
-                <select
-                  name="estado"
-                  defaultValue={control.estadoImplementacion}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                >
-                  {estados.map((estado) => (
-                    <option key={estado} value={estado}>
-                      {estado}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  disabled={actualizarControl.isPending}
-                  className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-                >
-                  {actualizarControl.isPending ? "Guardando..." : "Guardar cambios"}
-                </button>
+              <form className="mt-3 flex flex-col gap-3" onSubmit={handleSubmit}>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <select
+                    name="estado"
+                    defaultValue={control.estadoImplementacion}
+                    onChange={(e) => setEstadoSeleccionado(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    {estados.map((estado) => (
+                      <option key={estado} value={estado}>
+                        {estado}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={actualizarControl.isPending}
+                    className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                  >
+                    {actualizarControl.isPending ? "Guardando..." : "Guardar cambios"}
+                  </button>
+                </div>
+
+                {/* Ver Objetivo 3: obligatorio solo cuando el estado cambia
+                    respecto al valor actual; en modificaciones menores no
+                    aplica (aquí no hay otros campos editables en esta
+                    pantalla, así que el único caso relevante es el cambio
+                    de estado). */}
+                {(estadoSeleccionado ?? control.estadoImplementacion) !== control.estadoImplementacion && (
+                  <div>
+                    <label htmlFor="comentario" className="block text-sm font-medium text-slate-700">
+                      Comentario (obligatorio al cambiar de estado)
+                    </label>
+                    <textarea
+                      id="comentario"
+                      value={comentario}
+                      onChange={(e) => setComentario(e.target.value)}
+                      rows={2}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      placeholder="Ej: Control aplicado correctamente."
+                    />
+                  </div>
+                )}
               </form>
-              {actualizarControl.isError && (
-                <p className="mt-2 text-sm text-red-600">No se pudo actualizar el estado del control.</p>
+              {errorComentario && <p className="mt-2 text-sm text-red-600">{errorComentario}</p>}
+              {actualizarControl.isError && !errorComentario && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errorServidor ?? "No se pudo actualizar el estado del control."}
+                </p>
               )}
             </>
           ) : (
@@ -95,6 +153,16 @@ export function ControlDetailPage() {
               Este control pertenece al catálogo global y es de solo lectura para tu organización.
             </p>
           )}
+        </div>
+
+        <div className="mt-6">
+          <h2 className="text-sm font-semibold text-ink">Historial del control</h2>
+          <div className="mt-3">
+            <Timeline
+              entradas={historial ?? []}
+              etiquetaEstado={(e) => ETIQUETA_ESTADO_CONTROL[e] ?? e}
+            />
+          </div>
         </div>
       </div>
     </main>

@@ -10,13 +10,23 @@ import {
   listarControles,
   obtenerControl,
   actualizarControlExistente,
+  obtenerHistorialDeControl,
 } from "../service/controls.service";
-import { toControlResponseDTO, toControlResponseListDTO } from "../mapper/controls.mapper";
+import {
+  toControlResponseDTO,
+  toControlResponseListDTO,
+  toControlHistorialResponseListDTO,
+} from "../mapper/controls.mapper";
 import { AppError } from "../../../shared/AppError";
 
 function organizacionIdDe(req: Request): string {
   if (!req.user) {
     throw new AppError("No autenticado", 401);
+  }
+  if (!req.user.organizacionId) {
+    // Un SUPER_ADMIN (organizacionId = null) no opera sobre datos de
+    // gestión de riesgos: ese dominio pertenece siempre a una organización.
+    throw new AppError("Esta operación requiere pertenecer a una organización", 400);
   }
   return req.user.organizacionId;
 }
@@ -27,7 +37,7 @@ function actorDe(req: Request) {
   }
   return {
     usuarioId: req.user.sub,
-    organizacionId: req.user.organizacionId,
+    organizacionId: organizacionIdDe(req),
     direccionIp: req.ip ?? "desconocida",
   };
 }
@@ -100,6 +110,19 @@ export async function eliminarControlController(
   try {
     await eliminarControlExistente(req.params.id, organizacionIdDe(req), actorDe(req));
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function obtenerHistorialControlController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const historial = await obtenerHistorialDeControl(req.params.id, organizacionIdDe(req));
+    res.status(200).json(toControlHistorialResponseListDTO(historial));
   } catch (err) {
     next(err);
   }

@@ -3,17 +3,11 @@ import { UsuarioConRol, UsuarioPerfil } from "../types/auth.types";
 
 
 
-export async function findUsuarioByOrganizacionYEmail(
-  organizacionNombre: string,
-  email: string
-): Promise<UsuarioConRol | null> {
-  return prisma.usuario.findFirst({
-    where: {
-      email,
-      organizacion: { nombre: organizacionNombre },
-    },
+export async function findUsuarioPorEmail(email: string): Promise<UsuarioConRol | null> {
+  return prisma.usuario.findUnique({
+    where: { email },
     include: {
-      rol: { select: { id: true, nombre: true } },
+      rol: { select: { id: true, nombre: true, tipo: true } },
       organizacion: { select: { id: true, nombre: true, estado: true } },
     },
   });
@@ -78,7 +72,7 @@ export async function findUsuarioPorId(id: string): Promise<UsuarioPerfil | null
       id: true,
       nombre: true,
       email: true,
-      rol: { select: { id: true, nombre: true } },
+      rol: { select: { id: true, nombre: true, tipo: true } },
       organizacion: { select: { id: true, nombre: true } },
     },
   });

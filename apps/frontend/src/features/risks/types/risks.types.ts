@@ -29,3 +29,12 @@ export interface FiltrosRiesgos {
   estado?: EstadoRiesgo;
   nivelRiesgoInherente?: NivelRiesgo;
 }
+
+export interface RiesgoHistorialEntrada {
+  id: string;
+  estadoAnterior: string | null;
+  estadoNuevo: string;
+  comentario: string | null;
+  createdAt: string;
+  usuario: { id: string; nombre: string; rol: string };
+}

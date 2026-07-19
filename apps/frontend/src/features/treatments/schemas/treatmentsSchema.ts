@@ -11,6 +11,11 @@ export const treatmentFormSchema = z
     fechaLimite: z.string().trim().min(1, "La fecha límite es obligatoria"),
     estado: z.enum(["PLANIFICADO", "EN_PROGRESO", "IMPLEMENTADO", "VENCIDO"]),
     porcentajeAvance: z.coerce.number().int().min(0).max(100),
+    // Independiente de `descripcionPlan`. Obligatorio en creación (siempre
+    // transiciona Riesgo.estado) y en edición solo si el estado cambia
+    // respecto al valor actual — esa lógica vive en TreatmentForm.tsx, que
+    // es quien sabe si estamos creando o editando.
+    comentario: z.string().trim().optional(),
   })
   .refine((valores) => valores.estrategia !== "MITIGAR" || !!valores.controlPrincipalId, {
     message: "La estrategia MITIGAR requiere seleccionar un control principal",

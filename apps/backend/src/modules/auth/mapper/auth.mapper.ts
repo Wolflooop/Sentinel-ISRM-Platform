@@ -10,10 +10,13 @@ export function toLoginResponseDTO(result: LoginResult): LoginResponseDTO {
       nombre: result.usuario.nombre,
       email: result.usuario.email,
       rol: result.usuario.rol.nombre,
-      organizacion: {
-        id: result.usuario.organizacion.id,
-        nombre: result.usuario.organizacion.nombre,
-      },
+      tipoRol: result.usuario.rol.tipo,
+      organizacion: result.usuario.organizacion
+        ? {
+            id: result.usuario.organizacion.id,
+            nombre: result.usuario.organizacion.nombre,
+          }
+        : null,
     },
   };
 }
@@ -27,10 +30,13 @@ export function toPerfilActualResponseDTO(
       nombre: result.usuario.nombre,
       email: result.usuario.email,
       rol: result.usuario.rol.nombre,
-      organizacion: {
-        id: result.usuario.organizacion.id,
-        nombre: result.usuario.organizacion.nombre,
-      },
+      tipoRol: result.usuario.rol.tipo,
+      organizacion: result.usuario.organizacion
+        ? {
+            id: result.usuario.organizacion.id,
+            nombre: result.usuario.organizacion.nombre,
+          }
+        : null,
     },
     permisos: result.permisos,
   };

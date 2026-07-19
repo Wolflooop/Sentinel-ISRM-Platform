@@ -8,9 +8,11 @@ import {
   findContextoActivoDeOrganizacion,
   findCeldaMatriz,
   crearAavYRiesgo,
+  findHistorialDeRiesgo,
   RiesgoDuplicadoParaAavError,
 } from "../repository/risks.repository";
 import { RiesgoConRelaciones, FiltrosRiesgos } from "../types/risks.types";
+import { RiesgoHistorialEntrada } from "../../history/types/history.types";
 import { CrearRiesgoInput } from "../schema/risks.schema";
 
 interface ActorAuditoria {
@@ -93,4 +95,18 @@ export async function crearNuevoRiesgo(
     }
     throw err;
   }
+}
+
+/**
+ * Historial del riesgo (ver Fase 9). obtenerRiesgo ya lanza 404 si el
+ * riesgo no pertenece a la organización del actor, así que este llamado
+ * previo garantiza el mismo aislamiento multi-tenant que el resto del
+ * módulo antes de listar su historial.
+ */
+export async function obtenerHistorialDeRiesgo(
+  riesgoId: string,
+  organizacionId: string
+): Promise<RiesgoHistorialEntrada[]> {
+  await obtenerRiesgo(riesgoId, organizacionId);
+  return findHistorialDeRiesgo(riesgoId, organizacionId);
 }

@@ -7,6 +7,7 @@ export function toRolResponseDTO(rol: Rol): RolResponseDTO {
     nombre: rol.nombre,
     descripcion: rol.descripcion,
     esSistema: rol.esSistema,
+    tipo: rol.tipo,
   };
 }
 

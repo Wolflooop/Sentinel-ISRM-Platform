@@ -1,6 +1,8 @@
+import { TipoRol } from "@prisma/client";
+
 export interface UsuarioConRol {
   id: string;
-  organizacionId: string;
+  organizacionId: string | null;
   rolId: string;
   nombre: string;
   email: string;
@@ -10,11 +12,12 @@ export interface UsuarioConRol {
   rol: {
     id: string;
     nombre: string;
+    tipo: TipoRol;
   };
 }
 
 export interface CrearUsuarioParams {
-  organizacionId: string;
+  organizacionId: string | null;
   rolId: string;
   nombre: string;
   email: string;

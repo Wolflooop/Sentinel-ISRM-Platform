@@ -9,9 +9,11 @@ export function toUsuarioResponseDTO(usuario: UsuarioConRol): UsuarioResponseDTO
     activo: usuario.activo,
     ultimoLogin: usuario.ultimoLogin ? usuario.ultimoLogin.toISOString() : null,
     creadoEn: usuario.creadoEn.toISOString(),
+    organizacionId: usuario.organizacionId,
     rol: {
       id: usuario.rol.id,
       nombre: usuario.rol.nombre,
+      tipo: usuario.rol.tipo,
     },
   };
 }

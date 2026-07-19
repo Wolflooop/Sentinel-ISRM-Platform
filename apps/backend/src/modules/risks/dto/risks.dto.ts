@@ -13,3 +13,12 @@ export interface RiesgoResponseDTO {
   amenaza: { id: string; nombre: string };
   vulnerabilidad: { id: string; nombre: string };
 }
+
+export interface RiesgoHistorialResponseDTO {
+  id: string;
+  estadoAnterior: string | null;
+  estadoNuevo: string;
+  comentario: string | null;
+  createdAt: string;
+  usuario: { id: string; nombre: string; rol: string };
+}

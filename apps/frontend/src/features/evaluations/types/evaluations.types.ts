@@ -31,6 +31,8 @@ export interface CrearEvaluacionFormValues {
   contextoId: string;
   resultado: ResultadoEvaluacion;
   justificacion: string;
+  // Independiente de `justificacion`: comentario del historial del riesgo.
+  comentario: string;
 }
 
 export interface FiltrosEvaluaciones {

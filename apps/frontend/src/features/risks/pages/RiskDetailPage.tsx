@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { useRiesgo } from "../hooks/useRisks";
+import { useRiesgo, useHistorialRiesgo } from "../hooks/useRisks";
+import { Timeline } from "../../../components/Timeline";
 
 const ESTILO_NIVEL: Record<string, string> = {
   BAJO: "bg-green-100 text-green-800",
@@ -8,9 +9,20 @@ const ESTILO_NIVEL: Record<string, string> = {
   CRITICO: "bg-red-100 text-red-800",
 };
 
+const ETIQUETA_ESTADO_RIESGO: Record<string, string> = {
+  IDENTIFICADO: "Identificado",
+  EN_ANALISIS: "En análisis",
+  EVALUADO: "Evaluado",
+  TRATADO: "En tratamiento",
+  CERRADO: "Cerrado",
+  MONITOREADO: "Monitoreado",
+  ACEPTADO: "Aceptado",
+};
+
 export function RiskDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: riesgo, isLoading, isError } = useRiesgo(id);
+  const { data: historial } = useHistorialRiesgo(id);
 
   if (isLoading) {
     return <p className="p-8 text-sm text-slate-500">Cargando riesgo...</p>;
@@ -90,6 +102,13 @@ export function RiskDetailPage() {
         <div>
           <p className="text-xs text-slate-500">Creado</p>
           <p className="text-slate-800">{new Date(riesgo.creadoEn).toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-sm font-semibold text-ink">Historial del riesgo</h2>
+        <div className="mt-3">
+          <Timeline entradas={historial ?? []} etiquetaEstado={(e) => ETIQUETA_ESTADO_RIESGO[e] ?? e} />
         </div>
       </div>
     </main>

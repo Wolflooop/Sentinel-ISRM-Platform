@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "ActivoAmenazaVulnerabilidad_activoId_amenazaId_vulnerabilidadId" RENAME TO "ActivoAmenazaVulnerabilidad_activoId_amenazaId_vulnerabilid_key";

@@ -61,6 +61,9 @@ export interface CrearTratamientoInput {
   fechaLimite: string;
   estado?: EstadoTratamiento;
   porcentajeAvance?: number;
+  // Independiente de `descripcionPlan`: comentario del historial del
+  // riesgo. Crear un tratamiento siempre transiciona Riesgo.estado.
+  comentario: string;
 }
 
 export interface ActualizarTratamientoInput {
@@ -71,4 +74,5 @@ export interface ActualizarTratamientoInput {
   fechaLimite?: string;
   estado?: EstadoTratamiento;
   porcentajeAvance?: number;
+  comentario?: string;
 }

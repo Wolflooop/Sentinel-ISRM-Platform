@@ -79,6 +79,8 @@ export async function crearNuevoTratamiento(
     porcentajeAvance: input.porcentajeAvance ?? 0,
     riesgoId: evaluacion.riesgo.id,
     controlPrincipalTipo,
+    usuarioId: actor.usuarioId,
+    comentario: input.comentario,
   });
 
   await registrarAuditoriaTratamiento({
@@ -131,10 +133,14 @@ export async function actualizarTratamientoExistente(
     throw new AppError("La estrategia MITIGAR requiere especificar un controlPrincipalId", 422);
   }
 
+  // La validación de "comentario obligatorio si el estado realmente
+  // cambia" ya NO vive aquí: la decide únicamente
+  // transicionarEstadoRiesgo (modules/history/service/history.service.ts),
+  // que es el único punto responsable de esa regla.
+
   const tratamientoActualizado = await actualizarTratamiento(
     id,
     {
-      ...input,
       controlPrincipalId: input.controlPrincipalId,
       estrategia: input.estrategia,
       descripcionPlan: input.descripcionPlan,
@@ -148,6 +154,8 @@ export async function actualizarTratamientoExistente(
       evaluacionId: tratamiento.evaluacionId,
       estrategiaFinal,
       controlPrincipalTipoFinal,
+      usuarioId: actor.usuarioId,
+      comentario: input.comentario,
     }
   );
 

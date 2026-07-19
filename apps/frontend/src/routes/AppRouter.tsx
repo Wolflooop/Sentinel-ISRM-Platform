@@ -4,9 +4,8 @@ import { AppShell } from "../features/shell/components/AppShell";
 import { UsersListPage } from "../features/users/pages/UsersListPage";
 import { CreateUserPage } from "../features/users/pages/CreateUserPage";
 import { EditUserPage } from "../features/users/pages/EditUserPage";
-import { RolesListPage } from "../features/roles/pages/RolesListPage";
-import { RolDetailPage } from "../features/roles/pages/RolDetailPage";
 import { OrganizationSettingsPage } from "../features/organizations/pages/OrganizationSettingsPage";
+import { OrganizationsListPage } from "../features/organizations/pages/OrganizationsListPage";
 import { ContextListPage } from "../features/context/pages/ContextListPage";
 import { CreateContextPage } from "../features/context/pages/CreateContextPage";
 import { ContextDetailPage } from "../features/context/pages/ContextDetailPage";
@@ -36,6 +35,7 @@ import { TreatmentDetailPage } from "../features/treatments/pages/TreatmentDetai
 import { hasValidSession } from "../lib/authSession";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RequierePermiso } from "./RequierePermiso";
+import { RequiereTipoRol } from "./RequiereTipoRol";
 import { AccesoRestringidoPage } from "../features/shell/pages/AccesoRestringidoPage";
 
 
@@ -67,13 +67,19 @@ export function AppRouter() {
             <Route path="/usuarios/:id/editar" element={<EditUserPage />} />
           </Route>
 
-          <Route element={<RequierePermiso recurso="roles" accion="leer" />}>
-            <Route path="/roles" element={<RolesListPage />} />
-            <Route path="/roles/:id" element={<RolDetailPage />} />
-          </Route>
 
           <Route element={<RequierePermiso recurso="organizaciones" accion="leer" />}>
             <Route path="/organizacion" element={<OrganizationSettingsPage />} />
+          </Route>
+
+          {/* Administración global de organizaciones — exclusiva del
+              Administrador Principal (SUPER_ADMIN). Doble barrera: además
+              del permiso "organizaciones:leer", exige el TipoRol correcto,
+              tal como el backend (requireTipoRol("SUPER_ADMIN")). */}
+          <Route element={<RequierePermiso recurso="organizaciones" accion="leer" />}>
+            <Route element={<RequiereTipoRol tipoRol="SUPER_ADMIN" />}>
+              <Route path="/organizaciones" element={<OrganizationsListPage />} />
+            </Route>
           </Route>
 
           <Route element={<RequierePermiso recurso="contexto" accion="leer" />}>

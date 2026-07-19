@@ -14,6 +14,7 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
   { recurso: "roles", accion: "gestionarPermisos", descripcion: "Asignar o quitar permisos de un rol" },
   { recurso: "permisos", accion: "leer", descripcion: "Consultar el catálogo de permisos" },
   { recurso: "organizaciones", accion: "leer", descripcion: "Consultar los datos de la propia organización" },
+  { recurso: "organizaciones", accion: "crear", descripcion: "Crear una nueva organización (solo Administrador Principal)" },
   { recurso: "organizaciones", accion: "actualizar", descripcion: "Actualizar los datos de la propia organización" },
   { recurso: "organizaciones", accion: "cambiarEstado", descripcion: "Activar/suspender/desactivar la propia organización" },
   { recurso: "contexto", accion: "leer", descripcion: "Consultar el Contexto ISO y su configuración" },
@@ -47,16 +48,24 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
 
 const ROL_ADMINISTRADOR = {
   nombre: "Administrador",
-  descripcion: "Administrador del Sistema. Rol protegido con acceso completo a administración",
+  descripcion:
+    "Administrador Principal del sistema (SUPER_ADMIN). Usuario global, no pertenece a ninguna organización.",
+  tipo: "SUPER_ADMIN" as const,
 };
 
 const ROLES_ADICIONALES: Record<
   string,
-  { descripcion: string; permisos: Array<{ recurso: string; accion: string }> }
+  { descripcion: string; tipo: "ADMIN_TIC" | "USUARIO_COMUN"; permisos: Array<{ recurso: string; accion: string }> }
 > = {
   "Administrador TIC": {
-    descripcion: "Gestiona contexto ISO, activos, amenazas, vulnerabilidades, riesgos, tratamientos, controles y reportes",
+    descripcion: "Gestiona contexto ISO, activos, amenazas, vulnerabilidades, riesgos, tratamientos, controles y reportes de su propia organización",
+    tipo: "ADMIN_TIC",
     permisos: [
+      { recurso: "usuarios", accion: "leer" },
+      { recurso: "usuarios", accion: "crear" },
+      { recurso: "usuarios", accion: "actualizar" },
+      { recurso: "usuarios", accion: "cambiarEstado" },
+      { recurso: "roles", accion: "leer" },
       { recurso: "organizaciones", accion: "leer" },
       { recurso: "contexto", accion: "leer" },
       { recurso: "contexto", accion: "crear" },
@@ -89,6 +98,7 @@ const ROLES_ADICIONALES: Record<
   },
   "Usuario Operativo": {
     descripcion: "Consulta catálogos y registra/da seguimiento a riesgos permitidos, sin administración de usuarios ni roles",
+    tipo: "USUARIO_COMUN",
     permisos: [
       { recurso: "organizaciones", accion: "leer" },
       { recurso: "contexto", accion: "leer" },
@@ -253,7 +263,7 @@ async function seedRoles(permisosCreados: Array<{ id: string; recurso: string; a
 
   const rolAdministrador = await prisma.rol.upsert({
     where: { nombre: ROL_ADMINISTRADOR.nombre },
-    update: { descripcion: ROL_ADMINISTRADOR.descripcion },
+    update: { descripcion: ROL_ADMINISTRADOR.descripcion, tipo: ROL_ADMINISTRADOR.tipo },
     create: { ...ROL_ADMINISTRADOR, esSistema: true },
   });
 
@@ -270,8 +280,8 @@ async function seedRoles(permisosCreados: Array<{ id: string; recurso: string; a
   for (const [nombreRol, config] of Object.entries(ROLES_ADICIONALES)) {
     const rol = await prisma.rol.upsert({
       where: { nombre: nombreRol },
-      update: { descripcion: config.descripcion },
-      create: { nombre: nombreRol, descripcion: config.descripcion, esSistema: true },
+      update: { descripcion: config.descripcion, tipo: config.tipo },
+      create: { nombre: nombreRol, descripcion: config.descripcion, tipo: config.tipo, esSistema: true },
     });
 
     await Promise.all(
@@ -304,16 +314,16 @@ async function seedOrganizacionYUsuario(rolAdministradorId: string) {
   if (seedAdminPassword) {
     const passwordHash = await bcrypt.hash(seedAdminPassword, 10);
 
+    // El Administrador Principal (SUPER_ADMIN) es un usuario GLOBAL: no
+    // pertenece a la organización semilla ni a ninguna otra
+    // (organizacionId = null). La organización semilla se deja como
+    // ejemplo de organización ya existente en la plataforma, no como el
+    // "hogar" del SUPER_ADMIN.
     await prisma.usuario.upsert({
-      where: {
-        organizacionId_email: {
-          organizacionId: organizacionSeed.id,
-          email: USUARIO_SEED.email,
-        },
-      },
+      where: { email: USUARIO_SEED.email },
       update: {},
       create: {
-        organizacionId: organizacionSeed.id,
+        organizacionId: null,
         rolId: rolAdministradorId,
         nombre: USUARIO_SEED.nombre,
         email: USUARIO_SEED.email,

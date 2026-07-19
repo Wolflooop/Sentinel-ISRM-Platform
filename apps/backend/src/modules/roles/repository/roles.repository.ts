@@ -28,6 +28,7 @@ export async function findRolConPermisos(id: string): Promise<RolConPermisos | n
     nombre: rol.nombre,
     descripcion: rol.descripcion,
     esSistema: rol.esSistema,
+    tipo: rol.tipo,
     permisos: rol.permisos.map(
       (rp: {
         permiso: { id: string; recurso: string; accion: string; descripcion: string | null };

@@ -6,9 +6,11 @@ import {
   existeTratamientoParaControl,
   findControlVisiblePorId,
   findControlesVisiblesParaOrganizacion,
+  findHistorialDeControl,
 } from "../repository/controls.repository";
 import { CrearControlInput, ActualizarControlInput } from "../schema/controls.schema";
 import { ControlConRelaciones, FiltrosControles, EstadoImplementacionControl } from "../types/controls.types";
+import { ControlHistorialEntrada } from "../../history/types/history.types";
 
 interface ActorAuditoria {
   usuarioId: string;
@@ -131,6 +133,10 @@ export async function actualizarControlExistente(
     anterior.fechaImplementacion
   );
 
+  // La validación de "comentario obligatorio si estadoImplementacion
+  // realmente cambia" ya NO vive aquí: la decide únicamente
+  // transicionarEstadoControl (modules/history/service/history.service.ts).
+
   const actualizado = await actualizarControlConAuditoria(
     id,
     {
@@ -153,6 +159,11 @@ export async function actualizarControlExistente(
         estadoImplementacion: anterior.estadoImplementacion,
       },
       datosNuevos: input,
+    },
+    {
+      usuarioId: actor.usuarioId,
+      estadoNuevo: estadoEfectivo,
+      comentario: input.comentario,
     }
   );
 
@@ -183,4 +194,12 @@ export async function eliminarControlExistente(
       estadoImplementacion: anterior.estadoImplementacion,
     },
   });
+}
+
+export async function obtenerHistorialDeControl(
+  id: string,
+  organizacionId: string
+): Promise<ControlHistorialEntrada[]> {
+  await obtenerControl(id, organizacionId);
+  return findHistorialDeControl(id);
 }

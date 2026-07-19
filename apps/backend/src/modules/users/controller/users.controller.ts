@@ -7,18 +7,28 @@ import {
 import {
   listarUsuarios,
   obtenerUsuario,
-  crearUsuarioEnOrganizacion,
-  actualizarUsuarioEnOrganizacion,
-  cambiarEstadoUsuarioEnOrganizacion,
+  crearUsuarioComoActor,
+  actualizarUsuarioComoActor,
+  cambiarEstadoUsuarioComoActor,
+  ActorUsuarios,
 } from "../service/users.service";
 import { toUsuarioResponseDTO, toUsuarioResponseListDTO } from "../mapper/users.mapper";
 import { AppError } from "../../../shared/AppError";
 
-function organizacionIdDe(req: Request): string {
+// El actor SIEMPRE se construye a partir de req.user (JWT verificado por
+// `authenticate`). Nunca se lee organizacionId/tipoRol del body ni de query
+// params: eso es exactamente lo que permitiría a un usuario auto-asignarse
+// otra organización o un rol superior.
+function actorDe(req: Request): ActorUsuarios {
   if (!req.user) {
     throw new AppError("No autenticado", 401);
   }
-  return req.user.organizacionId;
+  return {
+    usuarioId: req.user.sub,
+    organizacionId: req.user.organizacionId,
+    tipoRol: req.user.tipoRol,
+    direccionIp: req.ip ?? "desconocida",
+  };
 }
 
 export async function listarUsuariosController(
@@ -27,7 +37,7 @@ export async function listarUsuariosController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const usuarios = await listarUsuarios(organizacionIdDe(req));
+    const usuarios = await listarUsuarios(actorDe(req));
     res.status(200).json(toUsuarioResponseListDTO(usuarios));
   } catch (err) {
     next(err);
@@ -40,7 +50,7 @@ export async function obtenerUsuarioController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const usuario = await obtenerUsuario(req.params.id, organizacionIdDe(req));
+    const usuario = await obtenerUsuario(req.params.id, actorDe(req));
     res.status(200).json(toUsuarioResponseDTO(usuario));
   } catch (err) {
     next(err);
@@ -54,7 +64,7 @@ export async function crearUsuarioController(
 ): Promise<void> {
   try {
     const input = crearUsuarioSchema.parse(req.body);
-    const usuario = await crearUsuarioEnOrganizacion(organizacionIdDe(req), input);
+    const usuario = await crearUsuarioComoActor(actorDe(req), input);
     res.status(201).json(toUsuarioResponseDTO(usuario));
   } catch (err) {
     next(err);
@@ -68,11 +78,7 @@ export async function actualizarUsuarioController(
 ): Promise<void> {
   try {
     const input = actualizarUsuarioSchema.parse(req.body);
-    const usuario = await actualizarUsuarioEnOrganizacion(
-      req.params.id,
-      organizacionIdDe(req),
-      input
-    );
+    const usuario = await actualizarUsuarioComoActor(req.params.id, actorDe(req), input);
     res.status(200).json(toUsuarioResponseDTO(usuario));
   } catch (err) {
     next(err);
@@ -86,9 +92,9 @@ export async function cambiarEstadoUsuarioController(
 ): Promise<void> {
   try {
     const input = cambiarEstadoUsuarioSchema.parse(req.body);
-    const usuario = await cambiarEstadoUsuarioEnOrganizacion(
+    const usuario = await cambiarEstadoUsuarioComoActor(
       req.params.id,
-      organizacionIdDe(req),
+      actorDe(req),
       input.activo
     );
     res.status(200).json(toUsuarioResponseDTO(usuario));

@@ -15,6 +15,7 @@ function normalizar(input: TreatmentFormValues) {
     fechaLimite: input.fechaLimite,
     estado: input.estado,
     porcentajeAvance: input.porcentajeAvance,
+    ...(input.comentario?.trim() ? { comentario: input.comentario.trim() } : {}),
   };
 }
 

@@ -34,22 +34,6 @@ export function LoginPage() {
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div>
-            <label htmlFor="organizacion" className="block text-sm font-medium text-ink">
-              Organización
-            </label>
-            <input
-              id="organizacion"
-              type="text"
-              autoComplete="organization"
-              className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
-              {...register("organizacion")}
-            />
-            {errors.organizacion && (
-              <p className="mt-1 text-sm text-red-600">{errors.organizacion.message}</p>
-            )}
-          </div>
-
-          <div>
             <label htmlFor="email" className="block text-sm font-medium text-ink">
               Correo
             </label>

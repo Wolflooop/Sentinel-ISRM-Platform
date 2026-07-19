@@ -366,6 +366,14 @@ export async function generarReporteNuevo(
 
   const datos = await recopilarDatosOrganizacion(actor.organizacionId);
 
+  // TRAZA TEMPORAL DE DIAGNÓSTICO — quitar una vez confirmada la causa raíz.
+  console.log("[DIAG reportes] organizacionId:", actor.organizacionId);
+  console.log("[DIAG reportes] datos.riesgos.length:", datos.riesgos.length);
+  console.log("[DIAG reportes] datos.controles.length:", datos.controles.length);
+  console.log("[DIAG reportes] datos.riesgos:", JSON.stringify(datos.riesgos, null, 2));
+  console.log("[DIAG reportes] datos.controles:", JSON.stringify(datos.controles, null, 2));
+  // FIN TRAZA TEMPORAL
+
   const nombreArchivo = `${actor.organizacionId}_${input.tipo}_${Date.now()}.pdf`;
   const rutaAbsoluta = path.join(STORAGE_DIR, nombreArchivo);
 

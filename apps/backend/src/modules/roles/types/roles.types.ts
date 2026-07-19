@@ -1,8 +1,11 @@
+import { TipoRol } from "@prisma/client";
+
 export interface Rol {
   id: string;
   nombre: string;
   descripcion: string | null;
   esSistema: boolean;
+  tipo: TipoRol;
 }
 
 export interface RolConPermisos extends Rol {

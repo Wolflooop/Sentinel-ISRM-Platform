@@ -2,10 +2,6 @@ import { z } from "zod";
 
 
 export const loginSchema = z.object({
-  organizacion: z
-    .string({ required_error: "La organización es obligatoria" })
-    .trim()
-    .min(1, "La organización es obligatoria"),
   email: z
     .string({ required_error: "El correo es obligatorio" })
     .trim()

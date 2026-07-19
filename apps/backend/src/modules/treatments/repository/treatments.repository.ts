@@ -6,6 +6,7 @@ import {
   FiltrosTratamientos,
   TratamientoConRelaciones,
 } from "../types/treatments.types";
+import { transicionarEstadoRiesgo } from "../../history/service/history.service";
 
 const TRATAMIENTO_INCLUDE = {
   evaluacion: {
@@ -203,7 +204,12 @@ async function calcularNivelResidual(
 
 
 export async function crearTratamiento(
-  params: CrearTratamientoParams & { riesgoId: string; controlPrincipalTipo: string | null }
+  params: CrearTratamientoParams & {
+    riesgoId: string;
+    controlPrincipalTipo: string | null;
+    usuarioId: string;
+    comentario: string;
+  }
 ): Promise<TratamientoConRelaciones> {
   const nuevoEstadoRiesgo =
     params.estado === "EN_PROGRESO" ? "MONITOREADO" : params.estado === "IMPLEMENTADO" ? "CERRADO" : "TRATADO";
@@ -214,12 +220,17 @@ export async function crearTratamiento(
         ? await calcularNivelResidual(tx, params.evaluacionId, params.estrategia, params.controlPrincipalTipo)
         : null;
 
-    await tx.riesgo.update({
-      where: { id: params.riesgoId },
-      data: {
-        estado: nuevoEstadoRiesgo,
-        ...(nivelResidual ? { nivelRiesgoResidual: nivelResidual, fechaUltimoCalculo: new Date() } : {}),
-      },
+    // Único punto responsable de transicionar Riesgo.estado y registrar su
+    // historial. Usa el campo `comentario` independiente (Prioridad 2) —
+    // nunca `descripcionPlan`.
+    await transicionarEstadoRiesgo(tx, {
+      riesgoId: params.riesgoId,
+      usuarioId: params.usuarioId,
+      estadoNuevo: nuevoEstadoRiesgo,
+      comentario: params.comentario,
+      datosAdicionales: nivelResidual
+        ? { nivelRiesgoResidual: nivelResidual, fechaUltimoCalculo: new Date() }
+        : undefined,
     });
 
     return tx.tratamiento.create({
@@ -247,6 +258,8 @@ export async function actualizarTratamiento(
     evaluacionId: string;
     estrategiaFinal: string;
     controlPrincipalTipoFinal: string | null;
+    usuarioId: string;
+    comentario?: string;
   }
 ): Promise<TratamientoConRelaciones> {
   const nuevoEstadoRiesgo =
@@ -264,12 +277,17 @@ export async function actualizarTratamiento(
             )
           : null;
 
-      await tx.riesgo.update({
-        where: { id: contexto.riesgoId },
-        data: {
-          estado: nuevoEstadoRiesgo,
-          ...(nivelResidual ? { nivelRiesgoResidual: nivelResidual, fechaUltimoCalculo: new Date() } : {}),
-        },
+      // Único punto responsable: decide si hay transición real, exige el
+      // comentario cuando corresponde, y persiste todo. Ni esta función ni
+      // treatments.service.ts vuelven a comparar estados manualmente.
+      await transicionarEstadoRiesgo(tx, {
+        riesgoId: contexto.riesgoId,
+        usuarioId: contexto.usuarioId,
+        estadoNuevo: nuevoEstadoRiesgo,
+        comentario: contexto.comentario,
+        datosAdicionales: nivelResidual
+          ? { nivelRiesgoResidual: nivelResidual, fechaUltimoCalculo: new Date() }
+          : undefined,
       });
     }
 

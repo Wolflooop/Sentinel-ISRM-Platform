@@ -6,6 +6,10 @@ export const crearUsuarioFormSchema = z.object({
   email: z.string().trim().email("El correo no tiene un formato válido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   rolId: z.string().min(1, "Debe seleccionar un rol"),
+  // Solo se envía (y solo tiene efecto) cuando quien crea es el
+  // Administrador Principal (SUPER_ADMIN); el backend lo ignora por
+  // completo para cualquier otro actor.
+  organizacionId: z.string().optional(),
 });
 export type CrearUsuarioFormValues = z.infer<typeof crearUsuarioFormSchema>;
 

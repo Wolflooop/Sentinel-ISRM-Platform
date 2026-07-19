@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { editarUsuarioFormSchema, EditarUsuarioFormValues } from "../schemas/usersSchema";
 import { Usuario } from "../types/users.types";
 import { useRoles } from "../../roles/hooks/useRoles";
+import { esSuperAdminActual } from "../../../lib/authSession";
 
 interface Props {
   usuario: Usuario;
@@ -13,7 +14,14 @@ interface Props {
 }
 
 export function EditUserForm({ usuario, onSubmit, isSubmittingRequest, errorMessage }: Props) {
+  const esSuperAdmin = esSuperAdminActual();
   const { data: roles } = useRoles();
+  // Misma jerarquía que en la creación: un ADMIN_TIC solo puede dejar a un
+  // usuario como USUARIO_COMUN (nunca promoverlo a ADMIN_TIC o
+  // SUPER_ADMIN). El backend vuelve a validar esto de forma independiente.
+  const rolesDisponibles = roles?.filter((rol) =>
+    esSuperAdmin ? rol.tipo !== "SUPER_ADMIN" : rol.tipo === "USUARIO_COMUN"
+  );
   const {
     register,
     handleSubmit,
@@ -64,7 +72,7 @@ export function EditUserForm({ usuario, onSubmit, isSubmittingRequest, errorMess
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
           {...register("rolId")}
         >
-          {roles?.map((rol) => (
+          {rolesDisponibles?.map((rol) => (
             <option key={rol.id} value={rol.id}>
               {rol.nombre}
             </option>

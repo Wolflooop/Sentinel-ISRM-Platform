@@ -14,6 +14,10 @@ export const crearTratamientoSchema = z
     fechaLimite: z.coerce.date(),
     estado: z.enum(["PLANIFICADO", "EN_PROGRESO", "IMPLEMENTADO", "VENCIDO"]).optional(),
     porcentajeAvance: z.number().int().min(0).max(100).optional(),
+    // Independiente de `descripcionPlan` (ver Prioridad 2): comentario del
+    // historial del riesgo. Crear un tratamiento siempre transiciona
+    // Riesgo.estado (a TRATADO/MONITOREADO/CERRADO), así que es obligatorio.
+    comentario: z.string().trim().min(1, "El comentario del cambio de estado es obligatorio"),
   })
   .refine((data) => data.estrategia !== "MITIGAR" || !!data.controlPrincipalId, {
     message: ESTRATEGIA_MITIGAR_REQUIERE_CONTROL,
@@ -32,6 +36,12 @@ export const actualizarTratamientoSchema = z
     fechaLimite: z.coerce.date().optional(),
     estado: z.enum(["PLANIFICADO", "EN_PROGRESO", "IMPLEMENTADO", "VENCIDO"]).optional(),
     porcentajeAvance: z.number().int().min(0).max(100).optional(),
+    // Independiente de `descripcionPlan` (ver Prioridad 2). Si es
+    // obligatorio o no depende de si `estado` realmente cambia respecto al
+    // valor actual del tratamiento — eso lo decide únicamente
+    // transicionarEstadoRiesgo (modules/history/service/history.service.ts),
+    // no este schema ni el service de este módulo.
+    comentario: z.string().trim().min(1).optional(),
   })
   .refine((data) => data.estrategia !== "MITIGAR" || data.controlPrincipalId !== null, {
     message: ESTRATEGIA_MITIGAR_REQUIERE_CONTROL,

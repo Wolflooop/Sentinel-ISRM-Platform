@@ -34,4 +34,16 @@ export interface ActualizarControlInput {
   fechaImplementacion?: string | null;
   observaciones?: string | null;
   descripcionImplementacion?: string | null;
+  // Obligatorio solo cuando estadoImplementacion cambia respecto al valor
+  // actual — el backend valida esa condición (ver Fase 9).
+  comentario?: string;
+}
+
+export interface ControlHistorialEntrada {
+  id: string;
+  estadoAnterior: string | null;
+  estadoNuevo: string;
+  comentario: string | null;
+  createdAt: string;
+  usuario: { id: string; nombre: string; rol: string };
 }

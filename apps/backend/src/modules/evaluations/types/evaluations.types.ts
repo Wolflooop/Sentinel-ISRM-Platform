@@ -31,6 +31,9 @@ export interface CrearEvaluacionParams {
   contextoId: string;
   resultado: ResultadoEvaluacion;
   justificacion: string;
+  // Independiente de `justificacion` (ver Prioridad 2) — es el comentario
+  // que se registra en el historial del riesgo.
+  comentario: string;
   usuarioId: string;
   organizacionId: string;
   direccionIp: string;

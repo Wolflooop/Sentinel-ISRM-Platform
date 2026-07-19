@@ -20,6 +20,10 @@ export const actualizarControlSchema = z.object({
   fechaImplementacion: z.coerce.date().nullable().optional(),
   observaciones: z.string().nullable().optional(),
   descripcionImplementacion: z.string().nullable().optional(),
+  // Ver Fase 9: obligatorio solo cuando estadoImplementacion realmente
+  // cambia respecto al valor actual — se valida en controls.service.ts,
+  // donde sí se conoce el estado anterior.
+  comentario: z.string().trim().min(1).optional(),
 });
 
 export type ActualizarControlInput = z.infer<typeof actualizarControlSchema>;

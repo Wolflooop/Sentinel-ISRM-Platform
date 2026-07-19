@@ -165,11 +165,18 @@ model Organizacion {
 }
 
 model Usuario {
-  id               String    @id @default(uuid())
-  organizacionId   String
-  organizacion     Organizacion @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  id               String        @id @default(uuid())
+  // Nullable a propósito (ver Fase 7 — jerarquía multiempresa): el
+  // ADMINISTRADOR PRINCIPAL (Rol.tipo = SUPER_ADMIN) es un usuario global
+  // que no pertenece a ninguna organización, por lo que organizacionId debe
+  // ser NULL para ese caso. Para ADMIN_TIC y USUARIO_COMUN es obligatorio;
+  // esa obligatoriedad se valida en la capa de aplicación (users.service),
+  // ya que Prisma no expresa restricciones condicionales entre columnas de
+  // tablas distintas (Usuario.organizacionId depende de Rol.tipo).
+  organizacionId   String?
+  organizacion     Organizacion? @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
   rolId            String
-  rol              Rol       @relation(fields: [rolId], references: [id], onDelete: Restrict)
+  rol              Rol           @relation(fields: [rolId], references: [id], onDelete: Restrict)
   nombre           String
   email            String
   passwordHash     String
@@ -186,12 +193,25 @@ model Usuario {
   tratamientosResponsable Tratamiento[] @relation("TratamientoResponsable")
   reportes               Reporte[]
   eventosSeguridad        EventoSeguridad[]
+  riesgoHistorial         RiesgoHistorial[]
+  controlHistorial        ControlHistorial[]
 
-  // Nota de implementación (ver Fase 3): al ser (organizacionId, email) una
-  // clave única compuesta, el flujo de login debe identificar primero la
-  // organización antes de validar el correo.
-  @@unique([organizacionId, email])
+  // Cambio (ver Fase 7): el login ya no pide organización (solo correo +
+  // contraseña), así que el correo debe ser único de forma GLOBAL y no por
+  // organización. Reemplaza la antigua @@unique([organizacionId, email]).
+  @@unique([email])
   @@index([rolId])
+  @@index([organizacionId])
+}
+
+// Nivel jerárquico del rol (ver Fase 7 — jerarquía de administración).
+// Es un campo independiente de `nombre`: la lógica de negocio (quién puede
+// crear a quién, quién puede elegir organización, etc.) se basa SIEMPRE en
+// `tipo`, nunca en comparar el nombre del rol como texto libre.
+enum TipoRol {
+  SUPER_ADMIN   // Administrador Principal: global, organizacionId = null
+  ADMIN_TIC     // Administrador TIC: siempre pertenece a una organización
+  USUARIO_COMUN // Usuario común: siempre pertenece a una organización
 }
 
 model Rol {
@@ -199,6 +219,8 @@ model Rol {
   nombre      String  @unique
   descripcion String?
   esSistema   Boolean @default(false)
+  // Ver enum TipoRol. Determina la jerarquía real del rol.
+  tipo        TipoRol @default(USUARIO_COMUN)
 
   usuarios Usuario[]
   permisos RolPermiso[]
@@ -470,11 +492,36 @@ model Riesgo {
   creadoEn              DateTime     @default(now())
 
   evaluaciones Evaluacion[]
+  historial    RiesgoHistorial[]
 
   // Decisión Fase 8.1: sin organizacionId directo. El aislamiento
   // multi-tenant se resuelve vía JOIN: Riesgo -> AAV -> Activo -> Organizacion.
   @@index([estado])
   @@index([nivelRiesgoInherente])
+}
+
+// Trazabilidad de cambios de estado del riesgo (ver Fase 9 — UX/historial).
+// Se escribe SIEMPRE dentro de la misma transacción que cambia Riesgo.estado
+// (creación del riesgo, creación de evaluación, creación/actualización de
+// tratamiento), nunca desde un endpoint propio de "cambiar estado libre" —
+// ese endpoint no existe y esta tabla no lo introduce.
+model RiesgoHistorial {
+  id             String       @id @default(uuid())
+  riesgoId       String
+  riesgo         Riesgo       @relation(fields: [riesgoId], references: [id], onDelete: Cascade)
+  usuarioId      String
+  usuario        Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  // NULL únicamente en la primera entrada (creación del riesgo): no hay
+  // estado "anterior" a IDENTIFICADO.
+  estadoAnterior EstadoRiesgo?
+  estadoNuevo    EstadoRiesgo
+  // NULL solo en la entrada de creación. Para cualquier transición de
+  // estado posterior, la capa de aplicación exige un comentario no vacío
+  // (ver evaluations.service.ts / treatments.service.ts).
+  comentario     String?      @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([riesgoId, createdAt])
 }
 
 model Evaluacion {
@@ -542,9 +589,30 @@ model Control {
   descripcionImplementacion   String?
 
   tratamientos Tratamiento[]
+  historial    ControlHistorial[]
 
   @@index([codigoIso27001])
   @@index([estadoImplementacion])
+}
+
+// Trazabilidad de cambios de estado de implementación del control (misma
+// lógica que RiesgoHistorial). Se escribe siempre dentro de la misma
+// transacción/operación que efectivamente cambia estadoImplementacion.
+model ControlHistorial {
+  id             String                       @id @default(uuid())
+  controlId      String
+  control        Control                      @relation(fields: [controlId], references: [id], onDelete: Cascade)
+  usuarioId      String
+  usuario        Usuario                      @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  // NULL únicamente en la primera entrada (creación del control).
+  estadoAnterior EstadoImplementacionControl?
+  estadoNuevo    EstadoImplementacionControl
+  // NULL solo en la entrada de creación; obligatorio en la capa de
+  // aplicación para cualquier transición posterior (ver controls.service.ts).
+  comentario     String?                      @db.Text
+  createdAt      DateTime                     @default(now())
+
+  @@index([controlId, createdAt])
 }
 
 // ============================================================================

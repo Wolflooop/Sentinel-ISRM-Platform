@@ -24,6 +24,9 @@ function actorDe(req: Request) {
   if (!req.user) {
     throw new AppError("No autenticado", 401);
   }
+  if (!req.user.organizacionId) {
+    throw new AppError("Esta operación requiere pertenecer a una organización", 400);
+  }
   return {
     usuarioId: req.user.sub,
     organizacionId: req.user.organizacionId,

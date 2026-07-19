@@ -33,3 +33,15 @@ export const cambiarEstadoOrganizacionSchema = z.object({
   estado: estadoOrganizacionEnum,
 });
 export type CambiarEstadoOrganizacionInput = z.infer<typeof cambiarEstadoOrganizacionSchema>;
+
+// Solo el Administrador Principal (SUPER_ADMIN) puede crear organizaciones.
+export const crearOrganizacionSchema = z.object({
+  nombre: z.string().trim().min(1, "El nombre es obligatorio"),
+  sector: sectorEnum,
+  tamano: tamanoEnum,
+  paisIso: z.string().trim().length(2, "paisIso debe ser un código ISO de 2 letras"),
+  correoContacto: z.string().trim().email("Correo inválido").nullable().optional(),
+  telefono: z.string().trim().nullable().optional(),
+  direccion: z.string().trim().nullable().optional(),
+});
+export type CrearOrganizacionInput = z.infer<typeof crearOrganizacionSchema>;

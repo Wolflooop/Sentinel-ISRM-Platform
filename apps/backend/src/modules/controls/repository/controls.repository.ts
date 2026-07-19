@@ -5,7 +5,11 @@ import {
   CrearControlParams,
   ControlConRelaciones,
   FiltrosControles,
+  EstadoImplementacionControl,
 } from "../types/controls.types";
+import { ControlHistorialEntrada } from "../../history/types/history.types";
+import { registrarCreacionControl, transicionarEstadoControl } from "../../history/service/history.service";
+import { findHistorialDeControl as findHistorialDeControlRepo } from "../../history/repository/history.repository";
 
 const CONTROL_INCLUDE = {
   organizacion: {
@@ -95,6 +99,14 @@ export async function crearControlConAuditoria(
       },
     });
 
+    // Primera entrada del historial: único punto responsable, ver
+    // modules/history/service/history.service.ts.
+    await registrarCreacionControl(tx, {
+      controlId: control.id,
+      usuarioId: auditoria.usuarioId,
+      estadoInicial: control.estadoImplementacion,
+    });
+
     return control;
   });
 }
@@ -102,13 +114,24 @@ export async function crearControlConAuditoria(
 export async function actualizarControlConAuditoria(
   id: string,
   params: ActualizarControlParams,
-  auditoria: AuditoriaControlParams
+  auditoria: AuditoriaControlParams,
+  transicion: {
+    usuarioId: string;
+    estadoNuevo: EstadoImplementacionControl;
+    comentario: string | null | undefined;
+  }
 ): Promise<ControlConRelaciones> {
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const actualizado = await tx.control.update({
-      where: { id },
-      data: params,
-      include: CONTROL_INCLUDE,
+    // Único punto responsable de cambiar Control.estadoImplementacion y
+    // registrar su historial (ver modules/history/service/history.service.ts).
+    // También persiste el resto de campos (nombre, tipo, observaciones,
+    // etc.) en la misma escritura, para no duplicar el UPDATE.
+    await transicionarEstadoControl(tx, {
+      controlId: id,
+      usuarioId: transicion.usuarioId,
+      estadoNuevo: transicion.estadoNuevo,
+      comentario: transicion.comentario,
+      datosControl: params,
     });
 
     await tx.auditoria.create({
@@ -124,7 +147,7 @@ export async function actualizarControlConAuditoria(
       },
     });
 
-    return actualizado;
+    return tx.control.findUniqueOrThrow({ where: { id }, include: CONTROL_INCLUDE });
   });
 }
 
@@ -159,3 +182,12 @@ export async function existeTratamientoParaControl(controlId: string): Promise<b
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Historial. findControlVisiblePorId ya resuelve la visibilidad híbrida
+// (global vs. propio de la organización) antes de listar el historial. La
+// lectura/escritura del historial en sí vive en modules/history/repository.
+// ---------------------------------------------------------------------------
+export async function findHistorialDeControl(controlId: string): Promise<ControlHistorialEntrada[]> {
+  return findHistorialDeControlRepo(controlId);
+}

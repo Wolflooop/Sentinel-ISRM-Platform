@@ -21,3 +21,12 @@ export interface ControlResponseDTO {
     nombre: string;
   } | null;
 }
+
+export interface ControlHistorialResponseDTO {
+  id: string;
+  estadoAnterior: string | null;
+  estadoNuevo: string;
+  comentario: string | null;
+  createdAt: string;
+  usuario: { id: string; nombre: string; rol: string };
+}

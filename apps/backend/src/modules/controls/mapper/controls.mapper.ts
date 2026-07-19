@@ -1,5 +1,6 @@
 import { ControlConRelaciones } from "../types/controls.types";
-import { ControlResponseDTO } from "../dto/controls.dto";
+import { ControlHistorialEntrada } from "../../history/types/history.types";
+import { ControlResponseDTO, ControlHistorialResponseDTO } from "../dto/controls.dto";
 
 /**
  * Prisma Model → Mapper → DTO. Requiere `organizacionId` del solicitante
@@ -35,4 +36,27 @@ export function toControlResponseListDTO(
   organizacionIdSolicitante: string
 ): ControlResponseDTO[] {
   return controles.map((control) => toControlResponseDTO(control, organizacionIdSolicitante));
+}
+
+export function toControlHistorialResponseDTO(
+  entrada: ControlHistorialEntrada
+): ControlHistorialResponseDTO {
+  return {
+    id: entrada.id,
+    estadoAnterior: entrada.estadoAnterior,
+    estadoNuevo: entrada.estadoNuevo,
+    comentario: entrada.comentario,
+    createdAt: entrada.createdAt.toISOString(),
+    usuario: {
+      id: entrada.usuario.id,
+      nombre: entrada.usuario.nombre,
+      rol: entrada.usuario.rol.nombre,
+    },
+  };
+}
+
+export function toControlHistorialResponseListDTO(
+  entradas: ControlHistorialEntrada[]
+): ControlHistorialResponseDTO[] {
+  return entradas.map(toControlHistorialResponseDTO);
 }

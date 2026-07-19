@@ -5,6 +5,7 @@ import {
   eliminarControlRequest,
   listarControlesRequest,
   obtenerControlRequest,
+  obtenerHistorialControlRequest,
 } from "../services/controlsService";
 import { ActualizarControlInput, FiltrosControles } from "../types/controls.types";
 
@@ -54,5 +55,13 @@ export function useEliminarControl() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["controles"] });
     },
+  });
+}
+
+export function useHistorialControl(id: string | undefined) {
+  return useQuery({
+    queryKey: ["controles", id, "historial"],
+    queryFn: () => obtenerHistorialControlRequest(id as string),
+    enabled: Boolean(id),
   });
 }

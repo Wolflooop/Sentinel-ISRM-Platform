@@ -1,5 +1,10 @@
 import { apiClient } from "../../../lib/apiClient";
-import { ActualizarControlInput, Control, FiltrosControles } from "../types/controls.types";
+import {
+  ActualizarControlInput,
+  Control,
+  FiltrosControles,
+  ControlHistorialEntrada,
+} from "../types/controls.types";
 
 export async function listarControlesRequest(filtros: FiltrosControles = {}): Promise<Control[]> {
   const { data } = await apiClient.get<Control[]>("/controles", { params: filtros });
@@ -26,4 +31,9 @@ export async function actualizarControlRequest(
 
 export async function eliminarControlRequest(id: string): Promise<void> {
   await apiClient.delete(`/controles/${id}`);
+}
+
+export async function obtenerHistorialControlRequest(id: string): Promise<ControlHistorialEntrada[]> {
+  const { data } = await apiClient.get<ControlHistorialEntrada[]>(`/controles/${id}/historial`);
+  return data;
 }

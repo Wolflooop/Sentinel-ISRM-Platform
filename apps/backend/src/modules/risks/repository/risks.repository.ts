@@ -10,6 +10,9 @@ import {
   ContextoActivoResumen,
   CeldaMatrizResumen,
 } from "../types/risks.types";
+import { RiesgoHistorialEntrada } from "../../history/types/history.types";
+import { registrarCreacionRiesgo } from "../../history/service/history.service";
+import { findHistorialDeRiesgo as findHistorialDeRiesgoRepo } from "../../history/repository/history.repository";
 
 
 
@@ -201,6 +204,14 @@ export async function crearAavYRiesgo(
         },
       });
 
+      // Primera entrada del historial: único punto responsable, ver
+      // modules/history/service/history.service.ts.
+      await registrarCreacionRiesgo(tx, {
+        riesgoId: riesgoCreado.id,
+        usuarioId: params.actor.usuarioId,
+        estadoInicial: "IDENTIFICADO",
+      });
+
       return riesgoCreado;
     });
   } catch (err) {
@@ -209,4 +220,26 @@ export async function crearAavYRiesgo(
     }
     throw err;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Historial. Aislamiento multi-tenant: se exige que el riesgo pertenezca a
+// la organización antes de listar su historial (mismo criterio que
+// findRiesgoDeOrganizacionPorId). La lectura/escritura del historial en sí
+// vive en modules/history/repository — este módulo solo valida pertenencia.
+// ---------------------------------------------------------------------------
+
+export async function findHistorialDeRiesgo(
+  riesgoId: string,
+  organizacionId: string
+): Promise<RiesgoHistorialEntrada[]> {
+  const riesgo = await prisma.riesgo.findFirst({
+    where: { id: riesgoId, ...whereOrganizacion(organizacionId) },
+    select: { id: true },
+  });
+  if (!riesgo) {
+    return [];
+  }
+
+  return findHistorialDeRiesgoRepo(riesgoId);
 }

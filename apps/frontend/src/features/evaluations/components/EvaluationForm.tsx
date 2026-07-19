@@ -22,6 +22,7 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
       contextoId,
       resultado: "ACEPTABLE",
       justificacion: "",
+      comentario: "",
     },
   });
 
@@ -57,6 +58,22 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
         />
         {errors.justificacion && (
           <p className="mt-1 text-sm text-red-600">{errors.justificacion.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="comentario" className="block text-sm font-medium text-slate-700">
+          Comentario del cambio de estado
+        </label>
+        <textarea
+          id="comentario"
+          rows={2}
+          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          placeholder="Ej: Evaluación inicial completada."
+          {...register("comentario")}
+        />
+        {errors.comentario && (
+          <p className="mt-1 text-sm text-red-600">{errors.comentario.message}</p>
         )}
       </div>
 

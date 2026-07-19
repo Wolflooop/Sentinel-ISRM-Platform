@@ -23,6 +23,11 @@ function organizacionIdDe(req: Request): string {
   if (!req.user) {
     throw new AppError("No autenticado", 401);
   }
+  if (!req.user.organizacionId) {
+    // Un SUPER_ADMIN (organizacionId = null) no opera sobre datos de
+    // gestión de riesgos: ese dominio pertenece siempre a una organización.
+    throw new AppError("Esta operación requiere pertenecer a una organización", 400);
+  }
   return req.user.organizacionId;
 }
 

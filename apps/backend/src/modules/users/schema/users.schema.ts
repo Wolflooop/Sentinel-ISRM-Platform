@@ -7,6 +7,12 @@ export const crearUsuarioSchema = z.object({
   email: z.string().trim().email("El correo no tiene un formato válido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   rolId: z.string().uuid("rolId debe ser un identificador válido"),
+  // Solo tiene efecto cuando quien crea es un ADMIN_PRINCIPAL (SUPER_ADMIN):
+  // es el único que puede elegir la organización. Si el actor es
+  // ADMIN_TIC, este campo se ignora por completo en el servicio — la
+  // organización se toma siempre de su propio token (req.user.organizacionId),
+  // nunca de este valor enviado por el cliente.
+  organizacionId: z.string().uuid("organizacionId debe ser un identificador válido").optional(),
 });
 export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;
 

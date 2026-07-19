@@ -3,6 +3,7 @@ import {
   listarRiesgosRequest,
   obtenerRiesgoRequest,
   crearRiesgoRequest,
+  obtenerHistorialRiesgoRequest,
 } from "../services/risksService";
 import { FiltrosRiesgos } from "../types/risks.types";
 import { CrearRiesgoFormValues } from "../schemas/risksSchema";
@@ -29,5 +30,13 @@ export function useCrearRiesgo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["riesgos"] });
     },
+  });
+}
+
+export function useHistorialRiesgo(id: string | undefined) {
+  return useQuery({
+    queryKey: ["riesgos", id, "historial"],
+    queryFn: () => obtenerHistorialRiesgoRequest(id as string),
+    enabled: Boolean(id),
   });
 }

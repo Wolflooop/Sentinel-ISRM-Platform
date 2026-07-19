@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { treatmentFormSchema, TreatmentFormValues } from "../schemas/treatmentsSchema";
@@ -54,9 +54,25 @@ export function TreatmentForm({
   const estrategiaSeleccionada = watch("estrategia");
   const estadoSeleccionado = watch("estado");
   const requiereControl = estrategiaSeleccionada === "MITIGAR";
+  // El comentario es obligatorio siempre que haya una transición real de
+  // estado del riesgo: en creación SIEMPRE la hay (un tratamiento nuevo
+  // siempre mueve Riesgo.estado); en edición, solo si el estado
+  // seleccionado difiere del que tenía el tratamiento al cargar el
+  // formulario. No aplica en ediciones que no tocan el estado.
+  const cambiaEstado = !tratamiento || estadoSeleccionado !== tratamiento.estado;
+  const [errorComentario, setErrorComentario] = useState<string | null>(null);
+
+  const manejarEnvio = handleSubmit((valores) => {
+    if (cambiaEstado && !valores.comentario?.trim()) {
+      setErrorComentario("No puede cambiar el estado sin ingresar un comentario.");
+      return;
+    }
+    setErrorComentario(null);
+    onSubmit(valores);
+  });
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form className="space-y-4" onSubmit={manejarEnvio} noValidate>
       <div>
         <label htmlFor="estrategia" className="block text-sm font-medium text-slate-700">
           Estrategia
@@ -199,6 +215,22 @@ export function TreatmentForm({
         </p>
       )}
 
+      {cambiaEstado && (
+        <div>
+          <label htmlFor="comentario" className="block text-sm font-medium text-slate-700">
+            Comentario (obligatorio al cambiar de estado)
+          </label>
+          <textarea
+            id="comentario"
+            rows={2}
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            placeholder="Ej: Se inició aplicación del plan de mitigación."
+            {...register("comentario")}
+          />
+        </div>
+      )}
+
+      {errorComentario && <p className="text-sm text-red-600">{errorComentario}</p>}
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <button

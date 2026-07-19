@@ -3,7 +3,7 @@ import { AppError } from "../../../shared/AppError";
 import { comparePassword } from "../../../shared/password";
 import { hashToken, signAuthToken } from "../../../shared/jwt";
 import {
-  findUsuarioByOrganizacionYEmail,
+  findUsuarioPorEmail,
   incrementarIntentosFallidos,
   resetearIntentosFallidos,
   bloquearUsuarioTemporalmente,
@@ -37,7 +37,7 @@ function parseExpiresInToMs(expiresIn: string): number {
 }
 
 export async function login(input: LoginInput, direccionIp: string): Promise<LoginResult> {
-  const usuario = await findUsuarioByOrganizacionYEmail(input.organizacion, input.email);
+  const usuario = await findUsuarioPorEmail(input.email);
 
   if (!usuario) {
     await registrarEventoSeguridad({
@@ -45,8 +45,8 @@ export async function login(input: LoginInput, direccionIp: string): Promise<Log
       resultado: "FALLIDO",
       severidad: "ADVERTENCIA",
       direccionIp,
-      descripcion: "Intento de login con organización o email inexistentes",
-      detalles: { organizacion: input.organizacion, email: input.email },
+      descripcion: "Intento de login con un correo inexistente",
+      detalles: { email: input.email },
     });
     throw new AppError(MENSAJE_CREDENCIALES_INVALIDAS, 401);
   }
@@ -64,7 +64,9 @@ export async function login(input: LoginInput, direccionIp: string): Promise<Log
     throw new AppError(MENSAJE_CREDENCIALES_INVALIDAS, 401);
   }
 
-  if (usuario.organizacion.estado !== "ACTIVA") {
+  // El Administrador Principal (SUPER_ADMIN) no pertenece a ninguna
+  // organización, así que esta validación no le aplica.
+  if (usuario.organizacion && usuario.organizacion.estado !== "ACTIVA") {
     await registrarEventoSeguridad({
       evento: "AUTH_LOGIN_FAILED",
       resultado: "FALLIDO",
@@ -136,6 +138,7 @@ export async function login(input: LoginInput, direccionIp: string): Promise<Log
     sub: usuario.id,
     organizacionId: usuario.organizacionId,
     rolId: usuario.rolId,
+    tipoRol: usuario.rol.tipo,
   });
 
   const expiraEn = new Date(Date.now() + parseExpiresInToMs(env.JWT_EXPIRES_IN));
@@ -176,7 +179,7 @@ export async function obtenerPerfilActual(
 
 export async function logout(
   token: string,
-  actor: { usuarioId?: string; organizacionId?: string; direccionIp: string }
+  actor: { usuarioId?: string; organizacionId?: string | null; direccionIp: string }
 ): Promise<void> {
   await revocarSesionPorTokenHash(hashToken(token));
 

@@ -1,8 +1,11 @@
 
 
+import { TipoRol } from "@prisma/client";
+
 export interface UsuarioConRol {
   id: string;
-  organizacionId: string;
+  // null para el Administrador Principal (SUPER_ADMIN).
+  organizacionId: string | null;
   rolId: string;
   nombre: string;
   email: string;
@@ -13,12 +16,13 @@ export interface UsuarioConRol {
   rol: {
     id: string;
     nombre: string;
+    tipo: TipoRol;
   };
   organizacion: {
     id: string;
     nombre: string;
     estado: "ACTIVA" | "SUSPENDIDA" | "INACTIVA";
-  };
+  } | null;
 }
 
 export interface LoginResult {
@@ -34,11 +38,12 @@ export interface UsuarioPerfil {
   rol: {
     id: string;
     nombre: string;
+    tipo: TipoRol;
   };
   organizacion: {
     id: string;
     nombre: string;
-  };
+  } | null;
 }
 
 export interface PerfilActualResult {

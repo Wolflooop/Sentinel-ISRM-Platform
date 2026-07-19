@@ -57,6 +57,7 @@ export async function crearNuevaEvaluacion(
     contextoId: input.contextoId,
     resultado: input.resultado,
     justificacion: input.justificacion,
+    comentario: input.comentario,
     usuarioId: actor.usuarioId,
     organizacionId,
     direccionIp: actor.direccionIp,
