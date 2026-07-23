@@ -34,16 +34,20 @@ export function TreatmentForm({
     formState: { errors, isSubmitting },
   } = useForm<TreatmentFormValues>({
     resolver: zodResolver(treatmentFormSchema),
-    defaultValues: { estado: "PLANIFICADO", porcentajeAvance: 0 },
+    defaultValues: { estado: "PROPUESTO", porcentajeAvance: 0, controlIds: [] },
   });
 
   useEffect(() => {
     if (tratamiento) {
       reset({
-        controlPrincipalId: tratamiento.controlPrincipalId ?? "",
+        controlIds: tratamiento.controles.map((c) => c.id),
+        controlPrincipalId: tratamiento.controles.find((c) => c.esPrincipal)?.id ?? "",
         estrategia: tratamiento.estrategia,
         descripcionPlan: tratamiento.descripcionPlan,
         usuarioResponsableId: tratamiento.usuarioResponsableId,
+        fechaInicio: tratamiento.fechaInicio?.slice(0, 10) ?? "",
+        justificacion: tratamiento.justificacion ?? "",
+        aprobadoPorId: tratamiento.aprobadoPorId ?? "",
         fechaLimite: tratamiento.fechaLimite.slice(0, 10),
         estado: tratamiento.estado,
         porcentajeAvance: tratamiento.porcentajeAvance,
@@ -53,12 +57,12 @@ export function TreatmentForm({
 
   const estrategiaSeleccionada = watch("estrategia");
   const estadoSeleccionado = watch("estado");
+  const controlIdsSeleccionados = watch("controlIds") ?? [];
   const requiereControl = estrategiaSeleccionada === "MITIGAR";
   // El comentario es obligatorio siempre que haya una transición real de
-  // estado del riesgo: en creación SIEMPRE la hay (un tratamiento nuevo
-  // siempre mueve Riesgo.estado); en edición, solo si el estado
-  // seleccionado difiere del que tenía el tratamiento al cargar el
-  // formulario. No aplica en ediciones que no tocan el estado.
+  // estado del riesgo: en creación SIEMPRE la hay; en edición, solo si el
+  // estado seleccionado difiere del que tenía el tratamiento al cargar el
+  // formulario.
   const cambiaEstado = !tratamiento || estadoSeleccionado !== tratamiento.estado;
   const [errorComentario, setErrorComentario] = useState<string | null>(null);
 
@@ -95,28 +99,49 @@ export function TreatmentForm({
       </div>
 
       <div>
-        <label htmlFor="controlPrincipalId" className="block text-sm font-medium text-slate-700">
-          Control principal {requiereControl && <span className="text-red-600">*</span>}
+        <label htmlFor="controlIds" className="block text-sm font-medium text-slate-700">
+          Controles asociados {requiereControl && <span className="text-red-600">*</span>}
         </label>
         <select
-          id="controlPrincipalId"
-          defaultValue=""
-          disabled={!requiereControl}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-400"
-          {...register("controlPrincipalId")}
+          id="controlIds"
+          multiple
+          size={Math.min(6, Math.max(3, controles.length))}
+          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          {...register("controlIds")}
         >
-          <option value="">Sin control</option>
           {controles.map((control) => (
             <option key={control.id} value={control.id}>
               {control.nombre}
             </option>
           ))}
         </select>
+        {errors.controlIds && <p className="mt-1 text-sm text-red-600">{errors.controlIds.message}</p>}
+        {!requiereControl && (
+          <p className="mt-1 text-xs text-slate-400">Obligatorio solo cuando la estrategia es "Mitigar".</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="controlPrincipalId" className="block text-sm font-medium text-slate-700">
+          Control principal
+        </label>
+        <select
+          id="controlPrincipalId"
+          defaultValue=""
+          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          {...register("controlPrincipalId")}
+        >
+          <option value="">Sin control principal</option>
+          {controles
+            .filter((c) => controlIdsSeleccionados.includes(c.id))
+            .map((control) => (
+              <option key={control.id} value={control.id}>
+                {control.nombre}
+              </option>
+            ))}
+        </select>
         {errors.controlPrincipalId && (
           <p className="mt-1 text-sm text-red-600">{errors.controlPrincipalId.message}</p>
-        )}
-        {!requiereControl && (
-          <p className="mt-1 text-xs text-slate-400">Solo aplica cuando la estrategia es "Mitigar".</p>
         )}
       </div>
 
@@ -133,6 +158,18 @@ export function TreatmentForm({
         {errors.descripcionPlan && (
           <p className="mt-1 text-sm text-red-600">{errors.descripcionPlan.message}</p>
         )}
+      </div>
+
+      <div>
+        <label htmlFor="justificacion" className="block text-sm font-medium text-slate-700">
+          Justificación
+        </label>
+        <textarea
+          id="justificacion"
+          rows={2}
+          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          {...register("justificacion")}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -161,6 +198,39 @@ export function TreatmentForm({
         </div>
 
         <div>
+          <label htmlFor="aprobadoPorId" className="block text-sm font-medium text-slate-700">
+            Aprobado por
+          </label>
+          <select
+            id="aprobadoPorId"
+            defaultValue=""
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            {...register("aprobadoPorId")}
+          >
+            <option value="">Sin aprobar aún</option>
+            {usuarios.map((usuario) => (
+              <option key={usuario.id} value={usuario.id}>
+                {usuario.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="fechaInicio" className="block text-sm font-medium text-slate-700">
+            Fecha de inicio
+          </label>
+          <input
+            id="fechaInicio"
+            type="date"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            {...register("fechaInicio")}
+          />
+        </div>
+
+        <div>
           <label htmlFor="fechaLimite" className="block text-sm font-medium text-slate-700">
             Fecha límite
           </label>
@@ -184,9 +254,9 @@ export function TreatmentForm({
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register("estado")}
           >
-            <option value="PLANIFICADO">Planificado</option>
-            <option value="EN_PROGRESO">En progreso</option>
-            <option value="IMPLEMENTADO">Implementado</option>
+            <option value="PROPUESTO">Propuesto</option>
+            <option value="EN_EJECUCION">En ejecución</option>
+            <option value="COMPLETADO">Completado</option>
             <option value="VENCIDO">Vencido</option>
           </select>
         </div>
@@ -209,9 +279,10 @@ export function TreatmentForm({
         </div>
       </div>
 
-      {estadoSeleccionado === "IMPLEMENTADO" && (
+      {estadoSeleccionado === "COMPLETADO" && (
         <p className="text-xs text-slate-400">
-          Al guardar con estado "Implementado" se calculará automáticamente el riesgo residual.
+          Al guardar con estado "Completado" se calculará automáticamente el riesgo residual y se
+          generará una nueva evaluación RESIDUAL.
         </p>
       )}
 

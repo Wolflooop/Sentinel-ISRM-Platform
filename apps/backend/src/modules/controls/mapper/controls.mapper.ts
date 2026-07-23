@@ -2,12 +2,6 @@ import { ControlConRelaciones } from "../types/controls.types";
 import { ControlHistorialEntrada } from "../../history/types/history.types";
 import { ControlResponseDTO, ControlHistorialResponseDTO } from "../dto/controls.dto";
 
-/**
- * Prisma Model → Mapper → DTO. Requiere `organizacionId` del solicitante
- * (no del control) para poder derivar `esPropia` sin exponer
- * `organizacionId` crudo en la respuesta — mismo criterio que
- * threats.mapper.ts.
- */
 export function toControlResponseDTO(
   control: ControlConRelaciones,
   organizacionIdSolicitante: string
@@ -23,10 +17,10 @@ export function toControlResponseDTO(
     observaciones: control.observaciones,
     descripcionImplementacion: control.descripcionImplementacion,
     organizacion: control.organizacion
-      ? {
-          id: control.organizacion.id,
-          nombre: control.organizacion.nombre,
-        }
+      ? { id: control.organizacion.id, nombre: control.organizacion.nombre }
+      : null,
+    responsable: control.responsable
+      ? { id: control.responsable.id, nombre: control.responsable.nombre, email: control.responsable.email }
       : null,
   };
 }

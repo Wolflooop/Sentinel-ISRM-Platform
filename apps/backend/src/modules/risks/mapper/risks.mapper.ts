@@ -2,21 +2,32 @@ import { RiesgoConRelaciones } from "../types/risks.types";
 import { RiesgoHistorialEntrada } from "../../history/types/history.types";
 import { RiesgoResponseDTO, RiesgoHistorialResponseDTO } from "../dto/risks.dto";
 
-
 export function toRiesgoResponseDTO(riesgo: RiesgoConRelaciones): RiesgoResponseDTO {
   return {
     id: riesgo.id,
-    probabilidad: riesgo.probabilidad,
-    impacto: riesgo.impacto,
-    valorRiesgo: riesgo.valorRiesgo,
-    nivelRiesgoInherente: riesgo.nivelRiesgoInherente,
-    nivelRiesgoResidual: riesgo.nivelRiesgoResidual,
+    origen: riesgo.origen,
+    titulo: riesgo.titulo,
+    descripcion: riesgo.descripcion,
+    justificacionOrigen: riesgo.justificacionOrigen,
     estado: riesgo.estado,
-    fechaUltimoCalculo: riesgo.fechaUltimoCalculo.toISOString(),
     creadoEn: riesgo.creadoEn.toISOString(),
-    activo: riesgo.aav.activo,
-    amenaza: riesgo.aav.amenaza,
-    vulnerabilidad: riesgo.aav.vulnerabilidad,
+    creador: riesgo.creador,
+    responsable: riesgo.responsable,
+    categoriaIdentificacion: riesgo.categoriaIdentificacion,
+    activo: riesgo.aav?.activo ?? null,
+    amenaza: riesgo.aav?.amenaza ?? null,
+    vulnerabilidad: riesgo.aav?.vulnerabilidad ?? null,
+    evaluacionActual: riesgo.evaluacionActual
+      ? {
+          id: riesgo.evaluacionActual.id,
+          tipoEvaluacion: riesgo.evaluacionActual.tipoEvaluacion,
+          probabilidad: riesgo.evaluacionActual.probabilidad,
+          impacto: riesgo.evaluacionActual.impacto,
+          valorCalculado: riesgo.evaluacionActual.valorCalculado,
+          nivelRiesgo: riesgo.evaluacionActual.nivelRiesgo,
+          fechaEvaluacion: riesgo.evaluacionActual.fechaEvaluacion.toISOString(),
+        }
+      : null,
   };
 }
 

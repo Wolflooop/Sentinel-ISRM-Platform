@@ -3,10 +3,12 @@ import {
   listarRiesgosRequest,
   obtenerRiesgoRequest,
   crearRiesgoRequest,
+  asignarResponsableRequest,
   obtenerHistorialRiesgoRequest,
+  listarCategoriasIdentificacionRequest,
 } from "../services/risksService";
 import { FiltrosRiesgos } from "../types/risks.types";
-import { CrearRiesgoFormValues } from "../schemas/risksSchema";
+import { CrearRiesgoFormValues, AsignarResponsableFormValues } from "../schemas/risksSchema";
 
 export function useRiesgos(filtros: FiltrosRiesgos) {
   return useQuery({
@@ -33,10 +35,29 @@ export function useCrearRiesgo() {
   });
 }
 
+export function useAsignarResponsable(id: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AsignarResponsableFormValues) =>
+      asignarResponsableRequest(id as string, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["riesgos"] });
+      queryClient.invalidateQueries({ queryKey: ["riesgos", id] });
+    },
+  });
+}
+
 export function useHistorialRiesgo(id: string | undefined) {
   return useQuery({
     queryKey: ["riesgos", id, "historial"],
     queryFn: () => obtenerHistorialRiesgoRequest(id as string),
     enabled: Boolean(id),
+  });
+}
+
+export function useCategoriasIdentificacion() {
+  return useQuery({
+    queryKey: ["categorias-identificacion-riesgo"],
+    queryFn: listarCategoriasIdentificacionRequest,
   });
 }

@@ -73,6 +73,9 @@ enum EstadoRiesgo {
   CERRADO
   MONITOREADO
   ACEPTADO
+  // V2: un riesgo previamente CERRADO puede reabrirse (ver ResolucionRiesgo,
+  // que es 1:N — un riesgo puede resolverse, reabrirse y volver a resolverse).
+  REABIERTO
 }
 
 enum ResultadoEvaluacion {
@@ -87,10 +90,13 @@ enum EstrategiaTratamiento {
   ACEPTAR
 }
 
+// V2: valores renombrados respecto a V1.
+// Migración de datos: PLANIFICADO -> PROPUESTO, EN_PROGRESO -> EN_EJECUCION,
+// IMPLEMENTADO -> COMPLETADO. VENCIDO se mantiene sin cambios.
 enum EstadoTratamiento {
-  PLANIFICADO
-  EN_PROGRESO
-  IMPLEMENTADO
+  PROPUESTO
+  EN_EJECUCION
+  COMPLETADO
   VENCIDO
 }
 
@@ -100,11 +106,37 @@ enum TipoControl {
   CORRECTIVO
 }
 
+// V2: valores renombrados/consolidados respecto a V1.
+// Migración de datos: NO_APLICADO -> NO_INICIADO, PLANIFICADO -> NO_INICIADO,
+// EN_PROGRESO -> EN_PROGRESO (sin cambio), IMPLEMENTADO -> IMPLEMENTADO (sin
+// cambio). Se agrega VERIFICADO como nuevo estado posterior a IMPLEMENTADO.
 enum EstadoImplementacionControl {
-  NO_APLICADO
-  PLANIFICADO
+  NO_INICIADO
   EN_PROGRESO
   IMPLEMENTADO
+  VERIFICADO
+}
+
+// V2: origen de un Riesgo — reemplaza la obligatoriedad exclusiva de AAV.
+enum OrigenRiesgo {
+  AAV
+  MANUAL
+}
+
+// V2: tipo de Evaluacion — antes implícito por posición (única evaluación
+// por riesgo). Ahora explícito porque Evaluacion es una entidad con
+// historial: un riesgo puede tener múltiples evaluaciones INHERENTE y
+// RESIDUAL a lo largo del tiempo.
+enum TipoEvaluacion {
+  INHERENTE
+  RESIDUAL
+}
+
+// V2: estado del ciclo de vida de una Evidencia adjunta a Riesgo/Tratamiento/Control.
+enum EstadoEvidencia {
+  SUBIDA
+  VALIDADA
+  RECHAZADA
 }
 
 enum TipoReporte {
@@ -158,6 +190,7 @@ model Organizacion {
   contextos   Contexto[]
   activos     Activo[]
   amenazas    Amenaza[]
+  vulnerabilidades Vulnerabilidad[]
   controles   Control[]
   auditorias  Auditoria[]
   reportes    Reporte[]
@@ -178,7 +211,9 @@ model Usuario {
   rolId            String
   rol              Rol           @relation(fields: [rolId], references: [id], onDelete: Restrict)
   nombre           String
-  email            String
+  // Auditoría: largo acotado a 320 (RFC 5321/5322 — 64 local-part + '@' +
+  // 255 domain), en vez de TEXT sin límite explícito de dominio.
+  email            String    @db.VarChar(320)
   passwordHash     String
   intentosFallidos Int       @default(0)
   bloqueadoHasta   DateTime?
@@ -191,10 +226,19 @@ model Usuario {
   activosResponsable     Activo[]      @relation("ActivoResponsable")
   evaluaciones           Evaluacion[]
   tratamientosResponsable Tratamiento[] @relation("TratamientoResponsable")
+  tratamientosAprobados   Tratamiento[] @relation("TratamientoAprobadoPor")
   reportes               Reporte[]
   eventosSeguridad        EventoSeguridad[]
   riesgoHistorial         RiesgoHistorial[]
   controlHistorial        ControlHistorial[]
+  riesgosCreados          Riesgo[]      @relation("RiesgoCreador")
+  riesgosResponsable      Riesgo[]      @relation("RiesgoResponsable")
+  controlesResponsable    Control[]     @relation("ControlResponsable")
+  resolucionesRiesgo      ResolucionRiesgo[]
+  comentarios             Comentario[]
+  seguimientos            Seguimiento[]
+  evidenciasSubidas       Evidencia[]   @relation("EvidenciaSubidaPor")
+  evidenciasValidadas     Evidencia[]   @relation("EvidenciaValidadaPor")
 
   // Cambio (ver Fase 7): el login ya no pide organización (solo correo +
   // contraseña), así que el correo debe ser único de forma GLOBAL y no por
@@ -202,6 +246,8 @@ model Usuario {
   @@unique([email])
   @@index([rolId])
   @@index([organizacionId])
+  // Auditoría: consulta frecuente "usuarios activos de mi organización".
+  @@index([organizacionId, activo])
 }
 
 // Nivel jerárquico del rol (ver Fase 7 — jerarquía de administración).
@@ -224,6 +270,10 @@ model Rol {
 
   usuarios Usuario[]
   permisos RolPermiso[]
+
+  // Auditoría: el RBAC dinámico consulta/agrupa por tipo de rol en cada
+  // verificación de autorización.
+  @@index([tipo])
 }
 
 model Permiso {
@@ -430,6 +480,10 @@ model CategoriaVulnerabilidad {
 
 model Vulnerabilidad {
   id             String   @id @default(uuid())
+  // V2: nullable — NULO = catálogo global administrado por el administrador
+  // del sistema. Exactamente el mismo patrón que Amenaza.organizacionId.
+  organizacionId String?
+  organizacion   Organizacion? @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
   categoriaId    String
   categoria      CategoriaVulnerabilidad @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
   nombre         String
@@ -439,10 +493,17 @@ model Vulnerabilidad {
   // implementarse mediante una migración SQL personalizada.
   severidad      Int
   referenciaCVE  String?
+  esPredefinida  Boolean  @default(false)
 
   aavs ActivoAmenazaVulnerabilidad[]
 
+  // IMPORTANTE (ver Amenaza): dos NULL nunca son iguales en PostgreSQL para
+  // efectos de UNIQUE, por lo que esta restricción no impide duplicados
+  // globales; la validación de duplicados globales queda en la capa de
+  // aplicación, igual que para Amenaza.
+  @@unique([organizacionId, nombre])
   @@index([severidad])
+  @@index([esPredefinida])
 }
 
 // ============================================================================
@@ -467,44 +528,83 @@ model ActivoAmenazaVulnerabilidad {
   @@index([vulnerabilidadId])
 }
 
+// V2: catálogo de categorías para riesgos de origen MANUAL (sin AAV).
+model CategoriaIdentificacionRiesgo {
+  id          String   @id @default(uuid())
+  nombre      String   @unique
+  descripcion String?
+
+  riesgos Riesgo[]
+}
+
 model Riesgo {
   id                    String       @id @default(uuid())
-  aavId                 String       @unique
-  aav                   ActivoAmenazaVulnerabilidad @relation(fields: [aavId], references: [id], onDelete: Restrict)
-  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 5.
-  // Prisma no soporta restricciones CHECK de forma nativa; debe
-  // implementarse mediante una migración SQL personalizada.
-  probabilidad          Int
-  impacto               Int
-  // Excepción documentada a 3FN (ver Fase 6): valorRiesgo es un dato
-  // persistido, no calculado automáticamente mediante triggers ni mediante
-  // lógica propia de PostgreSQL. Se sincroniza exclusivamente desde la capa
-  // de servicios de la aplicación, en la misma operación en que cambian
-  // probabilidad/impacto.
-  // Restricción de dominio (ver Fase 2/3): valores válidos entre 1 y 25.
-  // Prisma no soporta restricciones CHECK de forma nativa; debe
-  // implementarse mediante una migración SQL personalizada.
-  valorRiesgo           Int
-  nivelRiesgoInherente  NivelRiesgo
-  nivelRiesgoResidual   NivelRiesgo?
-  fechaUltimoCalculo    DateTime     @default(now())
+
+  // V2: un Riesgo ahora tiene dos orígenes posibles. aavId deja de ser
+  // obligatorio; la obligatoriedad condicional se expresa mediante el CHECK
+  // "riesgo_origen_check" (ver migración SQL personalizada), que garantiza:
+  //   - origen = AAV     -> aavId NOT NULL, titulo IS NULL
+  //   - origen = MANUAL  -> aavId IS NULL, titulo NOT NULL,
+  //                          categoriaIdentificacionId NOT NULL
+  // Prisma no expresa CHECK condicionales entre columnas de forma nativa.
+  origen                OrigenRiesgo
+  aavId                 String?      @unique
+  aav                   ActivoAmenazaVulnerabilidad? @relation(fields: [aavId], references: [id], onDelete: Restrict)
+
+  // Campos exclusivos de origen MANUAL (NULL cuando origen = AAV).
+  titulo                     String?
+  descripcion                String?  @db.Text
+  justificacionOrigen        String?  @db.Text
+  categoriaIdentificacionId  String?
+  categoriaIdentificacion    CategoriaIdentificacionRiesgo? @relation(fields: [categoriaIdentificacionId], references: [id], onDelete: Restrict)
+
+  // V2: probabilidad/impacto/valorRiesgo/nivelRiesgoInherente/
+  // nivelRiesgoResidual/fechaUltimoCalculo se retiran de Riesgo: ahora viven
+  // exclusivamente en Evaluacion (ver modelo Evaluacion). Riesgo mantiene
+  // únicamente un puntero a la evaluación vigente.
+  evaluacionActualId    String?      @unique
+  evaluacionActual      Evaluacion?  @relation("EvaluacionActual", fields: [evaluacionActualId], references: [id], onDelete: SetNull)
+
   estado                EstadoRiesgo @default(IDENTIFICADO)
   creadoEn              DateTime     @default(now())
 
-  evaluaciones Evaluacion[]
-  historial    RiesgoHistorial[]
+  // V2: creadorId nunca cambia (fijado en creación). responsableId puede
+  // cambiar y se actualiza únicamente mediante el endpoint dedicado
+  // POST /riesgos/:id/responsable (ver risks.service.ts), nunca mediante un
+  // PATCH genérico del riesgo.
+  creadorId             String
+  creador               Usuario      @relation("RiesgoCreador", fields: [creadorId], references: [id], onDelete: Restrict)
+  // Auditoría: opcional. El flujo real es Crear -> Identificar -> Analizar
+  // -> Asignar responsable -> Tratar; un riesgo recién creado no
+  // necesariamente tiene responsable todavía.
+  responsableId         String?
+  responsable           Usuario?     @relation("RiesgoResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+
+  evaluaciones  Evaluacion[] @relation("EvaluacionesDelRiesgo")
+  historial     RiesgoHistorial[]
+  tratamientos  Tratamiento[]
+  resoluciones  ResolucionRiesgo[]
+  comentarios   Comentario[]
+  seguimientos  Seguimiento[]
+  evidencias    Evidencia[]
 
   // Decisión Fase 8.1: sin organizacionId directo. El aislamiento
-  // multi-tenant se resuelve vía JOIN: Riesgo -> AAV -> Activo -> Organizacion.
+  // multi-tenant se resuelve vía JOIN: Riesgo -> AAV -> Activo -> Organizacion
+  // (origen AAV) o Riesgo -> creador -> Organizacion (origen MANUAL).
   @@index([estado])
-  @@index([nivelRiesgoInherente])
+  @@index([origen])
+  @@index([creadorId])
+  @@index([responsableId])
+  // Auditoría: soporta ordenamiento/filtrado por fecha de creación en
+  // listados, reportes y dashboards.
+  @@index([creadoEn])
 }
 
 // Trazabilidad de cambios de estado del riesgo (ver Fase 9 — UX/historial).
 // Se escribe SIEMPRE dentro de la misma transacción que cambia Riesgo.estado
 // (creación del riesgo, creación de evaluación, creación/actualización de
-// tratamiento), nunca desde un endpoint propio de "cambiar estado libre" —
-// ese endpoint no existe y esta tabla no lo introduce.
+// tratamiento, resolución/reapertura), nunca desde un endpoint propio de
+// "cambiar estado libre" — ese endpoint no existe y esta tabla no lo introduce.
 model RiesgoHistorial {
   id             String       @id @default(uuid())
   riesgoId       String
@@ -527,19 +627,145 @@ model RiesgoHistorial {
 model Evaluacion {
   id              String              @id @default(uuid())
   riesgoId        String
-  riesgo          Riesgo              @relation(fields: [riesgoId], references: [id], onDelete: Restrict)
+  riesgo          Riesgo              @relation("EvaluacionesDelRiesgo", fields: [riesgoId], references: [id], onDelete: Restrict)
   contextoId      String
   contexto        Contexto            @relation(fields: [contextoId], references: [id], onDelete: Restrict)
+
+  // V2: tipoEvaluacion distingue evaluaciones INHERENTE de RESIDUAL —
+  // reemplaza la distinción implícita que antes vivía en
+  // Riesgo.nivelRiesgoInherente / Riesgo.nivelRiesgoResidual.
+  tipoEvaluacion  TipoEvaluacion
+
+  // V2: campos migrados desde Riesgo (antes: probabilidad/impacto/
+  // valorRiesgo/nivelRiesgoInherente|Residual vivían en Riesgo). Ahora cada
+  // Evaluacion es dueña de su propio cálculo. Restricciones de dominio
+  // (probabilidad/impacto entre 1-5, valorCalculado entre 1-25) se
+  // implementan mediante CHECK en la migración SQL personalizada, igual que
+  // en V1.
+  probabilidad    Int
+  impacto         Int
+  valorCalculado  Int
+  nivelRiesgo     NivelRiesgo
+
   resultado       ResultadoEvaluacion
   justificacion   String              @db.Text
   usuarioId       String
   usuario         Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
   fechaEvaluacion DateTime            @default(now())
 
-  tratamiento Tratamiento?
+  // V2: un Tratamiento ya no depende exclusivamente de una Evaluacion (ver
+  // modelo Tratamiento); esta relación se conserva únicamente como
+  // referencia histórica de qué evaluación originó cada tratamiento
+  // (Tratamiento.evaluacionOrigenId), por lo que deja de ser 1:1 obligatoria.
+  tratamientosOrigen Tratamiento[] @relation("TratamientoEvaluacionOrigen")
+  riesgoComoActual   Riesgo?       @relation("EvaluacionActual")
+  comentarios        Comentario[]
 
   // Decisión Fase 8.1: sin organizacionId directo (ver Riesgo).
   @@index([riesgoId, fechaEvaluacion])
+  @@index([tipoEvaluacion])
+  // Auditoría: soporta filtrar/agrupar evaluaciones por Contexto ISO.
+  @@index([contextoId])
+}
+
+// V2: historial completo de resoluciones. Un riesgo puede resolverse,
+// reabrirse y volver a resolverse — por lo tanto es 1:N, nunca 1:1.
+// Cada fila representa un evento puntual (RESOLUCION o REAPERTURA); el
+// estado vigente del riesgo (CERRADO/REABIERTO/etc.) sigue viviendo en
+// Riesgo.estado y se sincroniza desde la capa de aplicación en la misma
+// transacción en que se inserta la fila correspondiente.
+enum TipoResolucionRiesgo {
+  RESOLUCION
+  REAPERTURA
+}
+
+model ResolucionRiesgo {
+  id           String               @id @default(uuid())
+  riesgoId     String
+  riesgo       Riesgo               @relation(fields: [riesgoId], references: [id], onDelete: Cascade)
+  tipo         TipoResolucionRiesgo
+  justificacion String              @db.Text
+  usuarioId    String
+  usuario      Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  fecha        DateTime             @default(now())
+
+  @@index([riesgoId, fecha])
+}
+
+// V2: comentario polimórfico — pertenece exactamente a uno de
+// Riesgo | Evaluacion | Tratamiento | Control. La exclusividad ("exactamente
+// un destino") se garantiza mediante CHECK en la migración SQL personalizada
+// (Prisma no expresa CHECK entre columnas nativamente); a nivel de
+// aplicación el DTO de creación exige exactamente un *Id no nulo.
+model Comentario {
+  id            String   @id @default(uuid())
+  riesgoId      String?
+  riesgo        Riesgo?      @relation(fields: [riesgoId], references: [id], onDelete: Cascade)
+  evaluacionId  String?
+  evaluacion    Evaluacion?  @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+  tratamientoId String?
+  tratamiento   Tratamiento? @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+  controlId     String?
+  control       Control?     @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  usuarioId     String
+  usuario       Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  contenido     String       @db.Text
+  creadoEn      DateTime     @default(now())
+
+  @@index([riesgoId])
+  @@index([evaluacionId])
+  @@index([tratamientoId])
+  @@index([controlId])
+}
+
+// V2: seguimiento polimórfico — pertenece exactamente a uno de
+// Riesgo | Tratamiento | Control (nótese: sin Evaluacion, a diferencia de
+// Comentario). Misma estrategia de CHECK que Comentario.
+model Seguimiento {
+  id            String   @id @default(uuid())
+  riesgoId      String?
+  riesgo        Riesgo?      @relation(fields: [riesgoId], references: [id], onDelete: Cascade)
+  tratamientoId String?
+  tratamiento   Tratamiento? @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+  controlId     String?
+  control       Control?     @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  usuarioId     String
+  usuario       Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  descripcion   String       @db.Text
+  fecha         DateTime     @default(now())
+
+  @@index([riesgoId])
+  @@index([tratamientoId])
+  @@index([controlId])
+}
+
+// V2: evidencia polimórfica — pertenece exactamente a uno de
+// Riesgo | Tratamiento | Control. Misma estrategia de CHECK que Comentario.
+model Evidencia {
+  id            String          @id @default(uuid())
+  riesgoId      String?
+  riesgo        Riesgo?      @relation(fields: [riesgoId], references: [id], onDelete: Cascade)
+  tratamientoId String?
+  tratamiento   Tratamiento? @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+  controlId     String?
+  control       Control?     @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  nombreArchivo String
+  rutaArchivo   String
+  estado        EstadoEvidencia @default(SUBIDA)
+  subidoPorId   String
+  subidoPor     Usuario         @relation("EvidenciaSubidaPor", fields: [subidoPorId], references: [id], onDelete: Restrict)
+  validadoPorId String?
+  validadoPor   Usuario?        @relation("EvidenciaValidadaPor", fields: [validadoPorId], references: [id], onDelete: Restrict)
+  comentarioValidacion String?  @db.Text
+  creadoEn      DateTime        @default(now())
+
+  @@index([riesgoId])
+  @@index([tratamientoId])
+  @@index([controlId])
+  @@index([estado])
 }
 
 // ============================================================================
@@ -548,27 +774,69 @@ model Evaluacion {
 
 model Tratamiento {
   id                    String                @id @default(uuid())
-  evaluacionId          String                @unique
-  evaluacion            Evaluacion            @relation(fields: [evaluacionId], references: [id], onDelete: Restrict)
-  // Nullable en general; obligatorio a nivel de aplicación cuando
-  // estrategia = MITIGAR (ver Fase 3/5). No es NOT NULL en la base de datos.
-  controlPrincipalId    String?
-  controlPrincipal      Control?              @relation(fields: [controlPrincipalId], references: [id], onDelete: Restrict)
+
+  // V2: Tratamiento ahora depende principalmente de Riesgo, no de
+  // Evaluacion. Un riesgo puede tener múltiples tratamientos a lo largo del
+  // tiempo (por eso ya no es @unique).
+  riesgoId              String
+  riesgo                Riesgo                @relation(fields: [riesgoId], references: [id], onDelete: Restrict)
+
+  // V2: se conserva únicamente como referencia histórica de qué evaluación
+  // motivó este tratamiento — ya no es la FK obligatoria ni @unique.
+  evaluacionOrigenId    String?
+  evaluacionOrigen      Evaluacion?           @relation("TratamientoEvaluacionOrigen", fields: [evaluacionOrigenId], references: [id], onDelete: SetNull)
+
   estrategia            EstrategiaTratamiento
   descripcionPlan       String                @db.Text
   usuarioResponsableId  String
   usuarioResponsable    Usuario               @relation("TratamientoResponsable", fields: [usuarioResponsableId], references: [id], onDelete: Restrict)
+
+  // V2: nuevos campos de gobernanza del tratamiento.
+  fechaInicio           DateTime?             @db.Date
+  justificacion         String?               @db.Text
+  aprobadoPorId         String?
+  aprobadoPor           Usuario?              @relation("TratamientoAprobadoPor", fields: [aprobadoPorId], references: [id], onDelete: Restrict)
+  fechaAprobacion       DateTime?
+
   fechaLimite           DateTime              @db.Date
-  estado                EstadoTratamiento     @default(PLANIFICADO)
+  estado                EstadoTratamiento     @default(PROPUESTO)
   // Restricción de dominio (ver Fase 2/3): valores válidos entre 0 y 100.
   // Prisma no soporta restricciones CHECK de forma nativa; debe
   // implementarse mediante una migración SQL personalizada.
   porcentajeAvance      Int                   @default(0)
 
+  // V2: la relación 1:1 vía controlPrincipalId se elimina — un tratamiento
+  // puede vincularse a varios controles y un control puede sostener varios
+  // tratamientos (ver modelo puente TratamientoControl).
+  controles     TratamientoControl[]
+  comentarios   Comentario[]
+  seguimientos  Seguimiento[]
+  evidencias    Evidencia[]
+
   // Decisión Fase 8.1: sin organizacionId directo (ver Riesgo).
-  @@index([controlPrincipalId])
+  @@index([riesgoId])
+  @@index([evaluacionOrigenId])
   @@index([estado])
   @@index([fechaLimite])
+}
+
+// V2: puente N:M entre Tratamiento y Control — reemplaza la antigua FK 1:1
+// Tratamiento.controlPrincipalId. Backfill (ver migración de datos): por
+// cada Tratamiento V1 con controlPrincipalId no nulo, se inserta una fila
+// aquí con esPrincipal = true; el resto de asociaciones nuevas se crean con
+// esPrincipal = false salvo que se indique explícitamente lo contrario.
+model TratamientoControl {
+  tratamientoId String
+  tratamiento   Tratamiento @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+  controlId     String
+  control       Control     @relation(fields: [controlId], references: [id], onDelete: Restrict)
+  // Conserva la semántica de "control principal" que existía en V1 como FK
+  // única; ahora es un flag sobre la fila del puente.
+  esPrincipal   Boolean     @default(false)
+  asociadoEn    DateTime    @default(now())
+
+  @@id([tratamientoId, controlId])
+  @@index([controlId])
 }
 
 model Control {
@@ -581,18 +849,29 @@ model Control {
   codigoIso27001              String?
   nombre                      String
   tipo                        TipoControl
-  estadoImplementacion        EstadoImplementacionControl  @default(NO_APLICADO)
+  estadoImplementacion        EstadoImplementacionControl  @default(NO_INICIADO)
   // Debe permanecer NULL mientras estadoImplementacion != IMPLEMENTADO
   // (regla de negocio validada en la capa de aplicación, ver Fase 5).
   fechaImplementacion         DateTime?                    @db.Date
   observaciones               String?
   descripcionImplementacion   String?
 
-  tratamientos Tratamiento[]
-  historial    ControlHistorial[]
+  // V2: responsable operativo del control (distinto del responsable del
+  // riesgo o del activo).
+  responsableId               String?
+  responsable                 Usuario?                     @relation("ControlResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+
+  // V2: la relación directa Tratamiento[] se reemplaza por el puente
+  // TratamientoControl (ver modelo Tratamiento).
+  tratamientos  TratamientoControl[]
+  historial     ControlHistorial[]
+  comentarios   Comentario[]
+  seguimientos  Seguimiento[]
+  evidencias    Evidencia[]
 
   @@index([codigoIso27001])
   @@index([estadoImplementacion])
+  @@index([responsableId])
 }
 
 // Trazabilidad de cambios de estado de implementación del control (misma
@@ -678,5 +957,8 @@ model EventoSeguridad {
   @@index([evento])
   @@index([fecha])
   @@index([severidad])
+  // Auditoría: consulta real es "eventos de tipo X en un rango de fechas"
+  // (p. ej. AUTH_LOGIN_FAILED en las últimas 24h) — el compuesto resuelve
+  // esto en un solo índice en vez de combinar los dos simples existentes.
+  @@index([evento, fecha])
 }
-

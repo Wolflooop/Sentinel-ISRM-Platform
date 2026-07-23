@@ -3,6 +3,9 @@ import { z } from "zod";
 export const crearEvaluacionFormSchema = z.object({
   riesgoId: z.string().min(1, "Debes indicar el riesgo"),
   contextoId: z.string().min(1, "Debes indicar el contexto"),
+  tipoEvaluacion: z.enum(["INHERENTE", "RESIDUAL"]),
+  probabilidad: z.coerce.number().int().min(1).max(5),
+  impacto: z.coerce.number().int().min(1).max(5),
   resultado: z.enum(["ACEPTABLE", "NO_ACEPTABLE"]),
   justificacion: z.string().trim().min(1, "La justificación es obligatoria"),
   // Independiente de `justificacion`: comentario del historial del riesgo.

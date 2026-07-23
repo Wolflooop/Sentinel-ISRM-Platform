@@ -7,10 +7,10 @@ interface Props {
 
 function estadoBadge(estado: Control["estadoImplementacion"]) {
   const styles: Record<Control["estadoImplementacion"], string> = {
-    NO_APLICADO: "bg-slate-100 text-slate-700",
-    PLANIFICADO: "bg-amber-100 text-amber-700",
+    NO_INICIADO: "bg-slate-100 text-slate-700",
     EN_PROGRESO: "bg-sky-100 text-sky-700",
     IMPLEMENTADO: "bg-emerald-100 text-emerald-700",
+    VERIFICADO: "bg-teal-100 text-teal-700",
   };
 
   return styles[estado];
@@ -26,6 +26,7 @@ export function ControlsTable({ controles }: Props) {
             <th className="px-4 py-3 font-medium">Tipo</th>
             <th className="px-4 py-3 font-medium">Estado</th>
             <th className="px-4 py-3 font-medium">Organización</th>
+            <th className="px-4 py-3 font-medium">Responsable</th>
             <th className="px-4 py-3 font-medium">Acciones</th>
           </tr>
         </thead>
@@ -46,6 +47,9 @@ export function ControlsTable({ controles }: Props) {
               </td>
               <td className="px-4 py-3 text-slate-600">
                 {control.organizacion?.nombre ?? "Sin organización"}
+              </td>
+              <td className="px-4 py-3 text-slate-600">
+                {control.responsable?.nombre ?? "Sin asignar"}
               </td>
               <td className="px-4 py-3">
                 <Link to={`/controles/${control.id}`} className="text-sm font-medium text-slate-700 underline">

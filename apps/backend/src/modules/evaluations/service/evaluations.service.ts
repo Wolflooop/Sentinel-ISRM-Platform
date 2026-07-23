@@ -4,6 +4,7 @@ import {
   findEvaluacionPorId,
   findRiesgoPorIdYOrganizacion,
   findContextoActivoPorOrganizacion,
+  findCeldaMatriz,
   crearEvaluacion,
   registrarAuditoriaEvaluacion,
 } from "../repository/evaluations.repository";
@@ -52,9 +53,24 @@ export async function crearNuevaEvaluacion(
     throw new AppError("El contexto indicado no es el contexto activo de la organización", 409);
   }
 
+  const celda = await findCeldaMatriz(contexto.id, input.probabilidad, input.impacto);
+  if (!celda) {
+    throw new AppError(
+      "El contexto activo no tiene definida esa combinación de probabilidad/impacto en su matriz de riesgo",
+      409
+    );
+  }
+
+  const valorCalculado = input.probabilidad * input.impacto;
+
   const evaluacion = await crearEvaluacion({
     riesgoId: input.riesgoId,
     contextoId: input.contextoId,
+    tipoEvaluacion: input.tipoEvaluacion,
+    probabilidad: input.probabilidad,
+    impacto: input.impacto,
+    valorCalculado,
+    nivelRiesgo: celda.nivelResultante,
     resultado: input.resultado,
     justificacion: input.justificacion,
     comentario: input.comentario,

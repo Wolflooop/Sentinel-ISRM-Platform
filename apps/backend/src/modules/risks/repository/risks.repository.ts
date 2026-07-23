@@ -3,18 +3,19 @@ import { prisma } from "../../../config/prisma";
 import {
   RiesgoConRelaciones,
   FiltrosRiesgos,
-  CrearRiesgoParams,
+  CrearRiesgoAavParams,
+  CrearRiesgoManualParams,
   ActivoResumen,
   AmenazaResumen,
   VulnerabilidadResumen,
   ContextoActivoResumen,
   CeldaMatrizResumen,
+  CategoriaIdentificacionResumen,
+  UsuarioDeOrganizacionResumen,
 } from "../types/risks.types";
 import { RiesgoHistorialEntrada } from "../../history/types/history.types";
 import { registrarCreacionRiesgo } from "../../history/service/history.service";
 import { findHistorialDeRiesgo as findHistorialDeRiesgoRepo } from "../../history/repository/history.repository";
-
-
 
 const RIESGO_INCLUDE = {
   aav: {
@@ -24,11 +25,33 @@ const RIESGO_INCLUDE = {
       vulnerabilidad: { select: { id: true, nombre: true } },
     },
   },
+  categoriaIdentificacion: { select: { id: true, nombre: true } },
+  creador: { select: { id: true, nombre: true } },
+  responsable: { select: { id: true, nombre: true } },
+  evaluacionActual: {
+    select: {
+      id: true,
+      tipoEvaluacion: true,
+      probabilidad: true,
+      impacto: true,
+      valorCalculado: true,
+      nivelRiesgo: true,
+      fechaEvaluacion: true,
+    },
+  },
 } as const;
 
-
+// V2: Riesgo ya no tiene organizacionId directo ni siempre tiene AAV
+// (origen MANUAL). El aislamiento multi-tenant se resuelve por CUALQUIERA
+// de las dos cadenas posibles: AAV -> Activo -> Organizacion (origen AAV),
+// o creador -> Organizacion (origen MANUAL, ver backfill/creación).
 function whereOrganizacion(organizacionId: string) {
-  return { aav: { activo: { organizacionId } } };
+  return {
+    OR: [
+      { aav: { activo: { organizacionId } } },
+      { creador: { organizacionId } },
+    ],
+  };
 }
 
 export async function findRiesgosDeOrganizacion(
@@ -39,9 +62,8 @@ export async function findRiesgosDeOrganizacion(
     where: {
       ...whereOrganizacion(organizacionId),
       ...(filtros.estado ? { estado: filtros.estado } : {}),
-      ...(filtros.nivelRiesgoInherente
-        ? { nivelRiesgoInherente: filtros.nivelRiesgoInherente }
-        : {}),
+      ...(filtros.origen ? { origen: filtros.origen } : {}),
+      ...(filtros.responsableId ? { responsableId: filtros.responsableId } : {}),
     },
     include: RIESGO_INCLUDE,
     orderBy: { creadoEn: "desc" },
@@ -73,10 +95,6 @@ export async function findActivoDeOrganizacion(
   });
 }
 
-/**
- * Igual que en threats.repository.ts: visible tanto si es global
- * (`organizacionId = null`) como si es propia de la organización.
- */
 export async function findAmenazaVisible(
   amenazaId: string,
   organizacionId: string
@@ -87,13 +105,15 @@ export async function findAmenazaVisible(
   });
 }
 
-/** Vulnerabilidad es 100% global (sin organizacionId) — solo existencia. */
-export async function findVulnerabilidad(
-  vulnerabilidadId: string
+// V2: la vulnerabilidad ahora también es catálogo global/organización
+// (igual que Amenaza) — visible si es global o propia.
+export async function findVulnerabilidadVisible(
+  vulnerabilidadId: string,
+  organizacionId: string
 ): Promise<VulnerabilidadResumen | null> {
-  return prisma.vulnerabilidad.findUnique({
-    where: { id: vulnerabilidadId },
-    select: { id: true, nombre: true },
+  return prisma.vulnerabilidad.findFirst({
+    where: { id: vulnerabilidadId, OR: [{ organizacionId: null }, { organizacionId }] },
+    select: { id: true, organizacionId: true, nombre: true },
   });
 }
 
@@ -123,6 +143,24 @@ export async function findCeldaMatriz(
   });
 }
 
+export async function findCategoriaIdentificacion(
+  categoriaIdentificacionId: string
+): Promise<CategoriaIdentificacionResumen | null> {
+  return prisma.categoriaIdentificacionRiesgo.findUnique({
+    where: { id: categoriaIdentificacionId },
+    select: { id: true, nombre: true },
+  });
+}
+
+export async function findUsuarioDeOrganizacion(
+  usuarioId: string,
+  organizacionId: string
+): Promise<UsuarioDeOrganizacionResumen | null> {
+  return prisma.usuario.findFirst({
+    where: { id: usuarioId, organizacionId },
+    select: { id: true, organizacionId: true },
+  });
+}
 
 export class RiesgoDuplicadoParaAavError extends Error {
   constructor() {
@@ -137,9 +175,51 @@ function esViolacionDeUnicidad(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
+/**
+ * Crea la Evaluacion INHERENTE inicial de un riesgo recién creado y fija
+ * Riesgo.evaluacionActualId a esa evaluación — replica, para riesgos
+ * nuevos, el mismo backfill que la migración V2 aplicó a los riesgos
+ * existentes (ver migración `..._v2_riesgo_evaluacion_tratamiento_polimorficos`).
+ */
+async function crearEvaluacionInherenteYFijarActual(
+  tx: Prisma.TransactionClient,
+  params: {
+    riesgoId: string;
+    contextoId: string;
+    probabilidad: number;
+    impacto: number;
+    valorCalculado: number;
+    nivelRiesgo: string;
+    usuarioId: string;
+  }
+): Promise<void> {
+  const resultado = params.nivelRiesgo === "BAJO" || params.nivelRiesgo === "MEDIO"
+    ? "ACEPTABLE"
+    : "NO_ACEPTABLE";
+
+  const evaluacion = await tx.evaluacion.create({
+    data: {
+      riesgoId: params.riesgoId,
+      contextoId: params.contextoId,
+      tipoEvaluacion: "INHERENTE",
+      probabilidad: params.probabilidad,
+      impacto: params.impacto,
+      valorCalculado: params.valorCalculado,
+      nivelRiesgo: params.nivelRiesgo as never,
+      resultado: resultado as never,
+      justificacion: "Evaluación inherente generada automáticamente al identificar el riesgo.",
+      usuarioId: params.usuarioId,
+    },
+  });
+
+  await tx.riesgo.update({
+    where: { id: params.riesgoId },
+    data: { evaluacionActualId: evaluacion.id },
+  });
+}
 
 export async function crearAavYRiesgo(
-  params: CrearRiesgoParams,
+  params: CrearRiesgoAavParams,
   intentosRestantes = 3
 ): Promise<RiesgoConRelaciones> {
   try {
@@ -166,22 +246,39 @@ export async function crearAavYRiesgo(
 
       const riesgoExistente = await tx.riesgo.findUnique({ where: { aavId: aav.id } });
       if (riesgoExistente) {
-
         throw new RiesgoDuplicadoParaAavError();
       }
 
-      const valorRiesgo = params.probabilidad * params.impacto;
+      const valorCalculado = params.probabilidad * params.impacto;
 
       const riesgoCreado = await tx.riesgo.create({
         data: {
+          origen: "AAV",
           aavId: aav.id,
-          probabilidad: params.probabilidad,
-          impacto: params.impacto,
-          valorRiesgo,
-          nivelRiesgoInherente: params.nivelRiesgoInherente,
+          creadorId: params.actor.usuarioId,
+          responsableId: params.responsableId,
           estado: "IDENTIFICADO",
         },
-        include: RIESGO_INCLUDE,
+      });
+
+      const contexto = await tx.contexto.findFirst({
+        where: { organizacionId: params.organizacionId, activo: true },
+        select: { id: true },
+      });
+      if (!contexto) {
+        throw new Error(
+          "No es posible crear la evaluación inherente: la organización no tiene un Contexto ISO activo"
+        );
+      }
+
+      await crearEvaluacionInherenteYFijarActual(tx, {
+        riesgoId: riesgoCreado.id,
+        contextoId: contexto.id,
+        probabilidad: params.probabilidad,
+        impacto: params.impacto,
+        valorCalculado,
+        nivelRiesgo: params.nivelRiesgoInherente,
+        usuarioId: params.actor.usuarioId,
       });
 
       await tx.auditoria.create({
@@ -192,27 +289,30 @@ export async function crearAavYRiesgo(
           entidadId: riesgoCreado.id,
           accion: "CREAR",
           datosNuevos: {
+            origen: "AAV",
             activoId: params.activoId,
             amenazaId: params.amenazaId,
             vulnerabilidadId: params.vulnerabilidadId,
             probabilidad: params.probabilidad,
             impacto: params.impacto,
-            valorRiesgo,
+            valorCalculado,
             nivelRiesgoInherente: params.nivelRiesgoInherente,
+            responsableId: params.responsableId,
           } as never,
           direccionIp: params.actor.direccionIp,
         },
       });
 
-      // Primera entrada del historial: único punto responsable, ver
-      // modules/history/service/history.service.ts.
       await registrarCreacionRiesgo(tx, {
         riesgoId: riesgoCreado.id,
         usuarioId: params.actor.usuarioId,
         estadoInicial: "IDENTIFICADO",
       });
 
-      return riesgoCreado;
+      return tx.riesgo.findUniqueOrThrow({
+        where: { id: riesgoCreado.id },
+        include: RIESGO_INCLUDE,
+      });
     });
   } catch (err) {
     if (esViolacionDeUnicidad(err) && intentosRestantes > 0) {
@@ -222,11 +322,123 @@ export async function crearAavYRiesgo(
   }
 }
 
+// V2: creación de riesgo de origen MANUAL (punto 1 del prompt) — sin AAV,
+// con titulo/descripcion/justificacionOrigen/categoriaIdentificacionId
+// obligatorios (garantizado también por el CHECK `riesgo_origen_check`).
+export async function crearRiesgoManual(
+  params: CrearRiesgoManualParams
+): Promise<RiesgoConRelaciones> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const valorCalculado = params.probabilidad * params.impacto;
+
+    const riesgoCreado = await tx.riesgo.create({
+      data: {
+        origen: "MANUAL",
+        titulo: params.titulo,
+        descripcion: params.descripcion,
+        justificacionOrigen: params.justificacionOrigen,
+        categoriaIdentificacionId: params.categoriaIdentificacionId,
+        creadorId: params.actor.usuarioId,
+        responsableId: params.responsableId,
+        estado: "IDENTIFICADO",
+      },
+    });
+
+    const contexto = await tx.contexto.findFirst({
+      where: { organizacionId: params.organizacionId, activo: true },
+      select: { id: true },
+    });
+    if (!contexto) {
+      throw new Error(
+        "No es posible crear la evaluación inherente: la organización no tiene un Contexto ISO activo"
+      );
+    }
+
+    await crearEvaluacionInherenteYFijarActual(tx, {
+      riesgoId: riesgoCreado.id,
+      contextoId: contexto.id,
+      probabilidad: params.probabilidad,
+      impacto: params.impacto,
+      valorCalculado,
+      nivelRiesgo: params.nivelRiesgoInherente,
+      usuarioId: params.actor.usuarioId,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: params.actor.usuarioId,
+        organizacionId: params.organizacionId,
+        entidad: "Riesgo",
+        entidadId: riesgoCreado.id,
+        accion: "CREAR",
+        datosNuevos: {
+          origen: "MANUAL",
+          titulo: params.titulo,
+          categoriaIdentificacionId: params.categoriaIdentificacionId,
+          probabilidad: params.probabilidad,
+          impacto: params.impacto,
+          valorCalculado,
+          nivelRiesgoInherente: params.nivelRiesgoInherente,
+          responsableId: params.responsableId,
+        } as never,
+        direccionIp: params.actor.direccionIp,
+      },
+    });
+
+    await registrarCreacionRiesgo(tx, {
+      riesgoId: riesgoCreado.id,
+      usuarioId: params.actor.usuarioId,
+      estadoInicial: "IDENTIFICADO",
+    });
+
+    return tx.riesgo.findUniqueOrThrow({
+      where: { id: riesgoCreado.id },
+      include: RIESGO_INCLUDE,
+    });
+  });
+}
+
+// V2 (punto 13 del prompt): endpoint dedicado para reasignar responsable.
+// creadorId NUNCA se toca aquí.
+export async function reasignarResponsableDeRiesgo(params: {
+  riesgoId: string;
+  responsableIdNuevo: string;
+  organizacionId: string;
+  actor: { usuarioId: string; direccionIp: string };
+}): Promise<RiesgoConRelaciones> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const anterior = await tx.riesgo.findUniqueOrThrow({
+      where: { id: params.riesgoId },
+      select: { responsableId: true },
+    });
+
+    const actualizado = await tx.riesgo.update({
+      where: { id: params.riesgoId },
+      data: { responsableId: params.responsableIdNuevo },
+      include: RIESGO_INCLUDE,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: params.actor.usuarioId,
+        organizacionId: params.organizacionId,
+        entidad: "Riesgo",
+        entidadId: params.riesgoId,
+        accion: "EDITAR",
+        datosAnteriores: { responsableId: anterior.responsableId } as never,
+        datosNuevos: { responsableId: params.responsableIdNuevo } as never,
+        direccionIp: params.actor.direccionIp,
+      },
+    });
+
+    return actualizado;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Historial. Aislamiento multi-tenant: se exige que el riesgo pertenezca a
 // la organización antes de listar su historial (mismo criterio que
-// findRiesgoDeOrganizacionPorId). La lectura/escritura del historial en sí
-// vive en modules/history/repository — este módulo solo valida pertenencia.
+// findRiesgoDeOrganizacionPorId).
 // ---------------------------------------------------------------------------
 
 export async function findHistorialDeRiesgo(

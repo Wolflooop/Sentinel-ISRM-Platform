@@ -3,6 +3,27 @@ import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
+// ============================================================================
+// SEED — SOLO DATOS GLOBALES DEL SISTEMA
+//
+// Este seed NO crea organizaciones, usuarios de organización, contextos,
+// escalas, matrices, activos, riesgos, tratamientos, evaluaciones, sesiones,
+// auditorías, eventos ni reportes. Sentinel ISRM es una plataforma SaaS
+// multiempresa: las organizaciones se crean desde la aplicación (SUPER_ADMIN)
+// mediante un bootstrap transaccional propio (organizations.service), nunca
+// mediante este archivo ni mediante variables de entorno.
+//
+// Este seed es idempotente y solo produce:
+//   1. Roles (SUPER_ADMIN, ADMIN_TIC, USUARIO_COMUN)
+//   2. Todos los permisos del catálogo
+//   3. RolPermiso
+//   4. Categorías globales (activo, amenaza, vulnerabilidad, identificación
+//      de riesgo)
+//   5. Catálogos ISO (amenazas predefinidas, vulnerabilidades predefinidas,
+//      controles ISO 27001)
+//   6. El usuario SUPER_ADMIN inicial (global, organizacionId = null)
+// ============================================================================
+
 const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> = [
   { recurso: "usuarios", accion: "leer", descripcion: "Consultar usuarios de la organización" },
   { recurso: "usuarios", accion: "crear", descripcion: "Crear usuarios en la organización" },
@@ -34,12 +55,31 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
   { recurso: "vulnerabilidades", accion: "actualizar", descripcion: "Actualizar una vulnerabilidad del catálogo" },
   { recurso: "vulnerabilidades", accion: "eliminar", descripcion: "Eliminar una vulnerabilidad del catálogo" },
   { recurso: "riesgos", accion: "leer", descripcion: "Consultar los riesgos identificados" },
-  { recurso: "riesgos", accion: "crear", descripcion: "Registrar un nuevo riesgo (activo + amenaza + vulnerabilidad)" },
-  { recurso: "riesgos", accion: "actualizar", descripcion: "Actualizar un riesgo o su tratamiento" },
+  { recurso: "riesgos", accion: "crear", descripcion: "Registrar un nuevo riesgo (origen AAV o MANUAL)" },
+  { recurso: "riesgos", accion: "actualizar", descripcion: "Actualizar un riesgo, su evaluación o su tratamiento" },
+  { recurso: "categoriasIdentificacionRiesgo", accion: "leer", descripcion: "Consultar el catálogo de categorías de identificación de riesgo manual" },
+  { recurso: "categoriasIdentificacionRiesgo", accion: "crear", descripcion: "Registrar una categoría de identificación de riesgo" },
+  { recurso: "categoriasIdentificacionRiesgo", accion: "actualizar", descripcion: "Actualizar una categoría de identificación de riesgo" },
+  { recurso: "categoriasIdentificacionRiesgo", accion: "eliminar", descripcion: "Eliminar una categoría de identificación de riesgo no utilizada" },
+  { recurso: "evaluaciones", accion: "leer", descripcion: "Consultar las evaluaciones de un riesgo" },
+  { recurso: "evaluaciones", accion: "crear", descripcion: "Registrar una nueva evaluación (inherente o residual) de un riesgo" },
+  { recurso: "evaluaciones", accion: "actualizar", descripcion: "Actualizar una evaluación de riesgo existente" },
+  { recurso: "resolucionesRiesgo", accion: "leer", descripcion: "Consultar el historial de resoluciones/reaperturas de un riesgo" },
+  { recurso: "resolucionesRiesgo", accion: "crear", descripcion: "Resolver o reabrir un riesgo" },
+  { recurso: "comentarios", accion: "leer", descripcion: "Consultar comentarios de riesgos, evaluaciones, tratamientos o controles" },
+  { recurso: "comentarios", accion: "crear", descripcion: "Registrar un comentario" },
+  { recurso: "seguimientos", accion: "leer", descripcion: "Consultar seguimientos de riesgos, tratamientos o controles" },
+  { recurso: "seguimientos", accion: "crear", descripcion: "Registrar un seguimiento" },
+  { recurso: "evidencias", accion: "leer", descripcion: "Consultar y descargar evidencias de riesgos, tratamientos o controles" },
+  { recurso: "evidencias", accion: "crear", descripcion: "Subir una evidencia" },
+  { recurso: "evidencias", accion: "validar", descripcion: "Validar o rechazar una evidencia subida" },
   { recurso: "controles", accion: "leer", descripcion: "Consultar el catálogo de controles" },
   { recurso: "controles", accion: "crear", descripcion: "Registrar un nuevo control" },
   { recurso: "controles", accion: "actualizar", descripcion: "Actualizar un control existente" },
   { recurso: "controles", accion: "eliminar", descripcion: "Eliminar un control no asociado a tratamientos" },
+  { recurso: "tratamientos", accion: "leer", descripcion: "Consultar los tratamientos asociados a un riesgo" },
+  { recurso: "tratamientos", accion: "crear", descripcion: "Registrar un nuevo tratamiento para un riesgo" },
+  { recurso: "tratamientos", accion: "actualizar", descripcion: "Actualizar el avance, estado o controles de un tratamiento" },
   { recurso: "reportes", accion: "leer", descripcion: "Consultar y descargar reportes generados" },
   { recurso: "reportes", accion: "crear", descripcion: "Generar un nuevo reporte" },
   { recurso: "auditoria", accion: "leer", descripcion: "Consultar el rastro de auditoría de la organización" },
@@ -55,7 +95,14 @@ const ROL_ADMINISTRADOR = {
 
 const ROLES_ADICIONALES: Record<
   string,
-  { descripcion: string; tipo: "ADMIN_TIC" | "USUARIO_COMUN"; permisos: Array<{ recurso: string; accion: string }> }
+  {
+    descripcion: string;
+    tipo: "ADMIN_TIC" | "USUARIO_COMUN";
+    permisos: Array<{
+      recurso: string;
+      accion: string;
+    }>;
+  }
 > = {
   "Administrador TIC": {
     descripcion: "Gestiona contexto ISO, activos, amenazas, vulnerabilidades, riesgos, tratamientos, controles y reportes de su propia organización",
@@ -86,6 +133,25 @@ const ROLES_ADICIONALES: Record<
       { recurso: "riesgos", accion: "leer" },
       { recurso: "riesgos", accion: "crear" },
       { recurso: "riesgos", accion: "actualizar" },
+      { recurso: "categoriasIdentificacionRiesgo", accion: "leer" },
+      { recurso: "categoriasIdentificacionRiesgo", accion: "crear" },
+      { recurso: "categoriasIdentificacionRiesgo", accion: "actualizar" },
+      { recurso: "categoriasIdentificacionRiesgo", accion: "eliminar" },
+      { recurso: "evaluaciones", accion: "leer" },
+      { recurso: "evaluaciones", accion: "crear" },
+      { recurso: "evaluaciones", accion: "actualizar" },
+      { recurso: "tratamientos", accion: "leer" },
+      { recurso: "tratamientos", accion: "crear" },
+      { recurso: "tratamientos", accion: "actualizar" },
+      { recurso: "resolucionesRiesgo", accion: "leer" },
+      { recurso: "resolucionesRiesgo", accion: "crear" },
+      { recurso: "comentarios", accion: "leer" },
+      { recurso: "comentarios", accion: "crear" },
+      { recurso: "seguimientos", accion: "leer" },
+      { recurso: "seguimientos", accion: "crear" },
+      { recurso: "evidencias", accion: "leer" },
+      { recurso: "evidencias", accion: "crear" },
+      { recurso: "evidencias", accion: "validar" },
       { recurso: "controles", accion: "leer" },
       { recurso: "controles", accion: "crear" },
       { recurso: "controles", accion: "actualizar" },
@@ -107,22 +173,24 @@ const ROLES_ADICIONALES: Record<
       { recurso: "vulnerabilidades", accion: "leer" },
       { recurso: "riesgos", accion: "leer" },
       { recurso: "riesgos", accion: "crear" },
+      { recurso: "categoriasIdentificacionRiesgo", accion: "leer" },
+      { recurso: "resolucionesRiesgo", accion: "leer" },
+      { recurso: "resolucionesRiesgo", accion: "crear" },
+      { recurso: "comentarios", accion: "leer" },
+      { recurso: "comentarios", accion: "crear" },
+      { recurso: "seguimientos", accion: "leer" },
+      { recurso: "seguimientos", accion: "crear" },
+      { recurso: "evidencias", accion: "leer" },
+      { recurso: "evidencias", accion: "crear" },
       { recurso: "controles", accion: "leer" },
       { recurso: "reportes", accion: "leer" },
     ],
   },
 };
 
-const ORGANIZACION_SEED = {
-  nombre: "Organizacion Semilla",
-  sector: "PRIVADO" as const,
-  tamano: "PEQUENA" as const,
-  paisIso: "CO",
-};
-
-const USUARIO_SEED = {
-  nombre: "Administrador Inicial",
-  email: "admin@sentinel-isrm.local",
+const SUPER_ADMIN_SEED = {
+  nombre: "Administrador Principal",
+  email: process.env.SEED_ADMIN_EMAIL ?? "admin@sentinel.local",
 };
 
 const CATEGORIAS_ACTIVO: Array<{ nombre: string; descripcion: string }> = [
@@ -155,6 +223,15 @@ const CATEGORIAS_VULNERABILIDAD: Array<{ nombre: string; descripcion: string }> 
   { nombre: "Personal", descripcion: "Debilidades derivadas de prácticas o capacitación del personal" },
   { nombre: "Procesos", descripcion: "Debilidades en procedimientos operativos" },
   { nombre: "Infraestructura", descripcion: "Debilidades en la infraestructura física o de soporte" },
+];
+
+const CATEGORIAS_IDENTIFICACION_RIESGO: Array<{ nombre: string; descripcion: string }> = [
+  { nombre: "Auditoría interna", descripcion: "Riesgo identificado durante una auditoría interna de la organización" },
+  { nombre: "Auditoría externa", descripcion: "Riesgo identificado por un auditor o ente externo" },
+  { nombre: "Incidente reportado", descripcion: "Riesgo identificado a partir de un incidente de seguridad ya ocurrido" },
+  { nombre: "Cambio regulatorio", descripcion: "Riesgo identificado a partir de un nuevo requisito legal o normativo" },
+  { nombre: "Cambio organizacional", descripcion: "Riesgo identificado a partir de un cambio de estructura, proceso o proveedor" },
+  { nombre: "Observación directa", descripcion: "Riesgo identificado directamente por el responsable durante la operación diaria" },
 ];
 
 const AMENAZAS_PREDEFINIDAS: Array<{
@@ -218,34 +295,6 @@ const CONTROLES_ISO27001: Array<{
   { codigoIso27001: "A.8.24", nombre: "Uso de criptografía", tipo: "PREVENTIVO" },
 ];
 
-const CONTEXTO_SEED = {
-  alcance: "Evaluación de riesgos de seguridad de la información de la organización",
-  criteriosAceptacion: "Evaluación basada en ISO/IEC 27005:2022",
-};
-
-const ESCALA_IMPACTO: Array<{ nivel: number; etiqueta: string }> = [
-  { nivel: 1, etiqueta: "Muy Bajo" },
-  { nivel: 2, etiqueta: "Bajo" },
-  { nivel: 3, etiqueta: "Medio" },
-  { nivel: 4, etiqueta: "Alto" },
-  { nivel: 5, etiqueta: "Crítico" },
-];
-
-const ESCALA_PROBABILIDAD: Array<{ nivel: number; etiqueta: string }> = [
-  { nivel: 1, etiqueta: "Raro" },
-  { nivel: 2, etiqueta: "Poco probable" },
-  { nivel: 3, etiqueta: "Posible" },
-  { nivel: 4, etiqueta: "Probable" },
-  { nivel: 5, etiqueta: "Casi seguro" },
-];
-
-function clasificarNivelRiesgo(valor: number): "BAJO" | "MEDIO" | "ALTO" | "CRITICO" {
-  if (valor <= 4) return "BAJO";
-  if (valor <= 9) return "MEDIO";
-  if (valor <= 15) return "ALTO";
-  return "CRITICO";
-}
-
 async function seedPermisos() {
   return Promise.all(
     PERMISOS.map((p) =>
@@ -302,37 +351,28 @@ async function seedRoles(permisosCreados: Array<{ id: string; recurso: string; a
   return rolAdministrador;
 }
 
-async function seedOrganizacionYUsuario(rolAdministradorId: string) {
-  const organizacionSeed = await prisma.organizacion.upsert({
-    where: { nombre: ORGANIZACION_SEED.nombre },
-    update: {},
-    create: ORGANIZACION_SEED,
-  });
-
+async function seedSuperAdminInicial(rolAdministradorId: string) {
   const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
 
-  if (seedAdminPassword) {
-    const passwordHash = await bcrypt.hash(seedAdminPassword, 10);
-
-    // El Administrador Principal (SUPER_ADMIN) es un usuario GLOBAL: no
-    // pertenece a la organización semilla ni a ninguna otra
-    // (organizacionId = null). La organización semilla se deja como
-    // ejemplo de organización ya existente en la plataforma, no como el
-    // "hogar" del SUPER_ADMIN.
-    await prisma.usuario.upsert({
-      where: { email: USUARIO_SEED.email },
-      update: {},
-      create: {
-        organizacionId: null,
-        rolId: rolAdministradorId,
-        nombre: USUARIO_SEED.nombre,
-        email: USUARIO_SEED.email,
-        passwordHash,
-      },
-    });
+  if (!seedAdminPassword) {
+    return { adminCreado: false };
   }
 
-  return { organizacionSeed, adminCreado: Boolean(seedAdminPassword) };
+  const passwordHash = await bcrypt.hash(seedAdminPassword, 10);
+
+  await prisma.usuario.upsert({
+    where: { email: SUPER_ADMIN_SEED.email },
+    update: { passwordHash },
+    create: {
+      organizacionId: null,
+      rolId: rolAdministradorId,
+      nombre: SUPER_ADMIN_SEED.nombre,
+      email: SUPER_ADMIN_SEED.email,
+      passwordHash,
+    },
+  });
+
+  return { adminCreado: true };
 }
 
 async function seedCategoriasActivo() {
@@ -371,6 +411,18 @@ async function seedCategoriasVulnerabilidad() {
   );
 }
 
+async function seedCategoriasIdentificacionRiesgo() {
+  return Promise.all(
+    CATEGORIAS_IDENTIFICACION_RIESGO.map((c) =>
+      prisma.categoriaIdentificacionRiesgo.upsert({
+        where: { nombre: c.nombre },
+        update: { descripcion: c.descripcion },
+        create: c,
+      })
+    )
+  );
+}
+
 async function seedAmenazas(categorias: Array<{ id: string; nombre: string }>) {
   const categoriaMap = new Map(categorias.map((c) => [c.nombre, c.id]));
 
@@ -380,6 +432,8 @@ async function seedAmenazas(categorias: Array<{ id: string; nombre: string }>) {
       throw new Error(`Categoría de amenaza no encontrada: ${a.categoria}`);
     }
 
+    // NOTA (auditoría): no se usa upsert aquí porque el @@unique([organizacionId, nombre])
+    // no es fiable con organizacionId = null en PostgreSQL (NULL != NULL en UNIQUE).
     const existente = await prisma.amenaza.findFirst({
       where: { organizacionId: null, nombre: a.nombre },
     });
@@ -418,18 +472,27 @@ async function seedVulnerabilidades(categorias: Array<{ id: string; nombre: stri
       throw new Error(`Categoría de vulnerabilidad no encontrada: ${v.categoria}`);
     }
 
+    // Mismo motivo que Amenaza: @@unique([organizacionId, nombre]) con
+    // organizacionId nullable no es fiable para upsert.
     const existente = await prisma.vulnerabilidad.findFirst({
-      where: { categoriaId, nombre: v.nombre },
+      where: { organizacionId: null, nombre: v.nombre },
     });
 
     if (existente) {
       await prisma.vulnerabilidad.update({
         where: { id: existente.id },
-        data: { descripcion: v.descripcion, severidad: v.severidad },
+        data: { categoriaId, descripcion: v.descripcion, severidad: v.severidad, esPredefinida: true },
       });
     } else {
       await prisma.vulnerabilidad.create({
-        data: { categoriaId, nombre: v.nombre, descripcion: v.descripcion, severidad: v.severidad },
+        data: {
+          categoriaId,
+          nombre: v.nombre,
+          descripcion: v.descripcion,
+          severidad: v.severidad,
+          organizacionId: null,
+          esPredefinida: true,
+        },
       });
     }
   }
@@ -437,6 +500,10 @@ async function seedVulnerabilidades(categorias: Array<{ id: string; nombre: stri
 
 async function seedControles() {
   for (const c of CONTROLES_ISO27001) {
+    // NOTA (auditoría): Control.codigoIso27001 NO tiene @unique ni @@unique
+    // en el schema ("Sin restricción UNIQUE" — comentario explícito del
+    // propio modelo). Un upsert con ese campo sería inválido; se usa
+    // findFirst + update/create.
     const existente = await prisma.control.findFirst({
       where: { organizacionId: null, codigoIso27001: c.codigoIso27001 },
     });
@@ -459,103 +526,36 @@ async function seedControles() {
   }
 }
 
-async function seedContexto(organizacionId: string) {
-  let contexto = await prisma.contexto.findFirst({
-    where: { organizacionId, activo: true },
-  });
-
-  if (!contexto) {
-    contexto = await prisma.contexto.create({
-      data: {
-        organizacionId,
-        alcance: CONTEXTO_SEED.alcance,
-        criteriosAceptacion: CONTEXTO_SEED.criteriosAceptacion,
-        activo: true,
-      },
-    });
-  }
-
-  await Promise.all(
-    ESCALA_IMPACTO.map((e) =>
-      prisma.escalaImpacto.upsert({
-        where: { contextoId_nivel: { contextoId: contexto!.id, nivel: e.nivel } },
-        update: { etiqueta: e.etiqueta },
-        create: { contextoId: contexto!.id, nivel: e.nivel, etiqueta: e.etiqueta },
-      })
-    )
-  );
-
-  await Promise.all(
-    ESCALA_PROBABILIDAD.map((e) =>
-      prisma.escalaProbabilidad.upsert({
-        where: { contextoId_nivel: { contextoId: contexto!.id, nivel: e.nivel } },
-        update: { etiqueta: e.etiqueta },
-        create: { contextoId: contexto!.id, nivel: e.nivel, etiqueta: e.etiqueta },
-      })
-    )
-  );
-
-  const combinaciones: Array<{ nivelProbabilidad: number; nivelImpacto: number }> = [];
-  for (let p = 1; p <= 5; p += 1) {
-    for (let i = 1; i <= 5; i += 1) {
-      combinaciones.push({ nivelProbabilidad: p, nivelImpacto: i });
-    }
-  }
-
-  await Promise.all(
-    combinaciones.map((combo) => {
-      const nivelResultante = clasificarNivelRiesgo(combo.nivelProbabilidad * combo.nivelImpacto);
-      return prisma.matrizRiesgo.upsert({
-        where: {
-          contextoId_nivelProbabilidad_nivelImpacto: {
-            contextoId: contexto!.id,
-            nivelProbabilidad: combo.nivelProbabilidad,
-            nivelImpacto: combo.nivelImpacto,
-          },
-        },
-        update: { nivelResultante },
-        create: {
-          contextoId: contexto!.id,
-          nivelProbabilidad: combo.nivelProbabilidad,
-          nivelImpacto: combo.nivelImpacto,
-          nivelResultante,
-        },
-      });
-    })
-  );
-
-  return contexto;
-}
-
 async function main(): Promise<void> {
   const permisosCreados = await seedPermisos();
   const rolAdministrador = await seedRoles(permisosCreados);
-  const { organizacionSeed, adminCreado } = await seedOrganizacionYUsuario(rolAdministrador.id);
+  const { adminCreado } = await seedSuperAdminInicial(rolAdministrador.id);
 
   const categoriasActivo = await seedCategoriasActivo();
   const categoriasAmenaza = await seedCategoriasAmenaza();
   const categoriasVulnerabilidad = await seedCategoriasVulnerabilidad();
+  const categoriasIdentificacionRiesgo = await seedCategoriasIdentificacionRiesgo();
 
   await seedAmenazas(categoriasAmenaza);
   await seedVulnerabilidades(categoriasVulnerabilidad);
   await seedControles();
-  await seedContexto(organizacionSeed.id);
 
-  console.log("Seed completado:");
-  console.log(`  Organización: ${ORGANIZACION_SEED.nombre}`);
+  console.log("Seed completado (solo datos globales):");
   console.log(`  Roles:        Administrador, ${Object.keys(ROLES_ADICIONALES).join(", ")}`);
   console.log(`  Permisos:     ${permisosCreados.length}`);
   console.log(`  Categorías activo: ${categoriasActivo.length}`);
   console.log(`  Categorías amenaza: ${categoriasAmenaza.length}`);
   console.log(`  Categorías vulnerabilidad: ${categoriasVulnerabilidad.length}`);
+  console.log(`  Categorías identificación de riesgo (manual): ${categoriasIdentificacionRiesgo.length}`);
   console.log(`  Amenazas predefinidas: ${AMENAZAS_PREDEFINIDAS.length}`);
   console.log(`  Vulnerabilidades predefinidas: ${VULNERABILIDADES_PREDEFINIDAS.length}`);
   console.log(`  Controles ISO 27001: ${CONTROLES_ISO27001.length}`);
-  console.log("  Contexto activo, escalas y matriz de riesgo 5x5 listos");
+  console.log("  Organizaciones: 0 (se crean desde la aplicación vía bootstrap transaccional)");
+  console.log("  Usuarios de organización: 0");
   console.log(
     adminCreado
-      ? `  Usuario:      ${USUARIO_SEED.email}`
-      : "  Usuario administrador: pendiente (defina SEED_ADMIN_PASSWORD y vuelva a ejecutar `npx prisma db seed`)"
+      ? `  Usuario SUPER_ADMIN: ${SUPER_ADMIN_SEED.email}`
+      : "  Usuario SUPER_ADMIN: pendiente (defina SEED_ADMIN_PASSWORD y vuelva a ejecutar `npx prisma db seed`)"
   );
 }
 

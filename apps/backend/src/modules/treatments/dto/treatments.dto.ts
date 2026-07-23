@@ -1,45 +1,44 @@
-/** DTO de salida para tratamientos. */
 export interface TratamientoResponseDTO {
   id: string;
-  evaluacionId: string;
-  controlPrincipalId: string | null;
+  riesgoId: string;
+  evaluacionOrigenId: string | null;
   estrategia: string;
   descripcionPlan: string;
   usuarioResponsableId: string;
+  fechaInicio: string | null;
+  justificacion: string | null;
+  aprobadoPorId: string | null;
+  fechaAprobacion: string | null;
   fechaLimite: string;
   estado: string;
   porcentajeAvance: number;
-  evaluacion: {
+  riesgo: {
+    id: string;
+    estado: string;
+    origen: string;
+    titulo: string | null;
+  };
+  evaluacionOrigen: {
     id: string;
     resultado: string;
     justificacion: string;
     fechaEvaluacion: string;
-    riesgo: {
-      id: string;
-      valorRiesgo: number;
-      nivelRiesgoInherente: string;
-      estado: string;
-    };
-    contexto: {
-      id: string;
-      alcance: string;
-      activo: boolean;
-    };
-    usuario: {
-      id: string;
-      nombre: string;
-      email: string;
-    };
-  };
-  controlPrincipal: {
-    id: string;
-    nombre: string;
-    tipo: string;
-    estadoImplementacion: string;
   } | null;
   usuarioResponsable: {
     id: string;
     nombre: string;
     email: string;
   };
+  aprobadoPor: {
+    id: string;
+    nombre: string;
+    email: string;
+  } | null;
+  controles: Array<{
+    id: string;
+    nombre: string;
+    tipo: string;
+    estadoImplementacion: string;
+    esPrincipal: boolean;
+  }>;
 }

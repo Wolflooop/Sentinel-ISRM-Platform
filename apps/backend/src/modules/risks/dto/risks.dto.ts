@@ -1,17 +1,26 @@
-
 export interface RiesgoResponseDTO {
   id: string;
-  probabilidad: number;
-  impacto: number;
-  valorRiesgo: number;
-  nivelRiesgoInherente: string;
-  nivelRiesgoResidual: string | null;
+  origen: string;
+  titulo: string | null;
+  descripcion: string | null;
+  justificacionOrigen: string | null;
   estado: string;
-  fechaUltimoCalculo: string;
   creadoEn: string;
-  activo: { id: string; nombre: string };
-  amenaza: { id: string; nombre: string };
-  vulnerabilidad: { id: string; nombre: string };
+  creador: { id: string; nombre: string };
+  responsable: { id: string; nombre: string };
+  categoriaIdentificacion: { id: string; nombre: string } | null;
+  activo: { id: string; nombre: string } | null;
+  amenaza: { id: string; nombre: string } | null;
+  vulnerabilidad: { id: string; nombre: string } | null;
+  evaluacionActual: {
+    id: string;
+    tipoEvaluacion: string;
+    probabilidad: number;
+    impacto: number;
+    valorCalculado: number;
+    nivelRiesgo: string;
+    fechaEvaluacion: string;
+  } | null;
 }
 
 export interface RiesgoHistorialResponseDTO {

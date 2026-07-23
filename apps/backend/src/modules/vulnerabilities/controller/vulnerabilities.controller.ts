@@ -19,17 +19,21 @@ import {
 } from "../mapper/vulnerabilities.mapper";
 import { AppError } from "../../../shared/AppError";
 
-
-function actorDe(req: Request) {
+function organizacionIdDe(req: Request): string {
   if (!req.user) {
     throw new AppError("No autenticado", 401);
   }
   if (!req.user.organizacionId) {
     throw new AppError("Esta operación requiere pertenecer a una organización", 400);
   }
+  return req.user.organizacionId;
+}
+
+function actorDe(req: Request) {
+  const organizacionId = organizacionIdDe(req);
   return {
-    usuarioId: req.user.sub,
-    organizacionId: req.user.organizacionId,
+    usuarioId: req.user!.sub,
+    organizacionId,
     direccionIp: req.ip ?? "desconocida",
   };
 }
@@ -41,8 +45,9 @@ export async function listarVulnerabilidadesController(
 ): Promise<void> {
   try {
     const filtros = filtrosVulnerabilidadesSchema.parse(req.query);
-    const vulnerabilidades = await listarVulnerabilidades(filtros);
-    res.status(200).json(toVulnerabilidadResponseListDTO(vulnerabilidades));
+    const organizacionId = organizacionIdDe(req);
+    const vulnerabilidades = await listarVulnerabilidades(organizacionId, filtros);
+    res.status(200).json(toVulnerabilidadResponseListDTO(vulnerabilidades, organizacionId));
   } catch (err) {
     next(err);
   }
@@ -67,8 +72,9 @@ export async function obtenerVulnerabilidadController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const vulnerabilidad = await obtenerVulnerabilidad(req.params.id);
-    res.status(200).json(toVulnerabilidadResponseDTO(vulnerabilidad));
+    const organizacionId = organizacionIdDe(req);
+    const vulnerabilidad = await obtenerVulnerabilidad(req.params.id, organizacionId);
+    res.status(200).json(toVulnerabilidadResponseDTO(vulnerabilidad, organizacionId));
   } catch (err) {
     next(err);
   }
@@ -81,8 +87,9 @@ export async function crearVulnerabilidadController(
 ): Promise<void> {
   try {
     const input = crearVulnerabilidadSchema.parse(req.body);
-    const vulnerabilidad = await crearNuevaVulnerabilidad(input, actorDe(req));
-    res.status(201).json(toVulnerabilidadResponseDTO(vulnerabilidad));
+    const organizacionId = organizacionIdDe(req);
+    const vulnerabilidad = await crearNuevaVulnerabilidad(organizacionId, input, actorDe(req));
+    res.status(201).json(toVulnerabilidadResponseDTO(vulnerabilidad, organizacionId));
   } catch (err) {
     next(err);
   }
@@ -95,12 +102,14 @@ export async function actualizarVulnerabilidadController(
 ): Promise<void> {
   try {
     const input = actualizarVulnerabilidadSchema.parse(req.body);
+    const organizacionId = organizacionIdDe(req);
     const vulnerabilidad = await actualizarVulnerabilidadExistente(
       req.params.id,
+      organizacionId,
       input,
       actorDe(req)
     );
-    res.status(200).json(toVulnerabilidadResponseDTO(vulnerabilidad));
+    res.status(200).json(toVulnerabilidadResponseDTO(vulnerabilidad, organizacionId));
   } catch (err) {
     next(err);
   }
@@ -112,7 +121,8 @@ export async function eliminarVulnerabilidadController(
   next: NextFunction
 ): Promise<void> {
   try {
-    await eliminarVulnerabilidadExistente(req.params.id, actorDe(req));
+    const organizacionId = organizacionIdDe(req);
+    await eliminarVulnerabilidadExistente(req.params.id, organizacionId, actorDe(req));
     res.status(204).send();
   } catch (err) {
     next(err);

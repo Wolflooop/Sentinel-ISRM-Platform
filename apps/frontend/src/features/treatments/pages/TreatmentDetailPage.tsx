@@ -5,13 +5,20 @@ import { useActualizarTratamiento, useTratamiento } from "../hooks/useTreatments
 import { useControles } from "../../controls/hooks/useControls";
 import { useUsuarios } from "../../users/hooks/useUsers";
 import { TreatmentFormValues } from "../schemas/treatmentsSchema";
+import { CommentsPanel } from "../../comments/components/CommentsPanel";
+import { FollowUpsPanel } from "../../follow-ups/components/FollowUpsPanel";
+import { EvidencePanel } from "../../evidence/components/EvidencePanel";
 
 function normalizar(input: TreatmentFormValues) {
   return {
+    controlIds: input.controlIds,
     controlPrincipalId: input.controlPrincipalId?.trim() || null,
     estrategia: input.estrategia,
     descripcionPlan: input.descripcionPlan.trim(),
     usuarioResponsableId: input.usuarioResponsableId,
+    fechaInicio: input.fechaInicio?.trim() || null,
+    justificacion: input.justificacion?.trim() || null,
+    aprobadoPorId: input.aprobadoPorId?.trim() || null,
     fechaLimite: input.fechaLimite,
     estado: input.estado,
     porcentajeAvance: input.porcentajeAvance,
@@ -38,13 +45,13 @@ export function TreatmentDetailPage() {
     return <p className="p-8 text-sm text-slate-500">Cargando tratamiento...</p>;
   }
 
-  if (isError || !tratamiento) {
+  if (isError || !tratamiento || !id) {
     return <p className="p-8 text-sm text-red-600">No se pudo cargar el tratamiento.</p>;
   }
 
   return (
     <main className="mx-auto max-w-xl px-4 py-8">
-      <Link to={`/riesgos/${tratamiento.evaluacion.riesgo.id}`} className="text-sm text-slate-500 underline">
+      <Link to={`/riesgos/${tratamiento.riesgo.id}`} className="text-sm text-slate-500 underline">
         ← Volver al riesgo
       </Link>
 
@@ -52,13 +59,15 @@ export function TreatmentDetailPage() {
         <h1 className="text-lg font-semibold text-slate-800">Tratamiento del riesgo</h1>
         <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-slate-600">
           <div>
-            <dt className="font-medium text-slate-700">Riesgo residual actual</dt>
-            <dd className="mt-1">{tratamiento.evaluacion.riesgo.estado}</dd>
+            <dt className="font-medium text-slate-700">Estado actual del riesgo</dt>
+            <dd className="mt-1">{tratamiento.riesgo.estado}</dd>
           </div>
-          <div>
-            <dt className="font-medium text-slate-700">Resultado de la evaluación</dt>
-            <dd className="mt-1">{tratamiento.evaluacion.resultado}</dd>
-          </div>
+          {tratamiento.evaluacionOrigen && (
+            <div>
+              <dt className="font-medium text-slate-700">Evaluación de origen</dt>
+              <dd className="mt-1">{tratamiento.evaluacionOrigen.resultado}</dd>
+            </div>
+          )}
         </dl>
 
         <div className="mt-6">
@@ -70,11 +79,17 @@ export function TreatmentDetailPage() {
             errorMessage={errorMessage}
             onSubmit={(values) => {
               actualizarTratamiento.mutate(normalizar(values), {
-                onSuccess: () => navigate(`/riesgos/${tratamiento.evaluacion.riesgo.id}`, { replace: true }),
+                onSuccess: () => navigate(`/riesgos/${tratamiento.riesgo.id}`, { replace: true }),
               });
             }}
           />
         </div>
+      </div>
+
+      <div className="mt-8 grid gap-6">
+        <CommentsPanel destino={{ tratamientoId: id }} />
+        <FollowUpsPanel destino={{ tratamientoId: id }} />
+        <EvidencePanel destino={{ tratamientoId: id }} />
       </div>
     </main>
   );

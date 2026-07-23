@@ -1,49 +1,14 @@
 import { Link } from "react-router-dom";
 import { Evaluacion } from "../types/evaluations.types";
-import { useTratamientoPorEvaluacion } from "../../treatments/hooks/useTreatments";
-
-interface ItemProps {
-  evaluacion: Evaluacion;
-}
-
-function TratamientoDeEvaluacion({ evaluacion }: ItemProps) {
-  const esNoAceptable = evaluacion.resultado === "NO_ACEPTABLE";
-  const { data: tratamiento, isLoading } = useTratamientoPorEvaluacion(
-    esNoAceptable ? evaluacion.id : undefined
-  );
-
-  if (!esNoAceptable) {
-    return null;
-  }
-
-  if (isLoading) {
-    return <p className="mt-2 text-xs text-slate-400">Consultando tratamiento...</p>;
-  }
-
-  if (tratamiento) {
-    return (
-      <Link
-        to={`/tratamientos/${tratamiento.id}`}
-        className="mt-2 inline-block text-xs font-medium text-slate-700 underline"
-      >
-        Ver tratamiento ({tratamiento.estado})
-      </Link>
-    );
-  }
-
-  return (
-    <Link
-      to={`/riesgos/${evaluacion.riesgoId}/evaluaciones/${evaluacion.id}/tratamiento/nuevo`}
-      className="mt-2 inline-block text-xs font-medium text-slate-700 underline"
-    >
-      Crear tratamiento
-    </Link>
-  );
-}
 
 interface Props {
   evaluaciones: Evaluacion[];
 }
+
+const ETIQUETA_TIPO: Record<string, string> = {
+  INHERENTE: "Inherente",
+  RESIDUAL: "Residual",
+};
 
 export function EvaluationHistoryList({ evaluaciones }: Props) {
   if (evaluaciones.length === 0) {
@@ -55,16 +20,32 @@ export function EvaluationHistoryList({ evaluaciones }: Props) {
       {evaluaciones.map((evaluacion) => (
         <li key={evaluacion.id} className="rounded-md border border-slate-200 p-3 text-sm">
           <div className="flex items-center justify-between gap-2">
-            <p className="font-medium text-slate-800">{evaluacion.resultado}</p>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                {ETIQUETA_TIPO[evaluacion.tipoEvaluacion] ?? evaluacion.tipoEvaluacion}
+              </span>
+              <p className="font-medium text-slate-800">{evaluacion.resultado}</p>
+            </div>
             <p className="text-xs text-slate-500">
               {new Date(evaluacion.fechaEvaluacion).toLocaleString()}
             </p>
           </div>
+          <p className="mt-2 text-slate-600">
+            {evaluacion.probabilidad} × {evaluacion.impacto} = {evaluacion.valorCalculado} (
+            {evaluacion.nivelRiesgo})
+          </p>
           <p className="mt-2 text-slate-600">{evaluacion.justificacion}</p>
           <p className="mt-2 text-xs text-slate-500">
             Evaluado por {evaluacion.usuario.nombre} ({evaluacion.usuario.email})
           </p>
-          <TratamientoDeEvaluacion evaluacion={evaluacion} />
+          {evaluacion.resultado === "NO_ACEPTABLE" && (
+            <Link
+              to={`/riesgos/${evaluacion.riesgoId}/tratamientos/nuevo`}
+              className="mt-2 inline-block text-xs font-medium text-slate-700 underline"
+            >
+              Crear tratamiento
+            </Link>
+          )}
         </li>
       ))}
     </ul>

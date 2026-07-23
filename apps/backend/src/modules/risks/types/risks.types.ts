@@ -1,4 +1,3 @@
-
 export type EstadoRiesgo =
   | "IDENTIFICADO"
   | "EN_ANALISIS"
@@ -6,34 +5,52 @@ export type EstadoRiesgo =
   | "TRATADO"
   | "CERRADO"
   | "MONITOREADO"
-  | "ACEPTADO";
+  | "ACEPTADO"
+  | "REABIERTO";
 
 export type NivelRiesgo = "BAJO" | "MEDIO" | "ALTO" | "CRITICO";
+export type OrigenRiesgo = "AAV" | "MANUAL";
+
+export interface EvaluacionActualResumen {
+  id: string;
+  tipoEvaluacion: "INHERENTE" | "RESIDUAL";
+  probabilidad: number;
+  impacto: number;
+  valorCalculado: number;
+  nivelRiesgo: NivelRiesgo;
+  fechaEvaluacion: Date;
+}
 
 export interface RiesgoConRelaciones {
   id: string;
-  probabilidad: number;
-  impacto: number;
-  valorRiesgo: number;
-  nivelRiesgoInherente: NivelRiesgo;
-  nivelRiesgoResidual: NivelRiesgo | null;
-  fechaUltimoCalculo: Date;
+  origen: OrigenRiesgo;
+  aavId: string | null;
+  titulo: string | null;
+  descripcion: string | null;
+  justificacionOrigen: string | null;
   estado: EstadoRiesgo;
   creadoEn: Date;
+  creadorId: string;
+  responsableId: string;
+  evaluacionActualId: string | null;
   aav: {
     activo: { id: string; nombre: string };
     amenaza: { id: string; nombre: string };
     vulnerabilidad: { id: string; nombre: string };
-  };
+  } | null;
+  categoriaIdentificacion: { id: string; nombre: string } | null;
+  creador: { id: string; nombre: string };
+  responsable: { id: string; nombre: string };
+  evaluacionActual: EvaluacionActualResumen | null;
 }
 
 export interface FiltrosRiesgos {
   estado?: EstadoRiesgo;
-  nivelRiesgoInherente?: NivelRiesgo;
+  origen?: OrigenRiesgo;
+  responsableId?: string;
 }
 
-
-export interface CrearRiesgoParams {
+export interface CrearRiesgoAavParams {
   organizacionId: string;
   activoId: string;
   amenazaId: string;
@@ -41,6 +58,23 @@ export interface CrearRiesgoParams {
   probabilidad: number;
   impacto: number;
   nivelRiesgoInherente: NivelRiesgo;
+  responsableId: string;
+  actor: {
+    usuarioId: string;
+    direccionIp: string;
+  };
+}
+
+export interface CrearRiesgoManualParams {
+  organizacionId: string;
+  titulo: string;
+  descripcion: string;
+  justificacionOrigen: string;
+  categoriaIdentificacionId: string;
+  probabilidad: number;
+  impacto: number;
+  nivelRiesgoInherente: NivelRiesgo;
+  responsableId: string;
   actor: {
     usuarioId: string;
     direccionIp: string;
@@ -62,6 +96,7 @@ export interface AmenazaResumen {
 
 export interface VulnerabilidadResumen {
   id: string;
+  organizacionId: string | null;
   nombre: string;
 }
 
@@ -72,4 +107,23 @@ export interface ContextoActivoResumen {
 
 export interface CeldaMatrizResumen {
   nivelResultante: NivelRiesgo;
+}
+
+export interface CategoriaIdentificacionResumen {
+  id: string;
+  nombre: string;
+}
+
+export interface UsuarioDeOrganizacionResumen {
+  id: string;
+  organizacionId: string | null;
+}
+
+export interface ReasignarResponsableParams {
+  riesgoId: string;
+  responsableIdNuevo: string;
+  actor: {
+    usuarioId: string;
+    direccionIp: string;
+  };
 }

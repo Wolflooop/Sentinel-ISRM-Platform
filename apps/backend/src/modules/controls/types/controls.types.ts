@@ -1,5 +1,5 @@
 export type TipoControl = "PREVENTIVO" | "DETECTIVO" | "CORRECTIVO";
-export type EstadoImplementacionControl = "NO_APLICADO" | "PLANIFICADO" | "EN_PROGRESO" | "IMPLEMENTADO";
+export type EstadoImplementacionControl = "NO_INICIADO" | "EN_PROGRESO" | "IMPLEMENTADO" | "VERIFICADO";
 
 export interface ControlConRelaciones {
   id: string;
@@ -11,9 +11,15 @@ export interface ControlConRelaciones {
   fechaImplementacion: Date | null;
   observaciones: string | null;
   descripcionImplementacion: string | null;
+  responsableId: string | null;
   organizacion: {
     id: string;
     nombre: string;
+  } | null;
+  responsable: {
+    id: string;
+    nombre: string;
+    email: string;
   } | null;
 }
 
@@ -26,6 +32,7 @@ export interface CrearControlParams {
   fechaImplementacion: Date | null;
   observaciones: string | null;
   descripcionImplementacion: string | null;
+  responsableId: string | null;
 }
 
 export interface ActualizarControlParams {
@@ -36,9 +43,11 @@ export interface ActualizarControlParams {
   fechaImplementacion?: Date | null;
   observaciones?: string | null;
   descripcionImplementacion?: string | null;
+  responsableId?: string | null;
 }
 
 export interface FiltrosControles {
   tipo?: TipoControl;
   estadoImplementacion?: EstadoImplementacionControl;
+  responsableId?: string;
 }

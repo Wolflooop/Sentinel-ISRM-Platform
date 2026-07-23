@@ -12,16 +12,25 @@ const ESTILO_NIVEL: Record<string, string> = {
   CRITICO: "bg-red-100 text-red-800",
 };
 
+// V2: el "título" de fila ahora depende del origen — AAV muestra el activo,
+// MANUAL muestra el título capturado a mano.
+function tituloDeFila(riesgo: Riesgo): string {
+  if (riesgo.origen === "AAV" && riesgo.activo) {
+    return riesgo.activo.nombre;
+  }
+  return riesgo.titulo ?? "Riesgo manual";
+}
+
 export function RisksTable({ riesgos }: Props) {
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
         <tr className="border-b border-slate-200 text-left text-slate-500">
-          <th className="py-2 pr-4">Activo</th>
-          <th className="py-2 pr-4">Amenaza</th>
-          <th className="py-2 pr-4">Vulnerabilidad</th>
+          <th className="py-2 pr-4">Riesgo</th>
+          <th className="py-2 pr-4">Origen</th>
+          <th className="py-2 pr-4">Responsable</th>
           <th className="py-2 pr-4">Valor</th>
-          <th className="py-2 pr-4">Prioridad</th>
+          <th className="py-2 pr-4">Nivel</th>
           <th className="py-2 pr-4">Estado</th>
           <th className="py-2 pr-4"></th>
         </tr>
@@ -29,18 +38,26 @@ export function RisksTable({ riesgos }: Props) {
       <tbody>
         {riesgos.map((riesgo) => (
           <tr key={riesgo.id} className="border-b border-slate-100">
-            <td className="py-2 pr-4 font-medium text-slate-800">{riesgo.activo.nombre}</td>
-            <td className="py-2 pr-4 text-slate-600">{riesgo.amenaza.nombre}</td>
-            <td className="py-2 pr-4 text-slate-600">{riesgo.vulnerabilidad.nombre}</td>
+            <td className="py-2 pr-4 font-medium text-slate-800">{tituloDeFila(riesgo)}</td>
             <td className="py-2 pr-4 text-slate-600">
-              {riesgo.probabilidad} × {riesgo.impacto} = {riesgo.valorRiesgo}
+              {riesgo.origen === "AAV" ? "AAV" : "Manual"}
+            </td>
+            <td className="py-2 pr-4 text-slate-600">{riesgo.responsable.nombre}</td>
+            <td className="py-2 pr-4 text-slate-600">
+              {riesgo.evaluacionActual
+                ? `${riesgo.evaluacionActual.probabilidad} × ${riesgo.evaluacionActual.impacto} = ${riesgo.evaluacionActual.valorCalculado}`
+                : "—"}
             </td>
             <td className="py-2 pr-4">
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${ESTILO_NIVEL[riesgo.nivelRiesgoInherente]}`}
-              >
-                {riesgo.nivelRiesgoInherente}
-              </span>
+              {riesgo.evaluacionActual ? (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${ESTILO_NIVEL[riesgo.evaluacionActual.nivelRiesgo]}`}
+                >
+                  {riesgo.evaluacionActual.nivelRiesgo}
+                </span>
+              ) : (
+                <span className="text-xs text-slate-400">Sin evaluar</span>
+              )}
             </td>
             <td className="py-2 pr-4 text-slate-500">{riesgo.estado}</td>
             <td className="py-2 pr-4">

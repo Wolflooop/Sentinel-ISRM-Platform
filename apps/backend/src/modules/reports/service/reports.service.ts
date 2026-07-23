@@ -138,12 +138,14 @@ const ETIQUETA_NIVEL_RIESGO: Record<string, string> = {
 
 // Agrupación de presentación para el gráfico: no altera el estado real
 // guardado, solo lo agrupa en 3 categorías visuales pedidas por el
-// backlog (PLANIFICADO/EN_PROGRESO se muestran juntos como "Pendiente").
+// backlog. V2: IMPLEMENTADO y VERIFICADO se muestran juntos como
+// "Implementado" (VERIFICADO es un refuerzo posterior del mismo estado
+// operativo, no una categoría visual distinta en este reporte).
 const CATEGORIA_ESTADO_CONTROL: Record<string, string> = {
   IMPLEMENTADO: "Implementado",
-  PLANIFICADO: "Pendiente",
+  VERIFICADO: "Implementado",
   EN_PROGRESO: "Pendiente",
-  NO_APLICADO: "No aplicado",
+  NO_INICIADO: "No aplicado",
 };
 
 const ORDEN_CATEGORIA_CONTROL = ["Implementado", "Pendiente", "No aplicado"];
@@ -303,8 +305,8 @@ function construirPDF(
         ["Activo", "Amenaza", "Vulnerabilidad", "P", "I", "Valor", "Nivel"],
         datos.riesgos.map((r) => [
           r.activo,
-          r.amenaza,
-          r.vulnerabilidad,
+          r.amenaza ?? "—",
+          r.vulnerabilidad ?? "—",
           String(r.probabilidad),
           String(r.impacto),
           String(r.valorRiesgo),
@@ -365,14 +367,6 @@ export async function generarReporteNuevo(
   asegurarDirectorioStorage();
 
   const datos = await recopilarDatosOrganizacion(actor.organizacionId);
-
-  // TRAZA TEMPORAL DE DIAGNÓSTICO — quitar una vez confirmada la causa raíz.
-  console.log("[DIAG reportes] organizacionId:", actor.organizacionId);
-  console.log("[DIAG reportes] datos.riesgos.length:", datos.riesgos.length);
-  console.log("[DIAG reportes] datos.controles.length:", datos.controles.length);
-  console.log("[DIAG reportes] datos.riesgos:", JSON.stringify(datos.riesgos, null, 2));
-  console.log("[DIAG reportes] datos.controles:", JSON.stringify(datos.controles, null, 2));
-  // FIN TRAZA TEMPORAL
 
   const nombreArchivo = `${actor.organizacionId}_${input.tipo}_${Date.now()}.pdf`;
   const rutaAbsoluta = path.join(STORAGE_DIR, nombreArchivo);

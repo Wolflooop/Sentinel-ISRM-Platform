@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-
 export const crearVulnerabilidadSchema = z.object({
   categoriaId: z.string().uuid("categoriaId debe ser un identificador válido"),
   nombre: z.string().trim().min(1, "El nombre es obligatorio"),

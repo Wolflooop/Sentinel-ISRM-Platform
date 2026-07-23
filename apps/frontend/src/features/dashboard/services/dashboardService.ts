@@ -13,21 +13,28 @@ import {
 
 const NIVELES_RIESGO: NivelRiesgo[] = ["BAJO", "MEDIO", "ALTO", "CRITICO"];
 const ESTADOS_CONTROL: EstadoImplementacionControl[] = [
-  "NO_APLICADO",
-  "PLANIFICADO",
+  "NO_INICIADO",
   "EN_PROGRESO",
   "IMPLEMENTADO",
+  "VERIFICADO",
 ];
 
-
-function nivelVigente(riesgo: RiesgoResumen): NivelRiesgo {
-  return riesgo.nivelRiesgoResidual ?? riesgo.nivelRiesgoInherente;
+// V2: el nivel vigente de un riesgo es el de su evaluacionActual (que
+// puede ser INHERENTE o RESIDUAL, según cuál se haya registrado más
+// recientemente — ver Riesgo.evaluacionActualId en el schema). Un riesgo
+// recién creado sin Contexto ISO activo podría no tener evaluacionActual;
+// esos casos se excluyen del conteo en vez de asumir un nivel.
+function nivelVigente(riesgo: RiesgoResumen): NivelRiesgo | null {
+  return riesgo.evaluacionActual?.nivelRiesgo ?? null;
 }
 
 function contarPorNivel(riesgos: RiesgoResumen[]): ConteoPorNivel {
   const conteo = Object.fromEntries(NIVELES_RIESGO.map((nivel) => [nivel, 0])) as ConteoPorNivel;
   for (const riesgo of riesgos) {
-    conteo[nivelVigente(riesgo)] += 1;
+    const nivel = nivelVigente(riesgo);
+    if (nivel) {
+      conteo[nivel] += 1;
+    }
   }
   return conteo;
 }

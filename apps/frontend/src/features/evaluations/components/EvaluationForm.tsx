@@ -10,6 +10,8 @@ interface Props {
   errorMessage?: string | null;
 }
 
+const NIVELES = [1, 2, 3, 4, 5];
+
 export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingRequest, errorMessage }: Props) {
   const {
     register,
@@ -20,6 +22,7 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
     defaultValues: {
       riesgoId,
       contextoId,
+      tipoEvaluacion: "RESIDUAL",
       resultado: "ACEPTABLE",
       justificacion: "",
       comentario: "",
@@ -30,6 +33,71 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
       <input type="hidden" {...register("riesgoId")} />
       <input type="hidden" {...register("contextoId")} />
+
+      <div>
+        <label htmlFor="tipoEvaluacion" className="block text-sm font-medium text-slate-700">
+          Tipo de evaluación
+        </label>
+        <select
+          id="tipoEvaluacion"
+          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          {...register("tipoEvaluacion")}
+        >
+          <option value="INHERENTE">Inherente</option>
+          <option value="RESIDUAL">Residual</option>
+        </select>
+        {errors.tipoEvaluacion && (
+          <p className="mt-1 text-sm text-red-600">{errors.tipoEvaluacion.message}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="probabilidad" className="block text-sm font-medium text-slate-700">
+            Probabilidad (1–5)
+          </label>
+          <select
+            id="probabilidad"
+            defaultValue=""
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            {...register("probabilidad")}
+          >
+            <option value="" disabled>
+              Selecciona...
+            </option>
+            {NIVELES.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+          {errors.probabilidad && (
+            <p className="mt-1 text-sm text-red-600">{errors.probabilidad.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="impacto" className="block text-sm font-medium text-slate-700">
+            Impacto (1–5)
+          </label>
+          <select
+            id="impacto"
+            defaultValue=""
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            {...register("impacto")}
+          >
+            <option value="" disabled>
+              Selecciona...
+            </option>
+            {NIVELES.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+          {errors.impacto && <p className="mt-1 text-sm text-red-600">{errors.impacto.message}</p>}
+        </div>
+      </div>
 
       <div>
         <label htmlFor="resultado" className="block text-sm font-medium text-slate-700">
@@ -69,7 +137,7 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
           id="comentario"
           rows={2}
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          placeholder="Ej: Evaluación inicial completada."
+          placeholder="Ej: Evaluación posterior al tratamiento aplicado."
           {...register("comentario")}
         />
         {errors.comentario && (

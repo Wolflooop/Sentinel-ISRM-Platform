@@ -35,6 +35,7 @@ export function VulnerabilitiesTable({ vulnerabilidades }: Props) {
           <th className="py-2 pr-4">Categoría</th>
           <th className="py-2 pr-4">Severidad</th>
           <th className="py-2 pr-4">CVE</th>
+          <th className="py-2 pr-4">Catálogo</th>
           <th className="py-2 pr-4"></th>
         </tr>
       </thead>
@@ -53,27 +54,36 @@ export function VulnerabilitiesTable({ vulnerabilidades }: Props) {
               </span>
             </td>
             <td className="py-2 pr-4 text-slate-500">{vulnerabilidad.referenciaCVE ?? "—"}</td>
+            <td className="py-2 pr-4 text-slate-500">
+              {vulnerabilidad.esPropia ? "Propia" : "Predefinida"}
+            </td>
             <td className="py-2 pr-4 space-x-3">
-              <Link
-                to={`/vulnerabilidades/${vulnerabilidad.id}/editar`}
-                className="text-slate-700 underline"
-              >
-                Editar
-              </Link>
-              <button
-                type="button"
-                disabled={eliminarVulnerabilidad.isPending}
-                onClick={() => handleEliminar(vulnerabilidad)}
-                className="text-red-600 underline disabled:opacity-50"
-              >
-                Eliminar
-              </button>
+              {vulnerabilidad.esPropia ? (
+                <>
+                  <Link
+                    to={`/vulnerabilidades/${vulnerabilidad.id}/editar`}
+                    className="text-slate-700 underline"
+                  >
+                    Editar
+                  </Link>
+                  <button
+                    type="button"
+                    disabled={eliminarVulnerabilidad.isPending}
+                    onClick={() => handleEliminar(vulnerabilidad)}
+                    className="text-red-600 underline disabled:opacity-50"
+                  >
+                    Eliminar
+                  </button>
+                </>
+              ) : (
+                <span className="text-slate-400">Solo lectura</span>
+              )}
             </td>
           </tr>
         ))}
         {vulnerabilidades.length === 0 && (
           <tr>
-            <td colSpan={5} className="py-4 text-sm text-slate-400">
+            <td colSpan={6} className="py-4 text-sm text-slate-400">
               No se encontraron vulnerabilidades con los filtros aplicados.
             </td>
           </tr>

@@ -1,6 +1,6 @@
 import { apiClient } from "../../../lib/apiClient";
-import { Riesgo, FiltrosRiesgos, RiesgoHistorialEntrada } from "../types/risks.types";
-import { CrearRiesgoFormValues } from "../schemas/risksSchema";
+import { Riesgo, FiltrosRiesgos, RiesgoHistorialEntrada, CategoriaIdentificacionRiesgo } from "../types/risks.types";
+import { CrearRiesgoFormValues, AsignarResponsableFormValues } from "../schemas/risksSchema";
 
 export async function listarRiesgosRequest(filtros: FiltrosRiesgos): Promise<Riesgo[]> {
   const { data } = await apiClient.get<Riesgo[]>("/riesgos", { params: filtros });
@@ -17,7 +17,23 @@ export async function crearRiesgoRequest(input: CrearRiesgoFormValues): Promise<
   return data;
 }
 
+// V2 (punto 13 del prompt): endpoint dedicado para reasignar responsable.
+export async function asignarResponsableRequest(
+  id: string,
+  input: AsignarResponsableFormValues
+): Promise<Riesgo> {
+  const { data } = await apiClient.post<Riesgo>(`/riesgos/${id}/responsable`, input);
+  return data;
+}
+
 export async function obtenerHistorialRiesgoRequest(id: string): Promise<RiesgoHistorialEntrada[]> {
   const { data } = await apiClient.get<RiesgoHistorialEntrada[]>(`/riesgos/${id}/historial`);
+  return data;
+}
+
+export async function listarCategoriasIdentificacionRequest(): Promise<CategoriaIdentificacionRiesgo[]> {
+  const { data } = await apiClient.get<CategoriaIdentificacionRiesgo[]>(
+    "/categorias-identificacion-riesgo"
+  );
   return data;
 }

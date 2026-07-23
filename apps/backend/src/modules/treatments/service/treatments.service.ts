@@ -2,9 +2,9 @@ import { AppError } from "../../../shared/AppError";
 import {
   actualizarTratamiento,
   crearTratamiento,
-  findControlPrincipalPorIdYOrganizacion,
-  findEvaluacionPorIdYOrganizacion,
-  findTratamientoPorEvaluacionId,
+  findControlesVisiblesPorIds,
+  findEvaluacionOrigenPorIdYOrganizacion,
+  findRiesgoParaTratamiento,
   findTratamientoPorId,
   findTratamientos,
   findUsuarioResponsablePorOrganizacion,
@@ -36,29 +36,50 @@ export async function obtenerTratamiento(
   return tratamiento;
 }
 
+async function validarControles(
+  controlIds: string[],
+  organizacionId: string
+): Promise<Map<string, string>> {
+  if (controlIds.length === 0) {
+    return new Map();
+  }
+  const controles = await findControlesVisiblesPorIds(controlIds, organizacionId);
+  if (controles.length !== new Set(controlIds).size) {
+    throw new AppError(
+      "Uno o más de los controles indicados no son válidos para esta organización",
+      404
+    );
+  }
+  return new Map(controles.map((c) => [c.id, c.tipo]));
+}
+
 export async function crearNuevoTratamiento(
   organizacionId: string,
   input: CrearTratamientoInput,
   actor: ActorAuditoria
 ): Promise<TratamientoConRelaciones> {
-  const evaluacion = await findEvaluacionPorIdYOrganizacion(input.evaluacionId, organizacionId);
-  if (!evaluacion) {
-    throw new AppError("La evaluación especificada no existe en esta organización", 404);
+  const riesgo = await findRiesgoParaTratamiento(input.riesgoId, organizacionId);
+  if (!riesgo) {
+    throw new AppError("El riesgo especificado no existe en esta organización", 404);
   }
 
-  const tratamientoExistente = await findTratamientoPorEvaluacionId(input.evaluacionId, organizacionId);
-  if (tratamientoExistente) {
-    throw new AppError("La evaluación ya tiene un tratamiento asociado", 409);
-  }
-
-  let controlPrincipalTipo: string | null = null;
-  if (input.controlPrincipalId) {
-    const control = await findControlPrincipalPorIdYOrganizacion(input.controlPrincipalId, organizacionId);
-    if (!control) {
-      throw new AppError("El control principal indicado no es válido para la organización", 404);
+  if (input.evaluacionOrigenId) {
+    const evaluacionOrigen = await findEvaluacionOrigenPorIdYOrganizacion(
+      input.evaluacionOrigenId,
+      organizacionId
+    );
+    if (!evaluacionOrigen || evaluacionOrigen.riesgoId !== input.riesgoId) {
+      throw new AppError(
+        "La evaluación de origen indicada no corresponde a este riesgo en esta organización",
+        404
+      );
     }
-    controlPrincipalTipo = control.tipo;
   }
+
+  const tiposPorControl = await validarControles(input.controlIds, organizacionId);
+  const controlPrincipalTipo = input.controlPrincipalId
+    ? tiposPorControl.get(input.controlPrincipalId) ?? null
+    : null;
 
   const usuarioResponsable = await findUsuarioResponsablePorOrganizacion(
     input.usuarioResponsableId,
@@ -68,16 +89,29 @@ export async function crearNuevoTratamiento(
     throw new AppError("El usuario responsable indicado no pertenece a la organización", 404);
   }
 
+  if (input.aprobadoPorId) {
+    const aprobador = await findUsuarioResponsablePorOrganizacion(input.aprobadoPorId, organizacionId);
+    if (!aprobador) {
+      throw new AppError("El usuario aprobador indicado no pertenece a la organización", 404);
+    }
+  }
+
   const tratamiento = await crearTratamiento({
-    evaluacionId: input.evaluacionId,
+    riesgoId: input.riesgoId,
+    evaluacionOrigenId: input.evaluacionOrigenId ?? null,
+    controlIds: input.controlIds,
     controlPrincipalId: input.controlPrincipalId ?? null,
     estrategia: input.estrategia,
     descripcionPlan: input.descripcionPlan,
     usuarioResponsableId: input.usuarioResponsableId,
+    fechaInicio: input.fechaInicio ?? null,
+    justificacion: input.justificacion ?? null,
+    aprobadoPorId: input.aprobadoPorId ?? null,
+    fechaAprobacion: input.fechaAprobacion ?? null,
     fechaLimite: input.fechaLimite,
-    estado: input.estado ?? "PLANIFICADO",
+    estado: input.estado ?? "PROPUESTO",
     porcentajeAvance: input.porcentajeAvance ?? 0,
-    riesgoId: evaluacion.riesgo.id,
+    riesgoEvaluacionActual: riesgo.evaluacionActual,
     controlPrincipalTipo,
     usuarioId: actor.usuarioId,
     comentario: input.comentario,
@@ -105,18 +139,33 @@ export async function actualizarTratamientoExistente(
     throw new AppError("Tratamiento no encontrado", 404);
   }
 
-  let controlPrincipalTipoFinal: string | null = tratamiento.controlPrincipal?.tipo ?? null;
-  if (input.controlPrincipalId !== undefined) {
-    if (input.controlPrincipalId) {
-      const control = await findControlPrincipalPorIdYOrganizacion(input.controlPrincipalId, organizacionId);
-      if (!control) {
-        throw new AppError("El control principal indicado no es válido para la organización", 404);
-      }
-      controlPrincipalTipoFinal = control.tipo;
-    } else {
-      controlPrincipalTipoFinal = null;
-    }
+  const riesgo = await findRiesgoParaTratamiento(tratamiento.riesgoId, organizacionId);
+  if (!riesgo) {
+    throw new AppError("El riesgo asociado no existe en esta organización", 404);
   }
+
+  let controlIdsFinal: string[] | undefined = input.controlIds;
+  let tiposPorControl = new Map<string, string>();
+  if (controlIdsFinal !== undefined) {
+    tiposPorControl = await validarControles(controlIdsFinal, organizacionId);
+  } else {
+    tiposPorControl = new Map(tratamiento.controles.map((c) => [c.id, c.tipo]));
+  }
+
+  const controlIdsEfectivos = controlIdsFinal ?? tratamiento.controles.map((c) => c.id);
+
+  let controlPrincipalIdFinal: string | null =
+    input.controlPrincipalId !== undefined
+      ? input.controlPrincipalId
+      : tratamiento.controles.find((c) => c.esPrincipal)?.id ?? null;
+
+  if (controlPrincipalIdFinal && !controlIdsEfectivos.includes(controlPrincipalIdFinal)) {
+    throw new AppError("controlPrincipalId debe estar incluido en los controles del tratamiento", 422);
+  }
+
+  const controlPrincipalTipoFinal = controlPrincipalIdFinal
+    ? tiposPorControl.get(controlPrincipalIdFinal) ?? null
+    : null;
 
   if (input.usuarioResponsableId) {
     const usuarioResponsable = await findUsuarioResponsablePorOrganizacion(
@@ -128,32 +177,43 @@ export async function actualizarTratamientoExistente(
     }
   }
 
-  const estrategiaFinal = input.estrategia ?? tratamiento.estrategia;
-  if (estrategiaFinal === "MITIGAR" && !controlPrincipalTipoFinal) {
-    throw new AppError("La estrategia MITIGAR requiere especificar un controlPrincipalId", 422);
+  if (input.aprobadoPorId) {
+    const aprobador = await findUsuarioResponsablePorOrganizacion(input.aprobadoPorId, organizacionId);
+    if (!aprobador) {
+      throw new AppError("El usuario aprobador indicado no pertenece a la organización", 404);
+    }
   }
 
-  // La validación de "comentario obligatorio si el estado realmente
-  // cambia" ya NO vive aquí: la decide únicamente
-  // transicionarEstadoRiesgo (modules/history/service/history.service.ts),
-  // que es el único punto responsable de esa regla.
+  const estrategiaFinal = input.estrategia ?? tratamiento.estrategia;
+  if (estrategiaFinal === "MITIGAR" && controlIdsEfectivos.length === 0) {
+    throw new AppError(
+      "La estrategia MITIGAR requiere especificar al menos un control (controlIds no vacío)",
+      422
+    );
+  }
 
   const tratamientoActualizado = await actualizarTratamiento(
     id,
     {
+      controlIds: controlIdsFinal,
       controlPrincipalId: input.controlPrincipalId,
       estrategia: input.estrategia,
       descripcionPlan: input.descripcionPlan,
       usuarioResponsableId: input.usuarioResponsableId,
+      fechaInicio: input.fechaInicio,
+      justificacion: input.justificacion,
+      aprobadoPorId: input.aprobadoPorId,
+      fechaAprobacion: input.fechaAprobacion,
       fechaLimite: input.fechaLimite,
       estado: input.estado,
       porcentajeAvance: input.porcentajeAvance,
     },
     {
-      riesgoId: tratamiento.evaluacion.riesgo.id,
-      evaluacionId: tratamiento.evaluacionId,
+      riesgoId: tratamiento.riesgoId,
+      riesgoEvaluacionActual: riesgo.evaluacionActual,
       estrategiaFinal,
       controlPrincipalTipoFinal,
+      controlPrincipalIdFinal,
       usuarioId: actor.usuarioId,
       comentario: input.comentario,
     }

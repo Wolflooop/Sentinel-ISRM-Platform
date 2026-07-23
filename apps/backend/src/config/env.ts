@@ -11,11 +11,21 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(1, "JWT_SECRET es obligatorio"),
   JWT_EXPIRES_IN: z.string().default("1h"),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
+
+  RATE_LIMIT_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
+
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
+  AUTH_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(10),
+
+  API_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
+  API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(500),
+
   LOG_LEVEL: z.string().default("info"),
 
-    AUTH_MAX_INTENTOS_FALLIDOS: z.coerce.number().int().positive().optional(),
+  AUTH_MAX_INTENTOS_FALLIDOS: z.coerce.number().int().positive().optional(),
   AUTH_BLOQUEO_MINUTOS: z.coerce.number().int().positive().optional(),
 });
 

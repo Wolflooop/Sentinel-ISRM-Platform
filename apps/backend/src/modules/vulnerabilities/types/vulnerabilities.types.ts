@@ -1,4 +1,3 @@
-
 export interface CategoriaVulnerabilidad {
   id: string;
   nombre: string;
@@ -7,11 +6,13 @@ export interface CategoriaVulnerabilidad {
 
 export interface Vulnerabilidad {
   id: string;
+  organizacionId: string | null;
   categoriaId: string;
   nombre: string;
   descripcion: string | null;
   severidad: number;
   referenciaCVE: string | null;
+  esPredefinida: boolean;
 }
 
 export interface VulnerabilidadConRelaciones extends Vulnerabilidad {
@@ -25,6 +26,7 @@ export interface FiltrosVulnerabilidades {
 }
 
 export interface CrearVulnerabilidadParams {
+  organizacionId: string;
   categoriaId: string;
   nombre: string;
   descripcion?: string;

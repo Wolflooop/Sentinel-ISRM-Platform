@@ -94,13 +94,23 @@ export async function recopilarDatosOrganizacion(
         orderBy: { nombre: "asc" },
       }),
       prisma.riesgo.findMany({
-        where: { aav: { activo: { organizacionId } } },
+        where: {
+          OR: [
+            { aav: { activo: { organizacionId } } },
+            { creador: { organizacionId } },
+          ],
+        },
         select: {
-          probabilidad: true,
-          impacto: true,
-          valorRiesgo: true,
-          nivelRiesgoInherente: true,
-          nivelRiesgoResidual: true,
+          origen: true,
+          titulo: true,
+          evaluacionActual: {
+            select: { probabilidad: true, impacto: true, valorCalculado: true, nivelRiesgo: true, tipoEvaluacion: true },
+          },
+          evaluaciones: {
+            where: { tipoEvaluacion: "INHERENTE" },
+            select: { nivelRiesgo: true },
+            take: 1,
+          },
           aav: {
             select: {
               activo: { select: { nombre: true } },
@@ -109,7 +119,6 @@ export async function recopilarDatosOrganizacion(
             },
           },
         },
-        orderBy: { valorRiesgo: "desc" },
       }),
       prisma.control.findMany({
         where: { OR: [{ organizacionId }, { organizacionId: null }] },
@@ -154,16 +163,18 @@ export async function recopilarDatosOrganizacion(
       criticidad: a.criticidad,
       estado: a.estado,
     })),
-    riesgos: riesgos.map((r: (typeof riesgos)[number]) => ({
-      activo: r.aav.activo.nombre,
-      amenaza: r.aav.amenaza.nombre,
-      vulnerabilidad: r.aav.vulnerabilidad.nombre,
-      probabilidad: r.probabilidad,
-      impacto: r.impacto,
-      valorRiesgo: r.valorRiesgo,
-      nivelInherente: r.nivelRiesgoInherente,
-      nivelResidual: r.nivelRiesgoResidual,
-    })),
+    riesgos: riesgos
+      .map((r: (typeof riesgos)[number]) => ({
+        activo: r.origen === "AAV" && r.aav ? r.aav.activo.nombre : (r.titulo ?? "Riesgo manual"),
+        amenaza: r.origen === "AAV" && r.aav ? r.aav.amenaza.nombre : null,
+        vulnerabilidad: r.origen === "AAV" && r.aav ? r.aav.vulnerabilidad.nombre : null,
+        probabilidad: r.evaluacionActual?.probabilidad ?? 0,
+        impacto: r.evaluacionActual?.impacto ?? 0,
+        valorRiesgo: r.evaluacionActual?.valorCalculado ?? 0,
+        nivelInherente: r.evaluaciones[0]?.nivelRiesgo ?? r.evaluacionActual?.nivelRiesgo ?? "BAJO",
+        nivelResidual: r.evaluacionActual?.tipoEvaluacion === "RESIDUAL" ? r.evaluacionActual.nivelRiesgo : null,
+      }))
+      .sort((a, b) => b.valorRiesgo - a.valorRiesgo),
     controles: controles.map((c: (typeof controles)[number]) => ({
       nombre: c.nombre,
       tipo: c.tipo,

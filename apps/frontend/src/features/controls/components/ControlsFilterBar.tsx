@@ -8,10 +8,10 @@ interface Props {
 const tiposControl: Array<TipoControl | ""> = ["", "PREVENTIVO", "DETECTIVO", "CORRECTIVO"];
 const estadosControl: Array<EstadoImplementacionControl | ""> = [
   "",
-  "NO_APLICADO",
-  "PLANIFICADO",
+  "NO_INICIADO",
   "EN_PROGRESO",
   "IMPLEMENTADO",
+  "VERIFICADO",
 ];
 
 export function ControlsFilterBar({ filtros, onChange }: Props) {

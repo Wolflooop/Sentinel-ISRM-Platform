@@ -120,6 +120,7 @@ export function AppRouter() {
             <Route path="/riesgos/:id" element={<RiskDetailPage />} />
             <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />
             <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
+            <Route path="/riesgos/:riesgoId/tratamientos/nuevo" element={<TreatmentCreatePage />} />
             <Route
               path="/riesgos/:riesgoId/evaluaciones/:evaluacionId/tratamiento/nuevo"
               element={<TreatmentCreatePage />}

@@ -7,6 +7,7 @@ import {
   findControlVisiblePorId,
   findControlesVisiblesParaOrganizacion,
   findHistorialDeControl,
+  findResponsableDeOrganizacion,
 } from "../repository/controls.repository";
 import { CrearControlInput, ActualizarControlInput } from "../schema/controls.schema";
 import { ControlConRelaciones, FiltrosControles, EstadoImplementacionControl } from "../types/controls.types";
@@ -18,28 +19,15 @@ interface ActorAuditoria {
   direccionIp: string;
 }
 
-/**
- * Regla documentada en schema.prisma sobre Control.fechaImplementacion:
- * debe permanecer NULL mientras estadoImplementacion !== "IMPLEMENTADO".
- * Se resuelve aquí, a nivel de aplicación (Zod no puede verlo porque
- * actualizarControlExistente mezcla un input parcial con el registro
- * existente):
- *  - Si el usuario intenta FIJAR una fecha explícita en un estado que no
- *    es "Implementado" -> se rechaza (error de captura).
- *  - Si el usuario solo cambia el estado (p. ej. desde el selector rápido
- *    del detalle) y el control ya tenía una fecha -> se limpia
- *    automáticamente para no dejar datos inconsistentes, en vez de romper
- *    esa actualización.
- */
 function normalizarFechaImplementacion(
   estadoEfectivo: EstadoImplementacionControl,
   fechaImplementacionInput: Date | null | undefined,
   fechaImplementacionAnterior: Date | null
 ): Date | null {
-  if (estadoEfectivo !== "IMPLEMENTADO") {
+  if (estadoEfectivo !== "IMPLEMENTADO" && estadoEfectivo !== "VERIFICADO") {
     if (fechaImplementacionInput) {
       throw new AppError(
-        "La fecha de implementación solo puede registrarse cuando el estado es 'Implementado'",
+        "La fecha de implementación solo puede registrarse cuando el estado es 'Implementado' o 'Verificado'",
         400
       );
     }
@@ -55,11 +43,6 @@ export async function listarControles(
   return findControlesVisiblesParaOrganizacion(organizacionId, filtros);
 }
 
-/**
- * Visible tanto para controles globales como propios — 404 (no revela
- * existencia) si el control pertenece a otra organización, mismo criterio
- * de aislamiento ya usado en threats/users/roles/context/assets.
- */
 export async function obtenerControl(
   id: string,
   organizacionId: string
@@ -71,14 +54,20 @@ export async function obtenerControl(
   return control;
 }
 
-/**
- * Ninguna operación de escritura de este módulo actúa sobre el catálogo
- * global (`organizacionId = NULL`) — mismo criterio ya resuelto en threats
- * para Amenaza (ver exigirAmenazaPropia).
- */
 function exigirControlPropio(control: ControlConRelaciones, organizacionId: string): void {
   if (control.organizacionId !== organizacionId) {
     throw new AppError("No se puede modificar un control del catálogo global", 403);
+  }
+}
+
+async function validarResponsable(
+  responsableId: string | null | undefined,
+  organizacionId: string
+): Promise<void> {
+  if (!responsableId) return;
+  const responsable = await findResponsableDeOrganizacion(responsableId, organizacionId);
+  if (!responsable) {
+    throw new AppError("El responsable indicado no pertenece a esta organización", 404);
   }
 }
 
@@ -87,8 +76,9 @@ export async function crearNuevoControl(
   input: CrearControlInput,
   actor: ActorAuditoria
 ): Promise<ControlConRelaciones> {
-  const estadoEfectivo = input.estadoImplementacion ?? "NO_APLICADO";
+  const estadoEfectivo = input.estadoImplementacion ?? "NO_INICIADO";
   const fechaEfectiva = normalizarFechaImplementacion(estadoEfectivo, input.fechaImplementacion, null);
+  await validarResponsable(input.responsableId, organizacionId);
 
   const control = await crearControlConAuditoria(
     {
@@ -100,6 +90,7 @@ export async function crearNuevoControl(
       fechaImplementacion: fechaEfectiva,
       observaciones: input.observaciones ?? null,
       descripcionImplementacion: input.descripcionImplementacion ?? null,
+      responsableId: input.responsableId ?? null,
     },
     {
       usuarioId: actor.usuarioId,
@@ -110,6 +101,7 @@ export async function crearNuevoControl(
         nombre: input.nombre,
         tipo: input.tipo,
         estadoImplementacion: estadoEfectivo,
+        responsableId: input.responsableId ?? null,
       },
     }
   );
@@ -133,9 +125,9 @@ export async function actualizarControlExistente(
     anterior.fechaImplementacion
   );
 
-  // La validación de "comentario obligatorio si estadoImplementacion
-  // realmente cambia" ya NO vive aquí: la decide únicamente
-  // transicionarEstadoControl (modules/history/service/history.service.ts).
+  if (input.responsableId !== undefined) {
+    await validarResponsable(input.responsableId, organizacionId);
+  }
 
   const actualizado = await actualizarControlConAuditoria(
     id,
@@ -147,6 +139,7 @@ export async function actualizarControlExistente(
       fechaImplementacion: fechaEfectiva,
       observaciones: input.observaciones,
       descripcionImplementacion: input.descripcionImplementacion,
+      responsableId: input.responsableId,
     },
     {
       usuarioId: actor.usuarioId,

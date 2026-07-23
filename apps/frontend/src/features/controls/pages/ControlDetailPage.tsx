@@ -3,14 +3,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { useControl, useActualizarControl, useHistorialControl } from "../hooks/useControls";
 import { Timeline } from "../../../components/Timeline";
+import { CommentsPanel } from "../../comments/components/CommentsPanel";
+import { FollowUpsPanel } from "../../follow-ups/components/FollowUpsPanel";
+import { EvidencePanel } from "../../evidence/components/EvidencePanel";
 
-const estados = ["NO_APLICADO", "PLANIFICADO", "EN_PROGRESO", "IMPLEMENTADO"] as const;
+const estados = ["NO_INICIADO", "EN_PROGRESO", "IMPLEMENTADO", "VERIFICADO"] as const;
 
 const ETIQUETA_ESTADO_CONTROL: Record<string, string> = {
-  NO_APLICADO: "No aplicado",
-  PLANIFICADO: "Planificado",
+  NO_INICIADO: "No iniciado",
   EN_PROGRESO: "En progreso",
   IMPLEMENTADO: "Implementado",
+  VERIFICADO: "Verificado",
 };
 
 export function ControlDetailPage() {
@@ -82,6 +85,10 @@ export function ControlDetailPage() {
           <div>
             <dt className="font-medium text-slate-700">Organización</dt>
             <dd className="mt-1">{control.organizacion?.nombre ?? "Sin organización"}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-700">Responsable</dt>
+            <dd className="mt-1">{control.responsable?.nombre ?? "Sin asignar"}</dd>
           </div>
           <div>
             <dt className="font-medium text-slate-700">Fecha de implementación</dt>
@@ -165,6 +172,14 @@ export function ControlDetailPage() {
           </div>
         </div>
       </div>
+
+      {id && (
+        <div className="mt-8 grid gap-6">
+          <CommentsPanel destino={{ controlId: id }} />
+          <FollowUpsPanel destino={{ controlId: id }} />
+          <EvidencePanel destino={{ controlId: id }} puedeValidar />
+        </div>
+      )}
     </main>
   );
 }

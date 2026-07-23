@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { controlFormSchema, ControlFormValues } from "../schemas/controlsSchema";
 import { Control } from "../types/controls.types";
+import { useUsuarios } from "../../users/hooks/useUsers";
 
 interface Props {
   control?: Control;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function ControlForm({ control, onSubmit, isSubmittingRequest, errorMessage }: Props) {
+  const { data: usuarios } = useUsuarios();
   const {
     register,
     handleSubmit,
@@ -20,7 +22,7 @@ export function ControlForm({ control, onSubmit, isSubmittingRequest, errorMessa
     formState: { errors, isSubmitting },
   } = useForm<ControlFormValues>({
     resolver: zodResolver(controlFormSchema),
-    defaultValues: { estadoImplementacion: "NO_APLICADO" },
+    defaultValues: { estadoImplementacion: "NO_INICIADO" },
   });
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export function ControlForm({ control, onSubmit, isSubmittingRequest, errorMessa
         fechaImplementacion: control.fechaImplementacion?.slice(0, 10) ?? "",
         descripcionImplementacion: control.descripcionImplementacion ?? "",
         observaciones: control.observaciones ?? "",
+        responsableId: control.responsable?.id ?? "",
       });
     }
   }, [control, reset]);
@@ -99,10 +102,10 @@ export function ControlForm({ control, onSubmit, isSubmittingRequest, errorMessa
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register("estadoImplementacion")}
           >
-            <option value="NO_APLICADO">No aplicado</option>
-            <option value="PLANIFICADO">Planificado</option>
+            <option value="NO_INICIADO">No iniciado</option>
             <option value="EN_PROGRESO">En progreso</option>
             <option value="IMPLEMENTADO">Implementado</option>
+            <option value="VERIFICADO">Verificado</option>
           </select>
         </div>
 
@@ -113,15 +116,15 @@ export function ControlForm({ control, onSubmit, isSubmittingRequest, errorMessa
           <input
             id="fechaImplementacion"
             type="date"
-            disabled={estadoSeleccionado !== "IMPLEMENTADO"}
+            disabled={!["IMPLEMENTADO", "VERIFICADO"].includes(estadoSeleccionado)}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-400"
             {...register("fechaImplementacion")}
           />
           {errors.fechaImplementacion && (
             <p className="mt-1 text-sm text-red-600">{errors.fechaImplementacion.message}</p>
           )}
-          {estadoSeleccionado !== "IMPLEMENTADO" && (
-            <p className="mt-1 text-xs text-slate-400">Solo aplica cuando el estado es "Implementado".</p>
+          {!["IMPLEMENTADO", "VERIFICADO"].includes(estadoSeleccionado) && (
+            <p className="mt-1 text-xs text-slate-400">Solo aplica cuando el estado es "Implementado" o "Verificado".</p>
           )}
         </div>
       </div>
@@ -136,6 +139,25 @@ export function ControlForm({ control, onSubmit, isSubmittingRequest, errorMessa
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
           {...register("descripcionImplementacion")}
         />
+      </div>
+
+      <div>
+        <label htmlFor="responsableId" className="block text-sm font-medium text-slate-700">
+          Responsable
+        </label>
+        <select
+          id="responsableId"
+          defaultValue=""
+          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          {...register("responsableId")}
+        >
+          <option value="">Sin responsable asignado</option>
+          {usuarios?.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.nombre}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

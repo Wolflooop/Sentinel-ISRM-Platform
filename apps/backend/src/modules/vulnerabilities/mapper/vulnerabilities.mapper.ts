@@ -2,7 +2,8 @@ import { VulnerabilidadConRelaciones, CategoriaVulnerabilidad } from "../types/v
 import { VulnerabilidadResponseDTO, CategoriaVulnerabilidadResponseDTO } from "../dto/vulnerabilities.dto";
 
 export function toVulnerabilidadResponseDTO(
-  vulnerabilidad: VulnerabilidadConRelaciones
+  vulnerabilidad: VulnerabilidadConRelaciones,
+  organizacionIdSolicitante: string
 ): VulnerabilidadResponseDTO {
   return {
     id: vulnerabilidad.id,
@@ -10,14 +11,17 @@ export function toVulnerabilidadResponseDTO(
     descripcion: vulnerabilidad.descripcion,
     severidad: vulnerabilidad.severidad,
     referenciaCVE: vulnerabilidad.referenciaCVE,
+    esPredefinida: vulnerabilidad.esPredefinida,
+    esPropia: vulnerabilidad.organizacionId === organizacionIdSolicitante,
     categoria: { id: vulnerabilidad.categoria.id, nombre: vulnerabilidad.categoria.nombre },
   };
 }
 
 export function toVulnerabilidadResponseListDTO(
-  vulnerabilidades: VulnerabilidadConRelaciones[]
+  vulnerabilidades: VulnerabilidadConRelaciones[],
+  organizacionIdSolicitante: string
 ): VulnerabilidadResponseDTO[] {
-  return vulnerabilidades.map(toVulnerabilidadResponseDTO);
+  return vulnerabilidades.map((v) => toVulnerabilidadResponseDTO(v, organizacionIdSolicitante));
 }
 
 export function toCategoriaVulnerabilidadResponseDTO(

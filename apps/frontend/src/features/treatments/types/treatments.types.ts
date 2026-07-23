@@ -1,76 +1,90 @@
 export type EstrategiaTratamiento = "EVITAR" | "MITIGAR" | "TRANSFERIR" | "ACEPTAR";
-export type EstadoTratamiento = "PLANIFICADO" | "EN_PROGRESO" | "IMPLEMENTADO" | "VENCIDO";
+export type EstadoTratamiento = "PROPUESTO" | "EN_EJECUCION" | "COMPLETADO" | "VENCIDO";
+
+export interface ControlAsociado {
+  id: string;
+  nombre: string;
+  tipo: string;
+  estadoImplementacion: string;
+  esPrincipal: boolean;
+}
 
 export interface Tratamiento {
   id: string;
-  evaluacionId: string;
-  controlPrincipalId: string | null;
+  riesgoId: string;
+  evaluacionOrigenId: string | null;
   estrategia: EstrategiaTratamiento;
   descripcionPlan: string;
   usuarioResponsableId: string;
+  fechaInicio: string | null;
+  justificacion: string | null;
+  aprobadoPorId: string | null;
+  fechaAprobacion: string | null;
   fechaLimite: string;
   estado: EstadoTratamiento;
   porcentajeAvance: number;
-  evaluacion: {
+  riesgo: {
+    id: string;
+    estado: string;
+    origen: string;
+    titulo: string | null;
+  };
+  evaluacionOrigen: {
     id: string;
     resultado: string;
     justificacion: string;
     fechaEvaluacion: string;
-    riesgo: {
-      id: string;
-      valorRiesgo: number;
-      nivelRiesgoInherente: string;
-      estado: string;
-    };
-    contexto: {
-      id: string;
-      alcance: string;
-      activo: boolean;
-    };
-    usuario: {
-      id: string;
-      nombre: string;
-      email: string;
-    };
-  };
-  controlPrincipal: {
-    id: string;
-    nombre: string;
-    tipo: string;
-    estadoImplementacion: string;
   } | null;
   usuarioResponsable: {
     id: string;
     nombre: string;
     email: string;
   };
+  aprobadoPor: {
+    id: string;
+    nombre: string;
+    email: string;
+  } | null;
+  controles: ControlAsociado[];
 }
 
 export interface FiltrosTratamientos {
-  evaluacionId?: string;
+  riesgoId?: string;
   estado?: EstadoTratamiento;
   estrategia?: EstrategiaTratamiento;
 }
 
 export interface CrearTratamientoInput {
-  evaluacionId: string;
+  riesgoId: string;
+  evaluacionOrigenId?: string | null;
+  controlIds: string[];
   controlPrincipalId?: string | null;
   estrategia: EstrategiaTratamiento;
   descripcionPlan: string;
   usuarioResponsableId: string;
+  fechaInicio?: string | null;
+  justificacion?: string | null;
+  aprobadoPorId?: string | null;
+  fechaAprobacion?: string | null;
   fechaLimite: string;
   estado?: EstadoTratamiento;
   porcentajeAvance?: number;
-  // Independiente de `descripcionPlan`: comentario del historial del
-  // riesgo. Crear un tratamiento siempre transiciona Riesgo.estado.
+  // Independiente de `descripcionPlan`/`justificacion`: comentario del
+  // historial del riesgo. Crear un tratamiento siempre transiciona
+  // Riesgo.estado.
   comentario: string;
 }
 
 export interface ActualizarTratamientoInput {
+  controlIds?: string[];
   controlPrincipalId?: string | null;
   estrategia?: EstrategiaTratamiento;
   descripcionPlan?: string;
   usuarioResponsableId?: string;
+  fechaInicio?: string | null;
+  justificacion?: string | null;
+  aprobadoPorId?: string | null;
+  fechaAprobacion?: string | null;
   fechaLimite?: string;
   estado?: EstadoTratamiento;
   porcentajeAvance?: number;

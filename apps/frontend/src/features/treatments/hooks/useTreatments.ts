@@ -14,15 +14,14 @@ export function useTratamientos(filtros: FiltrosTratamientos) {
   });
 }
 
-
-export function useTratamientoPorEvaluacion(evaluacionId: string | undefined) {
-  const query = useQuery({
-    queryKey: ["tratamientos", { evaluacionId }],
-    queryFn: () => listarTratamientosRequest({ evaluacionId }),
-    enabled: Boolean(evaluacionId),
+// V2: Tratamiento cuelga de Riesgo, no de Evaluacion — un riesgo puede
+// tener varios tratamientos a lo largo del tiempo (ya no es 1:1).
+export function useTratamientosPorRiesgo(riesgoId: string | undefined) {
+  return useQuery({
+    queryKey: ["tratamientos", { riesgoId }],
+    queryFn: () => listarTratamientosRequest({ riesgoId }),
+    enabled: Boolean(riesgoId),
   });
-
-  return { ...query, data: query.data?.[0] };
 }
 
 export function useTratamiento(id: string | undefined) {
@@ -40,7 +39,7 @@ export function useCrearTratamiento() {
     mutationFn: (input: CrearTratamientoInput) => crearTratamientoRequest(input),
     onSuccess: (tratamiento) => {
       queryClient.invalidateQueries({ queryKey: ["tratamientos"] });
-      queryClient.invalidateQueries({ queryKey: ["riesgos", tratamiento.evaluacion.riesgo.id] });
+      queryClient.invalidateQueries({ queryKey: ["riesgos", tratamiento.riesgo.id] });
     },
   });
 }
@@ -53,7 +52,7 @@ export function useActualizarTratamiento(id: string) {
     onSuccess: (tratamiento) => {
       queryClient.invalidateQueries({ queryKey: ["tratamientos"] });
       queryClient.invalidateQueries({ queryKey: ["tratamientos", id] });
-      queryClient.invalidateQueries({ queryKey: ["riesgos", tratamiento.evaluacion.riesgo.id] });
+      queryClient.invalidateQueries({ queryKey: ["riesgos", tratamiento.riesgo.id] });
     },
   });
 }

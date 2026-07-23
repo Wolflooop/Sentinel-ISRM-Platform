@@ -1,15 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
-import { CrearEvaluacionParams, EvaluacionConRelaciones, FiltrosEvaluaciones } from "../types/evaluations.types";
+import { CrearEvaluacionParams, EvaluacionConRelaciones, FiltrosEvaluaciones, CeldaMatrizResumen } from "../types/evaluations.types";
 import { transicionarEstadoRiesgo } from "../../history/service/history.service";
 
 const EVALUACION_INCLUDE = {
   riesgo: {
     select: {
       id: true,
-      valorRiesgo: true,
-      nivelRiesgoInherente: true,
       estado: true,
+      origen: true,
+      titulo: true,
     },
   },
   contexto: {
@@ -28,14 +28,15 @@ const EVALUACION_INCLUDE = {
   },
 } as const;
 
+// V2: Riesgo ya no cuelga siempre de un AAV (origen MANUAL) — el
+// aislamiento se resuelve por CUALQUIERA de las dos cadenas posibles.
 function whereOrganizacion(organizacionId: string) {
   return {
     riesgo: {
-      aav: {
-        activo: {
-          organizacionId,
-        },
-      },
+      OR: [
+        { aav: { activo: { organizacionId } } },
+        { creador: { organizacionId } },
+      ],
     },
   };
 }
@@ -48,6 +49,7 @@ export async function findEvaluaciones(
     where: {
       ...whereOrganizacion(organizacionId),
       ...(filtros.riesgoId ? { riesgoId: filtros.riesgoId } : {}),
+      ...(filtros.tipoEvaluacion ? { tipoEvaluacion: filtros.tipoEvaluacion } : {}),
     },
     include: EVALUACION_INCLUDE,
     orderBy: { fechaEvaluacion: "desc" },
@@ -67,15 +69,16 @@ export async function findEvaluacionPorId(
 export async function findRiesgoPorIdYOrganizacion(
   riesgoId: string,
   organizacionId: string
-): Promise<{ id: string; aavId: string } | null> {
+): Promise<{ id: string } | null> {
   return prisma.riesgo.findFirst({
     where: {
       id: riesgoId,
-      aav: {
-        activo: { organizacionId },
-      },
+      OR: [
+        { aav: { activo: { organizacionId } } },
+        { creador: { organizacionId } },
+      ],
     },
-    select: { id: true, aavId: true },
+    select: { id: true },
   });
 }
 
@@ -88,14 +91,26 @@ export async function findContextoActivoPorOrganizacion(
   });
 }
 
+export async function findCeldaMatriz(
+  contextoId: string,
+  nivelProbabilidad: number,
+  nivelImpacto: number
+): Promise<CeldaMatrizResumen | null> {
+  return prisma.matrizRiesgo.findUnique({
+    where: {
+      contextoId_nivelProbabilidad_nivelImpacto: { contextoId, nivelProbabilidad, nivelImpacto },
+    },
+    select: { nivelResultante: true },
+  });
+}
 
 export async function crearEvaluacion(params: CrearEvaluacionParams): Promise<EvaluacionConRelaciones> {
   const nuevoEstadoRiesgo = params.resultado === "ACEPTABLE" ? "ACEPTADO" : "EVALUADO";
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Único punto responsable de transicionar Riesgo.estado y registrar su
-    // historial: ver modules/history/service/history.service.ts. Usa el
-    // campo `comentario` independiente (Prioridad 2) — nunca `justificacion`.
+    // historial (ver modules/history/service/history.service.ts). Usa el
+    // campo `comentario` independiente — nunca `justificacion`.
     await transicionarEstadoRiesgo(tx, {
       riesgoId: params.riesgoId,
       usuarioId: params.usuarioId,
@@ -103,14 +118,31 @@ export async function crearEvaluacion(params: CrearEvaluacionParams): Promise<Ev
       comentario: params.comentario,
     });
 
-    return tx.evaluacion.create({
+    const evaluacion = await tx.evaluacion.create({
       data: {
         riesgoId: params.riesgoId,
         contextoId: params.contextoId,
+        tipoEvaluacion: params.tipoEvaluacion,
+        probabilidad: params.probabilidad,
+        impacto: params.impacto,
+        valorCalculado: params.valorCalculado,
+        nivelRiesgo: params.nivelRiesgo,
         resultado: params.resultado,
         justificacion: params.justificacion,
         usuarioId: params.usuarioId,
       },
+    });
+
+    // Riesgo.evaluacionActualId siempre apunta a la evaluación más
+    // reciente (punto 3 del prompt: "Cada Riesgo mantiene únicamente un
+    // puntero: evaluacionActualId").
+    await tx.riesgo.update({
+      where: { id: params.riesgoId },
+      data: { evaluacionActualId: evaluacion.id },
+    });
+
+    return tx.evaluacion.findUniqueOrThrow({
+      where: { id: evaluacion.id },
       include: EVALUACION_INCLUDE,
     });
   });

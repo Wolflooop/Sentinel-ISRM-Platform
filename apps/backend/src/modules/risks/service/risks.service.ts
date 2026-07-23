@@ -4,10 +4,14 @@ import {
   findRiesgoDeOrganizacionPorId,
   findActivoDeOrganizacion,
   findAmenazaVisible,
-  findVulnerabilidad,
+  findVulnerabilidadVisible,
   findContextoActivoDeOrganizacion,
   findCeldaMatriz,
+  findCategoriaIdentificacion,
+  findUsuarioDeOrganizacion,
   crearAavYRiesgo,
+  crearRiesgoManual,
+  reasignarResponsableDeRiesgo,
   findHistorialDeRiesgo,
   RiesgoDuplicadoParaAavError,
 } from "../repository/risks.repository";
@@ -38,10 +42,16 @@ export async function obtenerRiesgo(
   return riesgo;
 }
 
+async function validarResponsable(responsableId: string, organizacionId: string): Promise<void> {
+  const responsable = await findUsuarioDeOrganizacion(responsableId, organizacionId);
+  if (!responsable) {
+    throw new AppError("El responsable indicado no pertenece a esta organización", 404);
+  }
+}
 
-export async function crearNuevoRiesgo(
+async function crearRiesgoOrigenAav(
   organizacionId: string,
-  input: CrearRiesgoInput,
+  input: Extract<CrearRiesgoInput, { origen: "AAV" }>,
   actor: ActorAuditoria
 ): Promise<RiesgoConRelaciones> {
   const activo = await findActivoDeOrganizacion(input.activoId, organizacionId);
@@ -57,12 +67,17 @@ export async function crearNuevoRiesgo(
     );
   }
 
-  const vulnerabilidad = await findVulnerabilidad(input.vulnerabilidadId);
+  const vulnerabilidad = await findVulnerabilidadVisible(input.vulnerabilidadId, organizacionId);
   if (!vulnerabilidad) {
-    throw new AppError("La vulnerabilidad especificada no existe", 404);
+    throw new AppError(
+      "La vulnerabilidad especificada no existe o no está disponible para esta organización",
+      404
+    );
   }
 
-   const contexto = await findContextoActivoDeOrganizacion(organizacionId);
+  await validarResponsable(input.responsableId, organizacionId);
+
+  const contexto = await findContextoActivoDeOrganizacion(organizacionId);
   if (!contexto) {
     throw new AppError(
       "La organización no tiene un Contexto ISO activo; no es posible calcular el nivel de riesgo",
@@ -72,7 +87,7 @@ export async function crearNuevoRiesgo(
 
   const celda = await findCeldaMatriz(contexto.id, input.probabilidad, input.impacto);
   if (!celda) {
-      throw new AppError(
+    throw new AppError(
       "El contexto activo no tiene definida esa combinación de probabilidad/impacto en su matriz de riesgo",
       409
     );
@@ -87,6 +102,7 @@ export async function crearNuevoRiesgo(
       probabilidad: input.probabilidad,
       impacto: input.impacto,
       nivelRiesgoInherente: celda.nivelResultante,
+      responsableId: input.responsableId,
       actor,
     });
   } catch (err) {
@@ -97,12 +113,78 @@ export async function crearNuevoRiesgo(
   }
 }
 
-/**
- * Historial del riesgo (ver Fase 9). obtenerRiesgo ya lanza 404 si el
- * riesgo no pertenece a la organización del actor, así que este llamado
- * previo garantiza el mismo aislamiento multi-tenant que el resto del
- * módulo antes de listar su historial.
- */
+async function crearRiesgoOrigenManual(
+  organizacionId: string,
+  input: Extract<CrearRiesgoInput, { origen: "MANUAL" }>,
+  actor: ActorAuditoria
+): Promise<RiesgoConRelaciones> {
+  const categoria = await findCategoriaIdentificacion(input.categoriaIdentificacionId);
+  if (!categoria) {
+    throw new AppError("La categoría de identificación especificada no existe", 404);
+  }
+
+  await validarResponsable(input.responsableId, organizacionId);
+
+  const contexto = await findContextoActivoDeOrganizacion(organizacionId);
+  if (!contexto) {
+    throw new AppError(
+      "La organización no tiene un Contexto ISO activo; no es posible calcular el nivel de riesgo",
+      409
+    );
+  }
+
+  const celda = await findCeldaMatriz(contexto.id, input.probabilidad, input.impacto);
+  if (!celda) {
+    throw new AppError(
+      "El contexto activo no tiene definida esa combinación de probabilidad/impacto en su matriz de riesgo",
+      409
+    );
+  }
+
+  return crearRiesgoManual({
+    organizacionId,
+    titulo: input.titulo,
+    descripcion: input.descripcion,
+    justificacionOrigen: input.justificacionOrigen,
+    categoriaIdentificacionId: input.categoriaIdentificacionId,
+    probabilidad: input.probabilidad,
+    impacto: input.impacto,
+    nivelRiesgoInherente: celda.nivelResultante,
+    responsableId: input.responsableId,
+    actor,
+  });
+}
+
+export async function crearNuevoRiesgo(
+  organizacionId: string,
+  input: CrearRiesgoInput,
+  actor: ActorAuditoria
+): Promise<RiesgoConRelaciones> {
+  if (input.origen === "AAV") {
+    return crearRiesgoOrigenAav(organizacionId, input, actor);
+  }
+  return crearRiesgoOrigenManual(organizacionId, input, actor);
+}
+
+// V2 (punto 13 del prompt): único punto de la aplicación que puede cambiar
+// Riesgo.responsableId. creadorId es inmutable y nunca se toca aquí.
+export async function asignarResponsableDeRiesgo(
+  riesgoId: string,
+  organizacionId: string,
+  responsableIdNuevo: string,
+  actor: ActorAuditoria
+): Promise<RiesgoConRelaciones> {
+  await obtenerRiesgo(riesgoId, organizacionId);
+  await validarResponsable(responsableIdNuevo, organizacionId);
+
+  return reasignarResponsableDeRiesgo({
+    riesgoId,
+    responsableIdNuevo,
+    organizacionId,
+    actor,
+  });
+}
+
 export async function obtenerHistorialDeRiesgo(
   riesgoId: string,
   organizacionId: string

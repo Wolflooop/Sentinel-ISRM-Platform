@@ -5,29 +5,44 @@ export type EstadoRiesgo =
   | "TRATADO"
   | "CERRADO"
   | "MONITOREADO"
-  | "ACEPTADO";
+  | "ACEPTADO"
+  | "REABIERTO";
 
 export type NivelRiesgo = "BAJO" | "MEDIO" | "ALTO" | "CRITICO";
+export type OrigenRiesgo = "AAV" | "MANUAL";
 
-/** Nunca incluye un identificador de AAV — esa entidad no se expone. */
-export interface Riesgo {
+export interface EvaluacionActualResumen {
   id: string;
+  tipoEvaluacion: "INHERENTE" | "RESIDUAL";
   probabilidad: number;
   impacto: number;
-  valorRiesgo: number;
-  nivelRiesgoInherente: NivelRiesgo;
-  nivelRiesgoResidual: NivelRiesgo | null;
+  valorCalculado: number;
+  nivelRiesgo: NivelRiesgo;
+  fechaEvaluacion: string;
+}
+
+// V2: un riesgo ya no tiene siempre AAV — origen puede ser MANUAL.
+export interface Riesgo {
+  id: string;
+  origen: OrigenRiesgo;
+  titulo: string | null;
+  descripcion: string | null;
+  justificacionOrigen: string | null;
   estado: EstadoRiesgo;
-  fechaUltimoCalculo: string;
   creadoEn: string;
-  activo: { id: string; nombre: string };
-  amenaza: { id: string; nombre: string };
-  vulnerabilidad: { id: string; nombre: string };
+  creador: { id: string; nombre: string };
+  responsable: { id: string; nombre: string };
+  categoriaIdentificacion: { id: string; nombre: string } | null;
+  activo: { id: string; nombre: string } | null;
+  amenaza: { id: string; nombre: string } | null;
+  vulnerabilidad: { id: string; nombre: string } | null;
+  evaluacionActual: EvaluacionActualResumen | null;
 }
 
 export interface FiltrosRiesgos {
   estado?: EstadoRiesgo;
-  nivelRiesgoInherente?: NivelRiesgo;
+  origen?: OrigenRiesgo;
+  responsableId?: string;
 }
 
 export interface RiesgoHistorialEntrada {
@@ -37,4 +52,10 @@ export interface RiesgoHistorialEntrada {
   comentario: string | null;
   createdAt: string;
   usuario: { id: string; nombre: string; rol: string };
+}
+
+export interface CategoriaIdentificacionRiesgo {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
 }

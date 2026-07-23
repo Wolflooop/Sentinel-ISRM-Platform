@@ -5,6 +5,7 @@ import {
   listarRiesgosController,
   obtenerRiesgoController,
   crearRiesgoController,
+  asignarResponsableController,
   obtenerHistorialRiesgoController,
 } from "../controller/risks.controller";
 
@@ -16,6 +17,12 @@ router.get("/", authorize("riesgos", "leer"), listarRiesgosController);
 router.get("/:id", authorize("riesgos", "leer"), obtenerRiesgoController);
 router.get("/:id/historial", authorize("riesgos", "leer"), obtenerHistorialRiesgoController);
 router.post("/", authorize("riesgos", "crear"), crearRiesgoController);
-
+// V2 (punto 13 del prompt): endpoint dedicado para asignar responsable,
+// separado de cualquier actualización general del riesgo.
+router.post(
+  "/:id/responsable",
+  authorize("riesgos", "actualizar"),
+  asignarResponsableController
+);
 
 export { router as risksRouter };

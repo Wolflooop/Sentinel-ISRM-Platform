@@ -13,9 +13,10 @@ const ESTADOS = [
   "CERRADO",
   "MONITOREADO",
   "ACEPTADO",
+  "REABIERTO",
 ] as const;
 
-const NIVELES = ["BAJO", "MEDIO", "ALTO", "CRITICO"] as const;
+const ORIGENES = ["AAV", "MANUAL"] as const;
 
 export function RisksFilterBar({ filtros, onChange }: Props) {
   return (
@@ -39,21 +40,18 @@ export function RisksFilterBar({ filtros, onChange }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-500">Nivel de riesgo</label>
+        <label className="block text-xs font-medium text-slate-500">Origen</label>
         <select
-          value={filtros.nivelRiesgoInherente ?? ""}
+          value={filtros.origen ?? ""}
           onChange={(e) =>
-            onChange({
-              ...filtros,
-              nivelRiesgoInherente: (e.target.value || undefined) as FiltrosRiesgos["nivelRiesgoInherente"],
-            })
+            onChange({ ...filtros, origen: (e.target.value || undefined) as FiltrosRiesgos["origen"] })
           }
           className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
         >
           <option value="">Todos</option>
-          {NIVELES.map((n) => (
-            <option key={n} value={n}>
-              {n}
+          {ORIGENES.map((o) => (
+            <option key={o} value={o}>
+              {o === "AAV" ? "Activo + Amenaza + Vulnerabilidad" : "Manual"}
             </option>
           ))}
         </select>

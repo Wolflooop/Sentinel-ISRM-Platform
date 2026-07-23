@@ -1,9 +1,9 @@
 export type TipoControl = "PREVENTIVO" | "DETECTIVO" | "CORRECTIVO";
 export type EstadoImplementacionControl =
-  | "NO_APLICADO"
-  | "PLANIFICADO"
+  | "NO_INICIADO"
   | "EN_PROGRESO"
-  | "IMPLEMENTADO";
+  | "IMPLEMENTADO"
+  | "VERIFICADO";
 
 export interface Control {
   id: string;
@@ -19,11 +19,18 @@ export interface Control {
     id: string;
     nombre: string;
   } | null;
+  // V2 (punto 7 del prompt): responsable operativo del control.
+  responsable: {
+    id: string;
+    nombre: string;
+    email: string;
+  } | null;
 }
 
 export interface FiltrosControles {
   tipo?: TipoControl;
   estadoImplementacion?: EstadoImplementacionControl;
+  responsableId?: string;
 }
 
 export interface ActualizarControlInput {
@@ -34,8 +41,9 @@ export interface ActualizarControlInput {
   fechaImplementacion?: string | null;
   observaciones?: string | null;
   descripcionImplementacion?: string | null;
+  responsableId?: string | null;
   // Obligatorio solo cuando estadoImplementacion cambia respecto al valor
-  // actual — el backend valida esa condición (ver Fase 9).
+  // actual — el backend valida esa condición.
   comentario?: string;
 }
 

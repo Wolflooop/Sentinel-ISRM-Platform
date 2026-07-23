@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import {
   ActualizarVulnerabilidadParams,
@@ -12,12 +13,15 @@ const INCLUDE_RELACIONES = {
   categoria: { select: { id: true, nombre: true } },
 } as const;
 
-
-export async function findVulnerabilidades(
+// V2 (punto 8 del prompt): catálogo híbrido global/organización, idéntico
+// criterio que threats.repository.ts para Amenaza.
+export async function findVulnerabilidadesVisiblesParaOrganizacion(
+  organizacionId: string,
   filtros: FiltrosVulnerabilidades
 ): Promise<VulnerabilidadConRelaciones[]> {
   return prisma.vulnerabilidad.findMany({
     where: {
+      OR: [{ organizacionId: null }, { organizacionId }],
       ...(filtros.categoriaId ? { categoriaId: filtros.categoriaId } : {}),
       ...(filtros.severidad ? { severidad: filtros.severidad } : {}),
       ...(filtros.busqueda
@@ -29,13 +33,30 @@ export async function findVulnerabilidades(
   });
 }
 
-export async function findVulnerabilidadPorId(
-  id: string
+export async function findVulnerabilidadVisiblePorId(
+  id: string,
+  organizacionId: string
 ): Promise<VulnerabilidadConRelaciones | null> {
-  return prisma.vulnerabilidad.findUnique({
-    where: { id },
+  return prisma.vulnerabilidad.findFirst({
+    where: { id, OR: [{ organizacionId: null }, { organizacionId }] },
     include: INCLUDE_RELACIONES,
   });
+}
+
+export async function existeOtraVulnerabilidadConNombreEnOrganizacion(
+  organizacionId: string,
+  nombre: string,
+  excluirId?: string
+): Promise<boolean> {
+  const existente = await prisma.vulnerabilidad.findFirst({
+    where: {
+      organizacionId,
+      nombre,
+      ...(excluirId ? { id: { not: excluirId } } : {}),
+    },
+    select: { id: true },
+  });
+  return existente !== null;
 }
 
 export async function existeCategoriaVulnerabilidad(categoriaId: string): Promise<boolean> {
@@ -50,7 +71,6 @@ export async function findCategoriasVulnerabilidad(): Promise<CategoriaVulnerabi
   return prisma.categoriaVulnerabilidad.findMany({ orderBy: { nombre: "asc" } });
 }
 
-
 export async function existeAavParaVulnerabilidad(vulnerabilidadId: string): Promise<boolean> {
   const aav = await prisma.activoAmenazaVulnerabilidad.findFirst({
     where: { vulnerabilidadId },
@@ -59,48 +79,88 @@ export async function existeAavParaVulnerabilidad(vulnerabilidadId: string): Pro
   return aav !== null;
 }
 
-export async function crearVulnerabilidad(
-  params: CrearVulnerabilidadParams
+export async function crearVulnerabilidadConAuditoria(
+  params: CrearVulnerabilidadParams,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
 ): Promise<VulnerabilidadConRelaciones> {
-  return prisma.vulnerabilidad.create({
-    data: {
-      categoriaId: params.categoriaId,
-      nombre: params.nombre,
-      descripcion: params.descripcion,
-      severidad: params.severidad,
-      referenciaCVE: params.referenciaCVE,
-    },
-    include: INCLUDE_RELACIONES,
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const vulnerabilidad = await tx.vulnerabilidad.create({
+      data: {
+        organizacionId: params.organizacionId,
+        categoriaId: params.categoriaId,
+        nombre: params.nombre,
+        descripcion: params.descripcion,
+        severidad: params.severidad,
+        referenciaCVE: params.referenciaCVE,
+        esPredefinida: false,
+      },
+      include: INCLUDE_RELACIONES,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Vulnerabilidad",
+        entidadId: vulnerabilidad.id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return vulnerabilidad;
   });
 }
 
-export async function actualizarVulnerabilidad(
+export async function actualizarVulnerabilidadConAuditoria(
   id: string,
-  params: ActualizarVulnerabilidadParams
+  params: ActualizarVulnerabilidadParams,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
 ): Promise<VulnerabilidadConRelaciones> {
-  return prisma.vulnerabilidad.update({
-    where: { id },
-    data: params,
-    include: INCLUDE_RELACIONES,
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const actualizada = await tx.vulnerabilidad.update({
+      where: { id },
+      data: params,
+      include: INCLUDE_RELACIONES,
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Vulnerabilidad",
+        entidadId: id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
+
+    return actualizada;
   });
 }
 
+export async function eliminarVulnerabilidadConAuditoria(
+  id: string,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
+): Promise<void> {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.vulnerabilidad.delete({ where: { id } });
 
-export async function eliminarVulnerabilidad(id: string): Promise<void> {
-  await prisma.vulnerabilidad.delete({ where: { id } });
-}
-
-export async function registrarAuditoria(params: RegistrarAuditoriaParams): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: params.entidad,
-      entidadId: params.entidadId,
-      accion: params.accion,
-      datosAnteriores: params.datosAnteriores as never,
-      datosNuevos: params.datosNuevos as never,
-      direccionIp: params.direccionIp,
-    },
+    await tx.auditoria.create({
+      data: {
+        usuarioId: auditoria.usuarioId,
+        organizacionId: auditoria.organizacionId,
+        entidad: "Vulnerabilidad",
+        entidadId: id,
+        accion: auditoria.accion,
+        datosAnteriores: auditoria.datosAnteriores as never,
+        datosNuevos: auditoria.datosNuevos as never,
+        direccionIp: auditoria.direccionIp,
+      },
+    });
   });
 }

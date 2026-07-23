@@ -5,13 +5,14 @@ export type EstadoRiesgo =
   | "TRATADO"
   | "CERRADO"
   | "MONITOREADO"
-  | "ACEPTADO";
+  | "ACEPTADO"
+  | "REABIERTO";
 
 export type EstadoImplementacionControl =
-  | "NO_APLICADO"
-  | "PLANIFICADO"
+  | "NO_INICIADO"
   | "EN_PROGRESO"
-  | "IMPLEMENTADO";
+  | "IMPLEMENTADO"
+  | "VERIFICADO";
 
 export interface RiesgoHistorialEntrada {
   id: string;

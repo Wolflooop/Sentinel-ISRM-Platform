@@ -6,16 +6,16 @@ import { useTheme } from "../../../lib/theme/ThemeProvider";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 const ORDEN_ESTADOS: Array<keyof ConteoPorEstadoControl> = [
-  "NO_APLICADO",
-  "PLANIFICADO",
+  "NO_INICIADO",
   "EN_PROGRESO",
   "IMPLEMENTADO",
+  "VERIFICADO",
 ];
 const ETIQUETAS: Record<keyof ConteoPorEstadoControl, string> = {
-  NO_APLICADO: "No aplicado",
-  PLANIFICADO: "Planificado",
+  NO_INICIADO: "No iniciado",
   EN_PROGRESO: "En progreso",
   IMPLEMENTADO: "Implementado",
+  VERIFICADO: "Verificado",
 };
 
 interface ControlsStatusChartProps {

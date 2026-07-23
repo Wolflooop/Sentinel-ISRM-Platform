@@ -4,42 +4,30 @@ import { TratamientoResponseDTO } from "../dto/treatments.dto";
 export function toTratamientoResponseDTO(tratamiento: TratamientoConRelaciones): TratamientoResponseDTO {
   return {
     id: tratamiento.id,
-    evaluacionId: tratamiento.evaluacionId,
-    controlPrincipalId: tratamiento.controlPrincipalId,
+    riesgoId: tratamiento.riesgoId,
+    evaluacionOrigenId: tratamiento.evaluacionOrigenId,
     estrategia: tratamiento.estrategia,
     descripcionPlan: tratamiento.descripcionPlan,
     usuarioResponsableId: tratamiento.usuarioResponsableId,
+    fechaInicio: tratamiento.fechaInicio ? tratamiento.fechaInicio.toISOString() : null,
+    justificacion: tratamiento.justificacion,
+    aprobadoPorId: tratamiento.aprobadoPorId,
+    fechaAprobacion: tratamiento.fechaAprobacion ? tratamiento.fechaAprobacion.toISOString() : null,
     fechaLimite: tratamiento.fechaLimite.toISOString(),
     estado: tratamiento.estado,
     porcentajeAvance: tratamiento.porcentajeAvance,
-    evaluacion: {
-      id: tratamiento.evaluacion.id,
-      resultado: tratamiento.evaluacion.resultado,
-      justificacion: tratamiento.evaluacion.justificacion,
-      fechaEvaluacion: tratamiento.evaluacion.fechaEvaluacion.toISOString(),
-      riesgo: {
-        id: tratamiento.evaluacion.riesgo.id,
-        valorRiesgo: tratamiento.evaluacion.riesgo.valorRiesgo,
-        nivelRiesgoInherente: tratamiento.evaluacion.riesgo.nivelRiesgoInherente,
-        estado: tratamiento.evaluacion.riesgo.estado,
-      },
-      contexto: {
-        id: tratamiento.evaluacion.contexto.id,
-        alcance: tratamiento.evaluacion.contexto.alcance,
-        activo: tratamiento.evaluacion.contexto.activo,
-      },
-      usuario: {
-        id: tratamiento.evaluacion.usuario.id,
-        nombre: tratamiento.evaluacion.usuario.nombre,
-        email: tratamiento.evaluacion.usuario.email,
-      },
+    riesgo: {
+      id: tratamiento.riesgo.id,
+      estado: tratamiento.riesgo.estado,
+      origen: tratamiento.riesgo.origen,
+      titulo: tratamiento.riesgo.titulo,
     },
-    controlPrincipal: tratamiento.controlPrincipal
+    evaluacionOrigen: tratamiento.evaluacionOrigen
       ? {
-          id: tratamiento.controlPrincipal.id,
-          nombre: tratamiento.controlPrincipal.nombre,
-          tipo: tratamiento.controlPrincipal.tipo,
-          estadoImplementacion: tratamiento.controlPrincipal.estadoImplementacion,
+          id: tratamiento.evaluacionOrigen.id,
+          resultado: tratamiento.evaluacionOrigen.resultado,
+          justificacion: tratamiento.evaluacionOrigen.justificacion,
+          fechaEvaluacion: tratamiento.evaluacionOrigen.fechaEvaluacion.toISOString(),
         }
       : null,
     usuarioResponsable: {
@@ -47,6 +35,20 @@ export function toTratamientoResponseDTO(tratamiento: TratamientoConRelaciones):
       nombre: tratamiento.usuarioResponsable.nombre,
       email: tratamiento.usuarioResponsable.email,
     },
+    aprobadoPor: tratamiento.aprobadoPor
+      ? {
+          id: tratamiento.aprobadoPor.id,
+          nombre: tratamiento.aprobadoPor.nombre,
+          email: tratamiento.aprobadoPor.email,
+        }
+      : null,
+    controles: tratamiento.controles.map((c) => ({
+      id: c.id,
+      nombre: c.nombre,
+      tipo: c.tipo,
+      estadoImplementacion: c.estadoImplementacion,
+      esPrincipal: c.esPrincipal,
+    })),
   };
 }
 

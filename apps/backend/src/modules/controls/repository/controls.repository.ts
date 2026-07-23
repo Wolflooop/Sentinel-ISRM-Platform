@@ -13,20 +13,13 @@ import { findHistorialDeControl as findHistorialDeControlRepo } from "../../hist
 
 const CONTROL_INCLUDE = {
   organizacion: {
-    select: {
-      id: true,
-      nombre: true,
-    },
+    select: { id: true, nombre: true },
+  },
+  responsable: {
+    select: { id: true, nombre: true, email: true },
   },
 } as const;
 
-/**
- * Catálogo híbrido (mismo criterio que threats.repository.ts): incluye los
- * controles globales (`organizacionId = NULL`, ISO/IEC 27001 Anexo A) junto
- * con los propios de la organización solicitante. `organizacionId` ya no es
- * un filtro opcional del query — es obligatorio y se resuelve del JWT en el
- * Service, nunca del cliente.
- */
 export async function findControlesVisiblesParaOrganizacion(
   organizacionId: string,
   filtros: FiltrosControles
@@ -36,6 +29,7 @@ export async function findControlesVisiblesParaOrganizacion(
       OR: [{ organizacionId: null }, { organizacionId }],
       ...(filtros.tipo ? { tipo: filtros.tipo } : {}),
       ...(filtros.estadoImplementacion ? { estadoImplementacion: filtros.estadoImplementacion } : {}),
+      ...(filtros.responsableId ? { responsableId: filtros.responsableId } : {}),
     },
     include: CONTROL_INCLUDE,
     orderBy: { nombre: "asc" },
@@ -52,6 +46,16 @@ export async function findControlVisiblePorId(
   });
 }
 
+export async function findResponsableDeOrganizacion(
+  usuarioId: string,
+  organizacionId: string
+): Promise<{ id: string } | null> {
+  return prisma.usuario.findFirst({
+    where: { id: usuarioId, organizacionId },
+    select: { id: true },
+  });
+}
+
 type AuditoriaControlParams = {
   usuarioId: string;
   organizacionId: string;
@@ -61,12 +65,6 @@ type AuditoriaControlParams = {
   datosNuevos?: unknown;
 };
 
-/**
- * Corrección de auditoría (mismo patrón que risks.repository.ts): la
- * escritura de negocio y el registro de Auditoria quedan en la MISMA
- * transacción, para que un Control nunca pueda quedar persistido sin su
- * registro de auditoría correspondiente.
- */
 export async function crearControlConAuditoria(
   params: CrearControlParams,
   auditoria: AuditoriaControlParams
@@ -82,6 +80,7 @@ export async function crearControlConAuditoria(
         fechaImplementacion: params.fechaImplementacion,
         observaciones: params.observaciones,
         descripcionImplementacion: params.descripcionImplementacion,
+        responsableId: params.responsableId,
       },
       include: CONTROL_INCLUDE,
     });
@@ -99,8 +98,6 @@ export async function crearControlConAuditoria(
       },
     });
 
-    // Primera entrada del historial: único punto responsable, ver
-    // modules/history/service/history.service.ts.
     await registrarCreacionControl(tx, {
       controlId: control.id,
       usuarioId: auditoria.usuarioId,
@@ -122,10 +119,6 @@ export async function actualizarControlConAuditoria(
   }
 ): Promise<ControlConRelaciones> {
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    // Único punto responsable de cambiar Control.estadoImplementacion y
-    // registrar su historial (ver modules/history/service/history.service.ts).
-    // También persiste el resto de campos (nombre, tipo, observaciones,
-    // etc.) en la misma escritura, para no duplicar el UPDATE.
     await transicionarEstadoControl(tx, {
       controlId: id,
       usuarioId: transicion.usuarioId,
@@ -173,21 +166,16 @@ export async function eliminarControlConAuditoria(
   });
 }
 
+// V2: la referencia ya no es la FK única controlPrincipalId sino el
+// puente N:M TratamientoControl (punto 6 del prompt).
 export async function existeTratamientoParaControl(controlId: string): Promise<boolean> {
-  const tratamiento = await prisma.tratamiento.findFirst({
-    where: { controlPrincipalId: controlId },
-    select: { id: true },
+  const vinculo = await prisma.tratamientoControl.findFirst({
+    where: { controlId },
+    select: { tratamientoId: true },
   });
-  return Boolean(tratamiento);
+  return Boolean(vinculo);
 }
 
-
-
-// ---------------------------------------------------------------------------
-// Historial. findControlVisiblePorId ya resuelve la visibilidad híbrida
-// (global vs. propio de la organización) antes de listar el historial. La
-// lectura/escritura del historial en sí vive en modules/history/repository.
-// ---------------------------------------------------------------------------
 export async function findHistorialDeControl(controlId: string): Promise<ControlHistorialEntrada[]> {
   return findHistorialDeControlRepo(controlId);
 }

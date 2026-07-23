@@ -13,6 +13,7 @@ function normalizar(input: ControlFormValues) {
     fechaImplementacion: input.fechaImplementacion?.trim() || null,
     descripcionImplementacion: input.descripcionImplementacion?.trim() || undefined,
     observaciones: input.observaciones?.trim() || undefined,
+    responsableId: input.responsableId?.trim() || null,
   };
 }
 

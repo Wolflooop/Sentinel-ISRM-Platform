@@ -28,7 +28,14 @@ export function RiskMatrixGrid({ matriz, escalasProbabilidad, escalasImpacto, ri
 
   const conteoPorCelda = new Map<string, number>();
   for (const riesgo of riesgos) {
-    const clave = `${riesgo.probabilidad}-${riesgo.impacto}`;
+    // V2: probabilidad/impacto ya no viven en Riesgo — vienen de la
+    // Evaluacion vigente (evaluacionActual). Un riesgo sin evaluación aún
+    // (por ejemplo, si la organización no tenía Contexto activo al
+    // crearlo) simplemente no se ubica en la matriz.
+    if (!riesgo.evaluacionActual) {
+      continue;
+    }
+    const clave = `${riesgo.evaluacionActual.probabilidad}-${riesgo.evaluacionActual.impacto}`;
     conteoPorCelda.set(clave, (conteoPorCelda.get(clave) ?? 0) + 1);
   }
 

@@ -1,9 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { crearRiesgoSchema, filtrosRiesgosSchema } from "../schema/risks.schema";
+import {
+  crearRiesgoSchema,
+  filtrosRiesgosSchema,
+  asignarResponsableSchema,
+} from "../schema/risks.schema";
 import {
   listarRiesgos,
   obtenerRiesgo,
   crearNuevoRiesgo,
+  asignarResponsableDeRiesgo,
   obtenerHistorialDeRiesgo,
 } from "../service/risks.service";
 import {
@@ -18,8 +23,6 @@ function organizacionIdDe(req: Request): string {
     throw new AppError("No autenticado", 401);
   }
   if (!req.user.organizacionId) {
-    // Un SUPER_ADMIN (organizacionId = null) no opera sobre datos de
-    // gestión de riesgos: ese dominio pertenece siempre a una organización.
     throw new AppError("Esta operación requiere pertenecer a una organización", 400);
   }
   return req.user.organizacionId;
@@ -71,6 +74,26 @@ export async function crearRiesgoController(
     const organizacionId = organizacionIdDe(req);
     const riesgo = await crearNuevoRiesgo(organizacionId, input, actorDe(req));
     res.status(201).json(toRiesgoResponseDTO(riesgo));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function asignarResponsableController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const input = asignarResponsableSchema.parse(req.body);
+    const organizacionId = organizacionIdDe(req);
+    const riesgo = await asignarResponsableDeRiesgo(
+      req.params.id,
+      organizacionId,
+      input.responsableId,
+      actorDe(req)
+    );
+    res.status(200).json(toRiesgoResponseDTO(riesgo));
   } catch (err) {
     next(err);
   }

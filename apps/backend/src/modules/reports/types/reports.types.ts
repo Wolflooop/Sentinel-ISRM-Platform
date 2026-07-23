@@ -44,8 +44,8 @@ export interface DatosReporteOrganizacion {
   }>;
   riesgos: Array<{
     activo: string;
-    amenaza: string;
-    vulnerabilidad: string;
+    amenaza: string | null;
+    vulnerabilidad: string | null;
     probabilidad: number;
     impacto: number;
     valorRiesgo: number;
