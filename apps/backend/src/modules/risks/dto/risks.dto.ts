@@ -6,12 +6,37 @@ export interface RiesgoResponseDTO {
   justificacionOrigen: string | null;
   estado: string;
   creadoEn: string;
-  creador: { id: string; nombre: string };
-  responsable: { id: string; nombre: string };
-  categoriaIdentificacion: { id: string; nombre: string } | null;
-  activo: { id: string; nombre: string } | null;
-  amenaza: { id: string; nombre: string } | null;
-  vulnerabilidad: { id: string; nombre: string } | null;
+
+  creador: {
+    id: string;
+    nombre: string;
+  };
+
+  responsable: {
+    id: string;
+    nombre: string;
+  } | null;
+
+  categoriaIdentificacion: {
+    id: string;
+    nombre: string;
+  } | null;
+
+  activo: {
+    id: string;
+    nombre: string;
+  } | null;
+
+  amenaza: {
+    id: string;
+    nombre: string;
+  } | null;
+
+  vulnerabilidad: {
+    id: string;
+    nombre: string;
+  } | null;
+
   evaluacionActual: {
     id: string;
     tipoEvaluacion: string;
@@ -29,5 +54,9 @@ export interface RiesgoHistorialResponseDTO {
   estadoNuevo: string;
   comentario: string | null;
   createdAt: string;
-  usuario: { id: string; nombre: string; rol: string };
+  usuario: {
+    id: string;
+    nombre: string;
+    rol: string;
+  };
 }

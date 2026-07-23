@@ -14,6 +14,14 @@ export type EstadoImplementacionControl =
   | "IMPLEMENTADO"
   | "VERIFICADO";
 
+export interface UsuarioHistorialResumen {
+  id: string;
+  nombre: string;
+  rol: {
+    nombre: string;
+  };
+}
+
 export interface RiesgoHistorialEntrada {
   id: string;
   riesgoId: string;
@@ -21,11 +29,7 @@ export interface RiesgoHistorialEntrada {
   estadoNuevo: EstadoRiesgo;
   comentario: string | null;
   createdAt: Date;
-  usuario: {
-    id: string;
-    nombre: string;
-    rol: { nombre: string };
-  };
+  usuario: UsuarioHistorialResumen;
 }
 
 export interface ControlHistorialEntrada {
@@ -35,9 +39,5 @@ export interface ControlHistorialEntrada {
   estadoNuevo: EstadoImplementacionControl;
   comentario: string | null;
   createdAt: Date;
-  usuario: {
-    id: string;
-    nombre: string;
-    rol: { nombre: string };
-  };
+  usuario: UsuarioHistorialResumen;
 }
