@@ -27,3 +27,11 @@ logs/
 
 # TypeScript build cache
 *.tsbuildinfo
+# Documentos
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
