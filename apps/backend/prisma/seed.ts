@@ -34,6 +34,7 @@ const PERMISOS: Array<{ recurso: string; accion: string; descripcion: string }> 
   { recurso: "roles", accion: "actualizar", descripcion: "Actualizar nombre/descripción de roles" },
   { recurso: "roles", accion: "gestionarPermisos", descripcion: "Asignar o quitar permisos de un rol" },
   { recurso: "permisos", accion: "leer", descripcion: "Consultar el catálogo de permisos" },
+  { recurso: "dashboard", accion: "leer", descripcion: "Consultar los indicadores globales de administración de la plataforma (solo Administrador Principal)" },
   { recurso: "organizaciones", accion: "leer", descripcion: "Consultar los datos de la propia organización" },
   { recurso: "organizaciones", accion: "crear", descripcion: "Crear una nueva organización (solo Administrador Principal)" },
   { recurso: "organizaciones", accion: "actualizar", descripcion: "Actualizar los datos de la propia organización" },
@@ -167,7 +168,6 @@ const ROLES_ADICIONALES: Record<
     tipo: "USUARIO_COMUN",
     permisos: [
       { recurso: "organizaciones", accion: "leer" },
-      { recurso: "contexto", accion: "leer" },
       { recurso: "activos", accion: "leer" },
       { recurso: "amenazas", accion: "leer" },
       { recurso: "vulnerabilidades", accion: "leer" },

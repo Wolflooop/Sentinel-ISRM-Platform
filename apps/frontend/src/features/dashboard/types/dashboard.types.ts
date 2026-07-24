@@ -31,3 +31,32 @@ export interface IndicadoresDashboard {
   riesgosPorNivel: ConteoPorNivel;
   controlesPorEstado: ConteoPorEstadoControl;
 }
+
+export type ConteoPorTipoRol = Record<"SUPER_ADMIN" | "ADMIN_TIC" | "USUARIO_COMUN", number>;
+
+export type AccionAuditoria = "CREAR" | "EDITAR" | "ELIMINAR" | "APROBAR";
+
+export interface ActividadRecienteGlobal {
+  id: string;
+  entidad: string;
+  entidadId: string;
+  accion: AccionAuditoria;
+  fecha: string;
+  usuario: { id: string; nombre: string };
+  organizacion: { id: string; nombre: string };
+}
+
+// Indicadores de administración GLOBAL de la plataforma (GET
+// /api/dashboard/global) — exclusivos del Administrador Principal
+// (SUPER_ADMIN). No confundir con IndicadoresDashboard, que es el
+// resumen organizacional de ADMIN_TIC/USUARIO_COMUN.
+export interface IndicadoresGlobales {
+  totalOrganizaciones: number;
+  totalAdministradoresTic: number;
+  totalUsuarios: number;
+  totalActivos: number;
+  totalRiesgos: number;
+  riesgosPorNivel: ConteoPorNivel;
+  usuariosPorTipoRol: ConteoPorTipoRol;
+  actividadReciente: ActividadRecienteGlobal[];
+}

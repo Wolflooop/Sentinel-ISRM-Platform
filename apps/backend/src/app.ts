@@ -11,6 +11,7 @@ import { usersRouter } from "./modules/users/routes/users.routes";
 import { rolesRouter } from "./modules/roles/routes/roles.routes";
 import { permissionsRouter } from "./modules/permissions/routes/permissions.routes";
 import { organizationsRouter } from "./modules/organizations/routes/organizations.routes";
+import { dashboardRouter } from "./modules/dashboard/routes/dashboard.routes";
 import { contextRouter } from "./modules/context/routes/context.routes";
 import { assetsRouter } from "./modules/assets/routes/assets.routes";
 import { threatsRouter } from "./modules/threats/routes/threats.routes";
@@ -69,6 +70,7 @@ export function createApp(): Application {
   app.use("/api/roles", rolesRouter);
   app.use("/api/permisos", permissionsRouter);
   app.use("/api/organizaciones", organizationsRouter);
+  app.use("/api/dashboard", dashboardRouter);
   app.use("/api/contexto", contextRouter);
 
   app.use("/api/activos", assetsRouter);

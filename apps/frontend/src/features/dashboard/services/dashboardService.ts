@@ -7,6 +7,7 @@ import {
   ControlResumen,
   EstadoImplementacionControl,
   IndicadoresDashboard,
+  IndicadoresGlobales,
   NivelRiesgo,
   RiesgoResumen,
 } from "../types/dashboard.types";
@@ -45,6 +46,11 @@ function contarPorEstadoControl(controles: ControlResumen[]): ConteoPorEstadoCon
     conteo[control.estadoImplementacion] += 1;
   }
   return conteo;
+}
+
+export async function obtenerIndicadoresGlobales(): Promise<IndicadoresGlobales> {
+  const { data } = await apiClient.get<IndicadoresGlobales>("/dashboard/global");
+  return data;
 }
 
 export async function obtenerIndicadoresDashboard(): Promise<IndicadoresDashboard> {
