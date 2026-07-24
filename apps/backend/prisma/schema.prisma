@@ -411,6 +411,10 @@ model CategoriaActivo {
   activos Activo[]
 }
 
+// Extremo "protegido" de la cadena AAV: lo que la organización necesita
+// resguardar. Un mismo Activo puede aparecer en muchas filas de
+// ActivoAmenazaVulnerabilidad (una por cada combinación amenaza+
+// vulnerabilidad que le aplique).
 model Activo {
   id                     String       @id @default(uuid())
   organizacionId         String
@@ -444,6 +448,11 @@ model CategoriaAmenaza {
   amenazas Amenaza[]
 }
 
+// Segundo eslabón de la cadena AAV: la fuente potencial de daño. Una
+// Amenaza no está ligada a un único Activo — el mismo registro de
+// "phishing" o "falla eléctrica", por ejemplo, puede combinarse con
+// muchos activos distintos (y con distintas vulnerabilidades) a través de
+// ActivoAmenazaVulnerabilidad.
 model Amenaza {
   id             String        @id @default(uuid())
   // Nullable: NULO = catálogo global administrado por el administrador del
@@ -478,6 +487,11 @@ model CategoriaVulnerabilidad {
   vulnerabilidades Vulnerabilidad[]
 }
 
+// Tercer eslabón de la cadena AAV: la debilidad concreta que una Amenaza
+// podría explotar. Igual que Amenaza, una Vulnerabilidad es reutilizable:
+// la misma "contraseña débil" puede ser el punto de entrada para
+// distintas amenazas sobre distintos activos — la combinación específica
+// que sí importa para el análisis vive en ActivoAmenazaVulnerabilidad.
 model Vulnerabilidad {
   id             String   @id @default(uuid())
   // V2: nullable — NULO = catálogo global administrado por el administrador
@@ -509,9 +523,66 @@ model Vulnerabilidad {
 // ============================================================================
 // 4. ANÁLISIS (AAV, RIESGO, EVALUACIÓN)
 // ============================================================================
+//
+// MODELO AAV (Activo–Amenaza–Vulnerabilidad) — guía rápida para quien no
+// conozca el dominio:
+//
+//   Activo → Amenaza → Vulnerabilidad → Evaluación → Riesgo
+//
+// Un riesgo (en su origen AAV; ver enum OrigenRiesgo más abajo para el
+// origen MANUAL) no es un dato que alguien "captura" directamente: es la
+// CONSECUENCIA de que tres entidades independientes coincidan en un mismo
+// punto:
+//   - un Activo   (algo que la organización necesita proteger),
+//   - una Amenaza (algo capaz de causarle daño),
+//   - una Vulnerabilidad (una debilidad que esa amenaza podría explotar
+//     en ese activo).
+// Ese punto de encuentro es exactamente lo que representa el modelo puente
+// ActivoAmenazaVulnerabilidad (ver Fase 4, Puente 2): no es una tabla de
+// auditoría ni un catálogo, es la afirmación "esta amenaza podría explotar
+// esta vulnerabilidad en este activo concreto". Por eso NO existe un
+// endpoint CRUD independiente para AAV ni una pantalla propia en el
+// frontend — se crea implícitamente al identificar un riesgo de origen AAV
+// (ver risks.repository.ts / risks.service.ts), nunca de forma aislada.
+//
+// Cardinalidades a tener en cuenta:
+//   - Un Activo puede estar expuesto a muchas Amenazas (y viceversa: una
+//     Amenaza puede afectar a muchos Activos de la organización).
+//   - Una Vulnerabilidad puede ser explotada por distintas Amenazas.
+//   - Por eso la relación es ternaria (3 FKs) y no dos relaciones binarias:
+//     la combinación específica activo+amenaza+vulnerabilidad es la unidad
+//     mínima de análisis, no cada entidad por separado.
+//
+// La sola existencia de una fila AAV NO es todavía un riesgo cuantificado:
+// para saber qué tan grave es, hace falta una Evaluacion, que es quien
+// calcula probabilidad × impacto = nivel de riesgo (ver modelo Evaluacion).
+// Un mismo Riesgo puede tener varias Evaluaciones a lo largo del tiempo
+// (TipoEvaluacion.INHERENTE = antes de aplicar controles, RESIDUAL =
+// después). Riesgo.evaluacionActualId siempre apunta a la vigente.
+//
+// Una vez que una evaluación resulta NO_ACEPTABLE, el flujo continúa hacia
+// un Tratamiento (la decisión de qué hacer con el riesgo: mitigar,
+// transferir, aceptar o evitar — ver EstrategiaTratamiento) que a su vez
+// se apoya en uno o varios Control (las salvaguardas concretas que se
+// implementan para reducir probabilidad o impacto — ver modelo Control y
+// el puente TratamientoControl). El ciclo completo, entonces, es:
+//   AAV → Riesgo → Evaluación (inherente) → Tratamiento → Control(es)
+//         → Evaluación (residual, para medir si el tratamiento funcionó)
+// ============================================================================
 
 // Resuelve la asociación ternaria Activo + Amenaza + Vulnerabilidad
-// (ver Fase 4, Puente 2)
+// (ver Fase 4, Puente 2).
+//
+// AAV representa la combinación técnica entre un activo, una amenaza y una
+// vulnerabilidad. No es un módulo visible para usuarios finales, sino una
+// entidad interna utilizada para construir escenarios de riesgo dentro del
+// modelo ISO/IEC 27005: cada fila es un escenario concreto ("esta amenaza
+// podría explotar esta vulnerabilidad en este activo"), no un catálogo
+// independiente. Por eso no tiene endpoint CRUD, pantalla propia ni
+// gestión manual desde el frontend — se crea junto con el Riesgo que la
+// referencia (ver Riesgo.origen = AAV y risks.repository.ts), y su único
+// propósito es servir de base para que una Evaluacion pueda calcular
+// probabilidad × impacto sobre un escenario bien definido.
 model ActivoAmenazaVulnerabilidad {
   id                String         @id @default(uuid())
   activoId          String
@@ -537,6 +608,13 @@ model CategoriaIdentificacionRiesgo {
   riesgos Riesgo[]
 }
 
+// El riesgo en sí: el objeto de negocio que agrupa un escenario AAV (o un
+// hallazgo MANUAL) con su historial de evaluaciones y tratamientos. Un
+// Riesgo de origen AAV no tiene sentido sin su ActivoAmenazaVulnerabilidad
+// asociado (por eso aavId es la FK que lo ancla), y no tiene un nivel de
+// riesgo propio: ese cálculo vive siempre en la Evaluacion vigente
+// (evaluacionActualId) — Riesgo es el contenedor del ciclo de vida, no
+// quien calcula probabilidad/impacto.
 model Riesgo {
   id                    String       @id @default(uuid())
 
@@ -624,6 +702,13 @@ model RiesgoHistorial {
   @@index([riesgoId, createdAt])
 }
 
+// Quien efectivamente calcula el riesgo: probabilidad × impacto = nivel de
+// riesgo (BAJO/MEDIO/ALTO/CRÍTICO), evaluado contra la matriz vigente del
+// Contexto ISO de la organización. Un Riesgo puede acumular varias filas
+// aquí a lo largo de su vida: una evaluación INHERENTE inicial (antes de
+// aplicar controles) y, tras implementar un Tratamiento, una o más
+// evaluaciones RESIDUAL (para medir si el tratamiento realmente redujo el
+// riesgo). Riesgo.evaluacionActualId siempre apunta a la última vigente.
 model Evaluacion {
   id              String              @id @default(uuid())
   riesgoId        String
@@ -772,6 +857,13 @@ model Evidencia {
 // 5. TRATAMIENTO
 // ============================================================================
 
+// La respuesta de la organización cuando una Evaluacion resulta
+// NO_ACEPTABLE: qué estrategia se sigue (mitigar, transferir, aceptar o
+// evitar — ver EstrategiaTratamiento) y quién es responsable de
+// ejecutarla. Un Tratamiento no reduce el riesgo por sí mismo: lo hace a
+// través de uno o varios Control concretos (ver puente
+// TratamientoControl más abajo), y su efectividad real solo se confirma
+// con una nueva Evaluacion RESIDUAL posterior.
 model Tratamiento {
   id                    String                @id @default(uuid())
 
@@ -839,6 +931,14 @@ model TratamientoControl {
   @@index([controlId])
 }
 
+// La salvaguarda concreta (técnica, física u organizativa — ver
+// TipoControl) que reduce probabilidad o impacto. Es el último eslabón de
+// la cadena AAV → Riesgo → Evaluación → Tratamiento → Control: un Control
+// por sí solo no está "atado" a un riesgo específico (puede reutilizarse
+// en varios Tratamiento distintos, ver TratamientoControl), sino que su
+// estadoImplementacion (NO_INICIADO → EN_PROGRESO → IMPLEMENTADO →
+// VERIFICADO) es lo que en la práctica determina si el tratamiento que lo
+// usa está realmente mitigando algo o solo planificado en el papel.
 model Control {
   id                          String                       @id @default(uuid())
   // Nullable: NULO = catálogo global de referencia (ISO/IEC 27001 Anexo A).
