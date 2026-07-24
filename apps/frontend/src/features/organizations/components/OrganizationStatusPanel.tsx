@@ -39,9 +39,9 @@ export function OrganizationStatusPanel({
   }
 
   return (
-    <div className="rounded-md border border-slate-200 p-4">
+    <div className="rounded-md border border-border p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-800">Estado de la organización</h2>
+        <h2 className="text-sm font-semibold text-ink">Estado de la organización</h2>
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${ESTILOS_BADGE[organizacion.estado]}`}
         >
@@ -56,7 +56,7 @@ export function OrganizationStatusPanel({
             type="button"
             disabled={isSubmittingRequest || estado === organizacion.estado}
             onClick={() => solicitarCambio(estado)}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             {ETIQUETAS_ESTADO[estado]}
           </button>

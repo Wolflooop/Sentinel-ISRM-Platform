@@ -38,38 +38,38 @@ export function EditUserForm({ usuario, onSubmit, isSubmittingRequest, errorMess
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div>
-        <label htmlFor="nombre" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="nombre" className="block text-sm font-medium text-ink">
           Nombre
         </label>
         <input
           id="nombre"
           type="text"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("nombre")}
         />
         {errors.nombre && <p className="mt-1 text-sm text-red-600">{errors.nombre.message}</p>}
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="email" className="block text-sm font-medium text-ink">
           Correo
         </label>
         <input
           id="email"
           type="email"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("email")}
         />
         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
       </div>
 
       <div>
-        <label htmlFor="rolId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="rolId" className="block text-sm font-medium text-ink">
           Rol
         </label>
         <select
           id="rolId"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("rolId")}
         >
           {rolesDisponibles?.map((rol) => (
@@ -86,7 +86,7 @@ export function EditUserForm({ usuario, onSubmit, isSubmittingRequest, errorMess
       <button
         type="submit"
         disabled={isSubmitting || isSubmittingRequest}
-        className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {isSubmittingRequest ? "Guardando..." : "Guardar cambios"}
       </button>

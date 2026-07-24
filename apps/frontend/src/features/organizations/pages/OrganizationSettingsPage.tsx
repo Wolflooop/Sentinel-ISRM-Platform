@@ -27,9 +27,9 @@ export function OrganizationSettingsPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Mi organización</h1>
+      <h1 className="text-lg font-semibold text-ink">Mi organización</h1>
 
-      {isLoading && <p className="mt-4 text-sm text-slate-500">Cargando organización...</p>}
+      {isLoading && <p className="mt-4 text-sm text-muted">Cargando organización...</p>}
       {isError && (
         <p className="mt-4 text-sm text-red-600">No se pudo cargar la organización.</p>
       )}
@@ -42,8 +42,8 @@ export function OrganizationSettingsPage() {
             isSubmittingRequest={cambiarEstadoMutation.isPending}
           />
 
-          <div className="rounded-md border border-slate-200 p-4">
-            <h2 className="mb-4 text-sm font-semibold text-slate-800">Datos generales</h2>
+          <div className="rounded-md border border-border p-4">
+            <h2 className="mb-4 text-sm font-semibold text-ink">Datos generales</h2>
             <OrganizationForm
               organizacion={organizacion}
               onSubmit={handleSubmit}

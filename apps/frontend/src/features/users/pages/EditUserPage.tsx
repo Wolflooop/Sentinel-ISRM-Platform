@@ -17,7 +17,7 @@ export function EditUserPage() {
     : null;
 
   if (isLoading) {
-    return <p className="p-8 text-sm text-slate-500">Cargando usuario...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando usuario...</p>;
   }
 
   if (isError || !usuario) {
@@ -26,7 +26,7 @@ export function EditUserPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Editar usuario</h1>
+      <h1 className="text-lg font-semibold text-ink">Editar usuario</h1>
       <div className="mt-6">
         <EditUserForm
           usuario={usuario}
