@@ -1,16 +1,17 @@
 import { AppError } from "../../../shared/AppError";
+import { canManageRegistro, UsuarioParaOwnership } from "../../../shared/ownership";
 import {
   findSeguimientos,
   existeRiesgoDeOrganizacion,
   existeTratamientoDeOrganizacion,
   existeControlVisible,
+  findResponsableDelDestino,
   crearSeguimiento,
 } from "../repository/follow-ups.repository";
 import { CrearSeguimientoInput, FiltrosSeguimientosInput } from "../schema/follow-ups.schema";
 import { SeguimientoConRelaciones } from "../types/follow-ups.types";
 
-interface ActorAuditoria {
-  usuarioId: string;
+interface ActorAuditoria extends UsuarioParaOwnership {
   direccionIp: string;
 }
 
@@ -50,6 +51,17 @@ export async function crearNuevoSeguimiento(
   actor: ActorAuditoria
 ): Promise<SeguimientoConRelaciones> {
   await validarDestino(input, organizacionId);
+
+  // Fase 3B: registrar un seguimiento es gestionar el registro destino
+  // (riesgo, tratamiento o control). Se resuelve el responsable actual de
+  // ese destino específico, no siempre el del riesgo.
+  const responsableId = await findResponsableDelDestino(input, organizacionId);
+  if (!canManageRegistro(actor, { responsableId })) {
+    throw new AppError(
+      "Acceso denegado: solo el responsable actual del registro o un Administrador TIC pueden registrar un seguimiento",
+      403
+    );
+  }
 
   return crearSeguimiento({
     riesgoId: input.riesgoId ?? null,

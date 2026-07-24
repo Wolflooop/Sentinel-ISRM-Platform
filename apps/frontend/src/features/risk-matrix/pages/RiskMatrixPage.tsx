@@ -14,17 +14,17 @@ export function RiskMatrixPage() {
     <main className="mx-auto max-w-4xl px-4 py-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-slate-800">Matriz de riesgos</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-lg font-semibold text-ink">Matriz de riesgos</h1>
+          <p className="mt-1 text-sm text-muted">
             Distribución de los riesgos identificados según su probabilidad e impacto.
           </p>
         </div>
-        <Link to="/riesgos" className="text-sm font-medium text-slate-600 hover:text-slate-800">
+        <Link to="/riesgos" className="text-sm font-medium text-muted hover:text-ink">
           ← Volver a riesgos
         </Link>
       </div>
 
-      {cargando && <p className="mt-6 text-sm text-slate-500">Cargando matriz de riesgos...</p>}
+      {cargando && <p className="mt-6 text-sm text-muted">Cargando matriz de riesgos...</p>}
 
       {error && (
         <p className="mt-6 text-sm text-red-600">
@@ -33,14 +33,14 @@ export function RiskMatrixPage() {
       )}
 
       {!cargando && !error && !contexto && (
-        <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-          <p className="text-sm text-slate-600">No hay un contexto ISO/IEC 27005 activo para tu organización.</p>
-          <p className="mt-1 text-sm text-slate-500">
+        <div className="mt-6 rounded-lg border border-dashed border-border bg-surface p-8 text-center">
+          <p className="text-sm text-muted">No hay un contexto ISO/IEC 27005 activo para tu organización.</p>
+          <p className="mt-1 text-sm text-muted">
             Configura la matriz de riesgo en el módulo de Contexto antes de visualizarla aquí.
           </p>
           <Link
             to="/contexto"
-            className="mt-4 inline-block rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
+            className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
           >
             Ir a Contexto
           </Link>
@@ -48,13 +48,13 @@ export function RiskMatrixPage() {
       )}
 
       {!cargando && !error && contexto && contexto.matriz.length === 0 && (
-        <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-          <p className="text-sm text-slate-600">
+        <div className="mt-6 rounded-lg border border-dashed border-border bg-surface p-8 text-center">
+          <p className="text-sm text-muted">
             El contexto activo aún no tiene una matriz de riesgo configurada.
           </p>
           <Link
             to={`/contexto/${contexto.id}`}
-            className="mt-4 inline-block rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
+            className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
           >
             Configurar matriz
           </Link>
@@ -62,7 +62,7 @@ export function RiskMatrixPage() {
       )}
 
       {!cargando && !error && contexto && contexto.matriz.length > 0 && (
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mt-6 rounded-lg border border-border bg-surface-elevated p-6 shadow-sm">
           <RiskMatrixGrid
             matriz={contexto.matriz}
             escalasProbabilidad={contexto.escalasProbabilidad}
@@ -70,7 +70,7 @@ export function RiskMatrixPage() {
             riesgos={riesgos ?? []}
           />
           {riesgos && riesgos.length === 0 && (
-            <p className="mt-4 text-center text-sm text-slate-500">
+            <p className="mt-4 text-center text-sm text-muted">
               Aún no hay riesgos registrados para ubicar en la matriz.
             </p>
           )}

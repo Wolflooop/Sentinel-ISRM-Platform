@@ -7,6 +7,10 @@ import { apiClient } from "../../../lib/apiClient";
 interface Props {
   destino: DestinoEvidencia;
   puedeValidar?: boolean;
+  /** Si el usuario actual puede subir evidencia (responsable actual del
+   * registro, o Administrador TIC). Por defecto true para no romper usos
+   * existentes fuera del detalle de riesgo. */
+  puedeGestionar?: boolean;
 }
 
 const ESTILO_ESTADO: Record<string, string> = {
@@ -15,7 +19,7 @@ const ESTILO_ESTADO: Record<string, string> = {
   RECHAZADA: "bg-red-100 text-red-800",
 };
 
-export function EvidencePanel({ destino, puedeValidar = false }: Props) {
+export function EvidencePanel({ destino, puedeValidar = false, puedeGestionar = true }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: evidencias, isLoading } = useEvidencias(destino);
   const subir = useSubirEvidencia(destino);
@@ -32,45 +36,47 @@ export function EvidencePanel({ destino, puedeValidar = false }: Props) {
   }
 
   return (
-    <div className="rounded-md border border-slate-200 p-4">
+    <div className="rounded-md border border-border p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-800">Evidencias</h3>
-        <div>
-          <input
-            ref={inputRef}
-            type="file"
-            className="hidden"
-            onChange={(e) => {
-              const archivo = e.target.files?.[0];
-              if (archivo) subir.mutate(archivo);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={subir.isPending}
-            className="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {subir.isPending ? "Subiendo..." : "Subir evidencia"}
-          </button>
-        </div>
+        <h3 className="text-sm font-semibold text-ink">Evidencias</h3>
+        {puedeGestionar && (
+          <div>
+            <input
+              ref={inputRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const archivo = e.target.files?.[0];
+                if (archivo) subir.mutate(archivo);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={subir.isPending}
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-on-primary disabled:opacity-60"
+            >
+              {subir.isPending ? "Subiendo..." : "Subir evidencia"}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 space-y-2">
-        {isLoading && <p className="text-sm text-slate-400">Cargando evidencias...</p>}
-        {evidencias?.length === 0 && <p className="text-sm text-slate-400">Sin evidencias aún.</p>}
+        {isLoading && <p className="text-sm text-muted">Cargando evidencias...</p>}
+        {evidencias?.length === 0 && <p className="text-sm text-muted">Sin evidencias aún.</p>}
         {evidencias?.map((e) => (
-          <div key={e.id} className="flex items-center justify-between border-b border-slate-100 pb-2 text-sm">
+          <div key={e.id} className="flex items-center justify-between border-b border-border pb-2 text-sm">
             <div>
               <button
                 type="button"
                 onClick={() => descargar(e.id, e.nombreArchivo)}
-                className="text-slate-800 underline"
+                className="text-ink underline"
               >
                 {e.nombreArchivo}
               </button>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-muted">
                 {e.subidoPor.nombre} · {new Date(e.creadoEn).toLocaleString()}
               </p>
             </div>

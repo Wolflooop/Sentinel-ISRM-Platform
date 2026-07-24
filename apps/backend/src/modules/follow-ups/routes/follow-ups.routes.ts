@@ -8,6 +8,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", authorize("riesgos", "leer"), listarSeguimientosController);
-router.post("/", authorize("riesgos", "actualizar"), crearSeguimientoController);
+router.post("/", authorize("seguimientos", "crear"), crearSeguimientoController);
 
 export { router as followUpsRouter };

@@ -18,7 +18,11 @@ function actorDe(req: Request) {
   if (!req.user) {
     throw new AppError("No autenticado", 401);
   }
-  return { usuarioId: req.user.sub, direccionIp: req.ip ?? "desconocida" };
+  return {
+    usuarioId: req.user.sub,
+    tipoRol: req.user.tipoRol,
+    direccionIp: req.ip ?? "desconocida",
+  };
 }
 
 export async function listarSeguimientosController(

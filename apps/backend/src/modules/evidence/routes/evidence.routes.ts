@@ -15,7 +15,7 @@ router.use(authenticate);
 
 router.get("/", authorize("riesgos", "leer"), listarEvidenciasController);
 router.get("/:id/descargar", authorize("riesgos", "leer"), descargarEvidenciaController);
-router.post("/", authorize("riesgos", "actualizar"), uploadEvidencia, crearEvidenciaController);
-router.patch("/:id/validar", authorize("riesgos", "actualizar"), validarEvidenciaController);
+router.post("/", authorize("evidencias", "crear"), uploadEvidencia, crearEvidenciaController);
+router.patch("/:id/validar", authorize("evidencias", "validar"), validarEvidenciaController);
 
 export { router as evidenceRouter };

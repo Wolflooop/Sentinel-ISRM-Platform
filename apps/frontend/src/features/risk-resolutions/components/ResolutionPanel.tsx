@@ -18,15 +18,15 @@ export function ResolutionPanel({ riesgoId, estadoActual }: Props) {
   const puedeReabrir = estadoActual === "CERRADO";
 
   return (
-    <div className="rounded-md border border-slate-200 p-4">
-      <h3 className="text-sm font-semibold text-slate-800">Resolución del riesgo</h3>
+    <div className="rounded-md border border-border p-4">
+      <h3 className="text-sm font-semibold text-ink">Resolución del riesgo</h3>
 
       <textarea
         value={justificacion}
         onChange={(e) => setJustificacion(e.target.value)}
         placeholder="Justificación..."
         rows={2}
-        className="mt-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="mt-3 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
       />
 
       <div className="mt-2 flex gap-2">
@@ -40,7 +40,7 @@ export function ResolutionPanel({ riesgoId, estadoActual }: Props) {
                 { onSuccess: () => setJustificacion("") }
               )
             }
-            className="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-on-primary disabled:opacity-60"
           >
             Marcar como resuelto
           </button>
@@ -63,14 +63,14 @@ export function ResolutionPanel({ riesgoId, estadoActual }: Props) {
       </div>
 
       <div className="mt-4 space-y-2">
-        {isLoading && <p className="text-sm text-slate-400">Cargando historial de resoluciones...</p>}
+        {isLoading && <p className="text-sm text-muted">Cargando historial de resoluciones...</p>}
         {resoluciones?.map((r) => (
-          <div key={r.id} className="border-b border-slate-100 pb-2 text-sm">
-            <p className="font-medium text-slate-800">
+          <div key={r.id} className="border-b border-border pb-2 text-sm">
+            <p className="font-medium text-ink">
               {r.tipo === "RESOLUCION" ? "Resuelto" : "Reabierto"}
             </p>
-            <p className="text-slate-600">{r.justificacion}</p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="text-muted">{r.justificacion}</p>
+            <p className="mt-1 text-xs text-muted">
               {r.usuario.nombre} · {new Date(r.fecha).toLocaleString()}
             </p>
           </div>

@@ -8,6 +8,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", authorize("riesgos", "leer"), listarComentariosController);
-router.post("/", authorize("riesgos", "actualizar"), crearComentarioController);
+router.post("/", authorize("comentarios", "crear"), crearComentarioController);
 
 export { router as commentsRouter };

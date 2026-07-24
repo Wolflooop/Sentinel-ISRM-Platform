@@ -43,7 +43,7 @@ export function RiskMatrixGrid({ matriz, escalasProbabilidad, escalasImpacto, ri
     <div className="overflow-x-auto">
       <div className="inline-flex">
         {/* Eje Y: impacto, de mayor a menor de arriba hacia abajo */}
-        <div className="mr-2 flex flex-col justify-between py-6 text-right text-xs font-medium text-slate-500">
+        <div className="mr-2 flex flex-col justify-between py-6 text-right text-xs font-medium text-muted">
           {NIVELES_EJE.map((nivel) => (
             <div key={nivel} className="flex h-16 w-20 items-center justify-end">
               {etiquetaDe(escalasImpacto, nivel)}
@@ -79,18 +79,18 @@ export function RiskMatrixGrid({ matriz, escalasProbabilidad, escalasImpacto, ri
               <tr>
                 <td className="p-1" />
                 {[1, 2, 3, 4, 5].map((probabilidad) => (
-                  <td key={probabilidad} className="pt-2 text-center text-xs font-medium text-slate-500">
+                  <td key={probabilidad} className="pt-2 text-center text-xs font-medium text-muted">
                     {etiquetaDe(escalasProbabilidad, probabilidad)}
                   </td>
                 ))}
               </tr>
             </tbody>
           </table>
-          <p className="mt-1 text-center text-xs text-slate-400">Probabilidad →</p>
+          <p className="mt-1 text-center text-xs text-muted">Probabilidad →</p>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+      <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted">
         {(Object.keys(COLOR_POR_NIVEL) as NivelRiesgo[]).map((nivel) => (
           <span key={nivel} className="flex items-center gap-1.5">
             <span className={`h-3 w-3 rounded-sm border ${COLOR_POR_NIVEL[nivel]}`} />

@@ -56,6 +56,43 @@ export async function existeControlVisible(controlId: string, organizacionId: st
   return Boolean(c);
 }
 
+// Fase 3B: resuelve el responsable actual del "registro padre" de una
+// Evidencia (riesgo, tratamiento o control — destino exclusivo, ya validado
+// por validarDestino) para aplicar canManageRegistro.
+export async function findResponsableDelDestino(
+  destino: { riesgoId?: string | null; tratamientoId?: string | null; controlId?: string | null },
+  organizacionId: string
+): Promise<string | null | undefined> {
+  if (destino.riesgoId) {
+    const r = await prisma.riesgo.findFirst({
+      where: {
+        id: destino.riesgoId,
+        OR: [{ aav: { activo: { organizacionId } } }, { creador: { organizacionId } }],
+      },
+      select: { responsableId: true },
+    });
+    return r?.responsableId ?? undefined;
+  }
+  if (destino.tratamientoId) {
+    const t = await prisma.tratamiento.findFirst({
+      where: {
+        id: destino.tratamientoId,
+        riesgo: { OR: [{ aav: { activo: { organizacionId } } }, { creador: { organizacionId } }] },
+      },
+      select: { usuarioResponsableId: true },
+    });
+    return t?.usuarioResponsableId ?? undefined;
+  }
+  if (destino.controlId) {
+    const c = await prisma.control.findFirst({
+      where: { id: destino.controlId, OR: [{ organizacionId: null }, { organizacionId }] },
+      select: { responsableId: true },
+    });
+    return c?.responsableId ?? undefined;
+  }
+  return undefined;
+}
+
 // Verifica pertenencia a la organización, sin importar cuál de los tres
 // destinos posibles tenga la evidencia — usado antes de exponer/descargar.
 export async function perteneceAOrganizacion(

@@ -1,11 +1,13 @@
 import fs from "fs";
 import { AppError } from "../../../shared/AppError";
+import { canManageRegistro, UsuarioParaOwnership } from "../../../shared/ownership";
 import {
   findEvidencias,
   findEvidenciaPorId,
   existeRiesgoDeOrganizacion,
   existeTratamientoDeOrganizacion,
   existeControlVisible,
+  findResponsableDelDestino,
   perteneceAOrganizacion,
   crearEvidencia,
   validarEvidencia,
@@ -14,8 +16,7 @@ import { CrearEvidenciaInput, FiltrosEvidenciasInput, ValidarEvidenciaInput } fr
 import { EvidenciaConRelaciones } from "../types/evidence.types";
 import { rutaAbsolutaEvidencia } from "../../../middleware/uploadEvidencia";
 
-interface ActorAuditoria {
-  usuarioId: string;
+interface ActorAuditoria extends UsuarioParaOwnership {
   direccionIp: string;
 }
 
@@ -82,6 +83,17 @@ export async function crearNuevaEvidencia(
 ): Promise<EvidenciaConRelaciones> {
   await validarDestino(input, organizacionId);
 
+  // Fase 3B: subir una evidencia es gestionar el registro destino (riesgo,
+  // tratamiento o control). Se resuelve el responsable actual de ese
+  // destino específico.
+  const responsableId = await findResponsableDelDestino(input, organizacionId);
+  if (!canManageRegistro(actor, { responsableId })) {
+    throw new AppError(
+      "Acceso denegado: solo el responsable actual del registro o un Administrador TIC pueden subir una evidencia",
+      403
+    );
+  }
+
   return crearEvidencia({
     riesgoId: input.riesgoId ?? null,
     tratamientoId: input.tratamientoId ?? null,
@@ -100,6 +112,17 @@ export async function validarEvidenciaExistente(
   input: ValidarEvidenciaInput,
   actor: ActorAuditoria
 ): Promise<EvidenciaConRelaciones> {
+  // Fase 3B: validar/rechazar una evidencia es una acción de control de
+  // calidad reservada a Administrador TIC, no una gestión ordinaria del
+  // registro — un usuario común nunca valida evidencias, ni siquiera las
+  // suyas propias.
+  if (actor.tipoRol !== "ADMIN_TIC") {
+    throw new AppError(
+      "Acceso denegado: solo un Administrador TIC puede validar una evidencia",
+      403
+    );
+  }
+
   const evidencia = await obtenerEvidencia(id, organizacionId);
 
   if (evidencia.estado !== "SUBIDA") {
