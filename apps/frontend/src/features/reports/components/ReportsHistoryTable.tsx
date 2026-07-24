@@ -16,31 +16,31 @@ export function ReportsHistoryTable({ reportes }: ReportsHistoryTableProps) {
 
   if (reportes.length === 0) {
     return (
-      <p className="mt-4 text-sm text-slate-500">
+      <p className="mt-4 text-sm text-muted">
         Aún no se ha generado ningún reporte para esta organización.
       </p>
     );
   }
 
   return (
-    <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50">
+    <div className="mt-4 overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-sm">
+      <table className="min-w-full divide-y divide-border text-sm">
+        <thead className="bg-surface">
           <tr>
-            <th className="px-4 py-2 text-left font-medium text-slate-500">Tipo</th>
-            <th className="px-4 py-2 text-left font-medium text-slate-500">Formato</th>
-            <th className="px-4 py-2 text-left font-medium text-slate-500">Generado por</th>
-            <th className="px-4 py-2 text-left font-medium text-slate-500">Fecha</th>
-            <th className="px-4 py-2 text-right font-medium text-slate-500">Acción</th>
+            <th className="px-4 py-2 text-left font-medium text-muted">Tipo</th>
+            <th className="px-4 py-2 text-left font-medium text-muted">Formato</th>
+            <th className="px-4 py-2 text-left font-medium text-muted">Generado por</th>
+            <th className="px-4 py-2 text-left font-medium text-muted">Fecha</th>
+            <th className="px-4 py-2 text-right font-medium text-muted">Acción</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-border">
           {reportes.map((reporte) => (
             <tr key={reporte.id}>
-              <td className="px-4 py-2 text-slate-800">{ETIQUETA_TIPO[reporte.tipo] ?? reporte.tipo}</td>
-              <td className="px-4 py-2 text-slate-600">{reporte.formato}</td>
-              <td className="px-4 py-2 text-slate-600">{reporte.usuario.nombre}</td>
-              <td className="px-4 py-2 text-slate-600">
+              <td className="px-4 py-2 text-ink">{ETIQUETA_TIPO[reporte.tipo] ?? reporte.tipo}</td>
+              <td className="px-4 py-2 text-muted">{reporte.formato}</td>
+              <td className="px-4 py-2 text-muted">{reporte.usuario.nombre}</td>
+              <td className="px-4 py-2 text-muted">
                 {new Date(reporte.fecha).toLocaleString("es-CO")}
               </td>
               <td className="px-4 py-2 text-right">
@@ -48,7 +48,7 @@ export function ReportsHistoryTable({ reportes }: ReportsHistoryTableProps) {
                   type="button"
                   onClick={() => descargarReporte.mutate(reporte)}
                   disabled={descargarReporte.isPending}
-                  className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                  className="rounded-md border border-border px-3 py-1 text-xs font-medium text-ink hover:bg-surface disabled:opacity-60"
                 >
                   Descargar
                 </button>

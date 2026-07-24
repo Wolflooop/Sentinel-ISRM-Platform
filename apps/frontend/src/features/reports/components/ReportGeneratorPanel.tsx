@@ -38,9 +38,9 @@ export function ReportGeneratorPanel({ onGenerado }: ReportGeneratorPanelProps) 
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-800">Generar nuevo reporte</h2>
-      <p className="mt-1 text-sm text-slate-500">
+    <div className="rounded-xl border border-border bg-surface-elevated p-5 shadow-sm">
+      <h2 className="text-sm font-semibold text-ink">Generar nuevo reporte</h2>
+      <p className="mt-1 text-sm text-muted">
         Selecciona el tipo de reporte. Por ahora se genera en formato PDF; XLSX y CSV estarán
         disponibles próximamente.
       </p>
@@ -53,12 +53,12 @@ export function ReportGeneratorPanel({ onGenerado }: ReportGeneratorPanelProps) 
             onClick={() => setTipo(opcion.valor)}
             className={`rounded-lg border p-3 text-left text-sm transition ${
               tipo === opcion.valor
-                ? "border-slate-800 bg-slate-800 text-white"
-                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                ? "border-primary bg-primary text-on-primary"
+                : "border-border text-ink hover:bg-surface"
             }`}
           >
             <span className="block font-medium">{opcion.label}</span>
-            <span className={`mt-1 block text-xs ${tipo === opcion.valor ? "text-slate-200" : "text-slate-500"}`}>
+            <span className={`mt-1 block text-xs ${tipo === opcion.valor ? "text-on-primary/80" : "text-muted"}`}>
               {opcion.descripcion}
             </span>
           </button>
@@ -75,7 +75,7 @@ export function ReportGeneratorPanel({ onGenerado }: ReportGeneratorPanelProps) 
         type="button"
         onClick={handleGenerar}
         disabled={generarReporte.isPending}
-        className="mt-4 rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {generarReporte.isPending ? "Generando..." : "Generar reporte"}
       </button>
