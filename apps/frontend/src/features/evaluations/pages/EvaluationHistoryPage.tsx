@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEvaluaciones } from "../hooks/useEvaluations";
 import { EvaluationHistoryList } from "../components/EvaluationHistoryList";
 
@@ -7,7 +7,7 @@ export function EvaluationHistoryPage() {
   const { data: evaluaciones, isLoading, isError } = useEvaluaciones({ riesgoId: riesgoId ?? "" });
 
   if (isLoading) {
-    return <p className="p-8 text-sm text-slate-500">Cargando evaluaciones...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando evaluaciones...</p>;
   }
 
   if (isError) {
@@ -16,7 +16,10 @@ export function EvaluationHistoryPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Historial de evaluaciones</h1>
+      <Link to={`/riesgos/${riesgoId}`} className="text-sm text-muted underline">
+        ← Volver al riesgo
+      </Link>
+      <h1 className="mt-4 text-lg font-semibold text-ink">Historial de evaluaciones</h1>
       <div className="mt-4">
         <EvaluationHistoryList evaluaciones={evaluaciones ?? []} />
       </div>

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { EvaluationForm } from "../components/EvaluationForm";
 import { useContextoActivo, useCrearEvaluacion } from "../hooks/useEvaluations";
@@ -21,7 +21,7 @@ export function EvaluationCreatePage() {
   }
 
   if (isLoadingContexto) {
-    return <p className="p-8 text-sm text-slate-500">Cargando contexto activo...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando contexto activo...</p>;
   }
 
   if (!contextoActivo?.id) {
@@ -30,8 +30,11 @@ export function EvaluationCreatePage() {
 
   return (
     <main className="mx-auto max-w-xl px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Nueva evaluación</h1>
-      <p className="mt-2 text-sm text-slate-500">Registra una evaluación para este riesgo.</p>
+      <Link to={`/riesgos/${riesgoId}`} className="text-sm text-muted underline">
+        ← Volver al riesgo
+      </Link>
+      <h1 className="mt-4 text-lg font-semibold text-ink">Nueva evaluación</h1>
+      <p className="mt-2 text-sm text-muted">Registra una evaluación para este riesgo.</p>
       <div className="mt-6">
         <EvaluationForm
           riesgoId={riesgoId}

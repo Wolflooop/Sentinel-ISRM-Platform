@@ -1,37 +1,64 @@
-# Dependencias
+# ===========================
+# Dependencies
+# ===========================
 node_modules/
 
-# Variables de entorno (nunca versionar secretos reales)
-.env
-.env.local
-.env.*.local
-
-# Build
+# ===========================
+# Build outputs
+# ===========================
 dist/
 build/
-
-# Cobertura de pruebas
 coverage/
+.vite/
 
-# Prisma
-.prisma/
+# ===========================
+# TypeScript
+# ===========================
+*.tsbuildinfo
 
+# ===========================
+# Environment variables
+# ===========================
+.env
+.env.*
+!.env.example
+
+# ===========================
 # Logs
-*.log
+# ===========================
 logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
-# Editor / OS
+# ===========================
+# Temporary files
+# ===========================
+.cache/
+.tmp/
+temp/
+
+# ===========================
+# Operating System
+# ===========================
 .DS_Store
+Thumbs.db
+
+# ===========================
+# IDE
+# ===========================
 .vscode/
 .idea/
 
-# TypeScript build cache
-*.tsbuildinfo
-# Documentos
-*.pdf
-*.doc
-*.docx
-*.xls
-*.xlsx
-*.ppt
-*.pptx
+# ===========================
+# Generated reports
+# ===========================
+apps/backend/storage/reports/*
+!apps/backend/storage/reports/.gitignore
+
+# ===========================
+# Uploaded evidence
+# ===========================
+apps/backend/storage/evidencias/*
+!apps/backend/storage/evidencias/.gitignoreapps/backend/storage/

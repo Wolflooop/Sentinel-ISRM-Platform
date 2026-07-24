@@ -35,12 +35,12 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
       <input type="hidden" {...register("contextoId")} />
 
       <div>
-        <label htmlFor="tipoEvaluacion" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="tipoEvaluacion" className="block text-sm font-medium text-ink">
           Tipo de evaluación
         </label>
         <select
           id="tipoEvaluacion"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("tipoEvaluacion")}
         >
           <option value="INHERENTE">Inherente</option>
@@ -53,13 +53,13 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="probabilidad" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="probabilidad" className="block text-sm font-medium text-ink">
             Probabilidad (1–5)
           </label>
           <select
             id="probabilidad"
             defaultValue=""
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("probabilidad")}
           >
             <option value="" disabled>
@@ -77,13 +77,13 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
         </div>
 
         <div>
-          <label htmlFor="impacto" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="impacto" className="block text-sm font-medium text-ink">
             Impacto (1–5)
           </label>
           <select
             id="impacto"
             defaultValue=""
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("impacto")}
           >
             <option value="" disabled>
@@ -100,12 +100,12 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
       </div>
 
       <div>
-        <label htmlFor="resultado" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="resultado" className="block text-sm font-medium text-ink">
           Resultado
         </label>
         <select
           id="resultado"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("resultado")}
         >
           <option value="ACEPTABLE">ACEPTABLE</option>
@@ -115,13 +115,13 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
       </div>
 
       <div>
-        <label htmlFor="justificacion" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="justificacion" className="block text-sm font-medium text-ink">
           Justificación
         </label>
         <textarea
           id="justificacion"
           rows={4}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("justificacion")}
         />
         {errors.justificacion && (
@@ -130,13 +130,13 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
       </div>
 
       <div>
-        <label htmlFor="comentario" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="comentario" className="block text-sm font-medium text-ink">
           Comentario del cambio de estado
         </label>
         <textarea
           id="comentario"
           rows={2}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           placeholder="Ej: Evaluación posterior al tratamiento aplicado."
           {...register("comentario")}
         />
@@ -150,7 +150,7 @@ export function EvaluationForm({ riesgoId, contextoId, onSubmit, isSubmittingReq
       <button
         type="submit"
         disabled={isSubmitting || isSubmittingRequest}
-        className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {isSubmittingRequest ? "Guardando..." : "Registrar evaluación"}
       </button>
