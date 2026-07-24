@@ -30,12 +30,15 @@ import { ControlDetailPage } from "../features/controls/pages/ControlDetailPage"
 import { CreateControlPage } from "../features/controls/pages/CreateControlPage";
 import { EditControlPage } from "../features/controls/pages/EditControlPage";
 import { ReportsPage } from "../features/reports/pages/ReportsPage";
+import { AuditListPage } from "../features/audit/pages/AuditListPage";
+import { SecurityEventsListPage } from "../features/security-events/pages/SecurityEventsListPage";
 import { TreatmentCreatePage } from "../features/treatments/pages/TreatmentCreatePage";
 import { TreatmentDetailPage } from "../features/treatments/pages/TreatmentDetailPage";
 import { hasValidSession } from "../lib/authSession";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RequierePermiso } from "./RequierePermiso";
 import { RequiereTipoRol } from "./RequiereTipoRol";
+import { RequiereOrganizacion } from "./RequiereOrganizacion";
 import { AccesoRestringidoPage } from "../features/shell/pages/AccesoRestringidoPage";
 
 
@@ -82,54 +85,88 @@ export function AppRouter() {
             </Route>
           </Route>
 
-          <Route element={<RequierePermiso recurso="contexto" accion="leer" />}>
-            <Route path="/contexto" element={<ContextListPage />} />
-            <Route path="/contexto/nuevo" element={<CreateContextPage />} />
-            <Route path="/contexto/:id" element={<ContextDetailPage />} />
-          </Route>
+          {/* Módulos organizacionales: además del permiso de recurso,
+              exigen que el usuario pertenezca a una organización. El
+              SUPER_ADMIN tiene el permiso (recibe todo el catálogo por
+              diseño del RBAC) pero no pertenece a ninguna organización,
+              así que este guard adicional lo redirige antes de llegar a
+              una pantalla que el backend igualmente rechazaría. */}
+          <Route element={<RequiereOrganizacion />}>
+            <Route element={<RequierePermiso recurso="contexto" accion="leer" />}>
+              <Route path="/contexto" element={<ContextListPage />} />
+              <Route path="/contexto/nuevo" element={<CreateContextPage />} />
+              <Route path="/contexto/:id" element={<ContextDetailPage />} />
+            </Route>
 
-          <Route element={<RequierePermiso recurso="activos" accion="leer" />}>
-            <Route path="/activos" element={<AssetsListPage />} />
-            <Route path="/activos/nuevo" element={<CreateAssetPage />} />
-            <Route path="/activos/:id/editar" element={<EditAssetPage />} />
-          </Route>
+            <Route element={<RequierePermiso recurso="activos" accion="leer" />}>
+              <Route path="/activos" element={<AssetsListPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="activos" accion="crear" />}>
+              <Route path="/activos/nuevo" element={<CreateAssetPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="activos" accion="actualizar" />}>
+              <Route path="/activos/:id/editar" element={<EditAssetPage />} />
+            </Route>
 
-          <Route element={<RequierePermiso recurso="amenazas" accion="leer" />}>
-            <Route path="/amenazas" element={<ThreatsListPage />} />
-            <Route path="/amenazas/nueva" element={<CreateThreatPage />} />
-            <Route path="/amenazas/:id/editar" element={<EditThreatPage />} />
-          </Route>
+            <Route element={<RequierePermiso recurso="amenazas" accion="leer" />}>
+              <Route path="/amenazas" element={<ThreatsListPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="amenazas" accion="crear" />}>
+              <Route path="/amenazas/nueva" element={<CreateThreatPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="amenazas" accion="actualizar" />}>
+              <Route path="/amenazas/:id/editar" element={<EditThreatPage />} />
+            </Route>
 
-          <Route element={<RequierePermiso recurso="vulnerabilidades" accion="leer" />}>
-            <Route path="/vulnerabilidades" element={<VulnerabilitiesListPage />} />
-            <Route path="/vulnerabilidades/nueva" element={<CreateVulnerabilityPage />} />
-            <Route path="/vulnerabilidades/:id/editar" element={<EditVulnerabilityPage />} />
-          </Route>
+            <Route element={<RequierePermiso recurso="vulnerabilidades" accion="leer" />}>
+              <Route path="/vulnerabilidades" element={<VulnerabilitiesListPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="vulnerabilidades" accion="crear" />}>
+              <Route path="/vulnerabilidades/nueva" element={<CreateVulnerabilityPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="vulnerabilidades" accion="actualizar" />}>
+              <Route path="/vulnerabilidades/:id/editar" element={<EditVulnerabilityPage />} />
+            </Route>
 
-          <Route element={<RequierePermiso recurso="controles" accion="leer" />}>
-            <Route path="/controles" element={<ControlsListPage />} />
-            <Route path="/controles/nuevo" element={<CreateControlPage />} />
-            <Route path="/controles/:id" element={<ControlDetailPage />} />
-            <Route path="/controles/:id/editar" element={<EditControlPage />} />
-          </Route>
+            <Route element={<RequierePermiso recurso="controles" accion="leer" />}>
+              <Route path="/controles" element={<ControlsListPage />} />
+              <Route path="/controles/:id" element={<ControlDetailPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="controles" accion="crear" />}>
+              <Route path="/controles/nuevo" element={<CreateControlPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="controles" accion="actualizar" />}>
+              <Route path="/controles/:id/editar" element={<EditControlPage />} />
+            </Route>
 
-          <Route element={<RequierePermiso recurso="riesgos" accion="leer" />}>
-            <Route path="/riesgos" element={<RisksListPage />} />
-            <Route path="/riesgos/matriz" element={<RiskMatrixPage />} />
-            <Route path="/riesgos/nuevo" element={<CreateRiskPage />} />
-            <Route path="/riesgos/:id" element={<RiskDetailPage />} />
-            <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />
-            <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
-            <Route path="/riesgos/:riesgoId/tratamientos/nuevo" element={<TreatmentCreatePage />} />
-            <Route
-              path="/riesgos/:riesgoId/evaluaciones/:evaluacionId/tratamiento/nuevo"
-              element={<TreatmentCreatePage />}
-            />
-            <Route path="/tratamientos/:id" element={<TreatmentDetailPage />} />
-          </Route>
+            <Route element={<RequierePermiso recurso="riesgos" accion="leer" />}>
+              <Route path="/riesgos" element={<RisksListPage />} />
+              <Route path="/riesgos/matriz" element={<RiskMatrixPage />} />
+              <Route path="/riesgos/:id" element={<RiskDetailPage />} />
+              <Route path="/riesgos/:riesgoId/evaluaciones/nueva" element={<EvaluationCreatePage />} />
+              <Route path="/riesgos/:riesgoId/evaluaciones" element={<EvaluationHistoryPage />} />
+              <Route path="/riesgos/:riesgoId/tratamientos/nuevo" element={<TreatmentCreatePage />} />
+              <Route
+                path="/riesgos/:riesgoId/evaluaciones/:evaluacionId/tratamiento/nuevo"
+                element={<TreatmentCreatePage />}
+              />
+              <Route path="/tratamientos/:id" element={<TreatmentDetailPage />} />
+            </Route>
+            <Route element={<RequierePermiso recurso="riesgos" accion="crear" />}>
+              <Route path="/riesgos/nuevo" element={<CreateRiskPage />} />
+            </Route>
 
-          <Route element={<RequierePermiso recurso="reportes" accion="leer" />}>
-            <Route path="/reportes" element={<ReportsPage />} />
+            <Route element={<RequierePermiso recurso="reportes" accion="leer" />}>
+              <Route path="/reportes" element={<ReportsPage />} />
+            </Route>
+
+            <Route element={<RequierePermiso recurso="auditoria" accion="leer" />}>
+              <Route path="/auditoria" element={<AuditListPage />} />
+            </Route>
+
+            <Route element={<RequierePermiso recurso="eventosSeguridad" accion="leer" />}>
+              <Route path="/eventos-seguridad" element={<SecurityEventsListPage />} />
+            </Route>
           </Route>
         </Route>
         </Route>
