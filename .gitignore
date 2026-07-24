@@ -62,3 +62,6 @@ apps/backend/storage/reports/*
 # ===========================
 apps/backend/storage/evidencias/*
 !apps/backend/storage/evidencias/.gitignoreapps/backend/storage/
+
+# Archivos almacenados por usuarios
+apps/backend/storage/
