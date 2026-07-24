@@ -17,6 +17,14 @@ import { RiesgoHistorialEntrada } from "../../history/types/history.types";
 import { registrarCreacionRiesgo } from "../../history/service/history.service";
 import { findHistorialDeRiesgo as findHistorialDeRiesgoRepo } from "../../history/repository/history.repository";
 
+// Forma canónica en la que el resto del módulo (servicio, controlador,
+// mapper hacia el frontend) espera recibir un Riesgo. Se centraliza aquí
+// para que toda consulta que devuelva un Riesgo completo lo haga de forma
+// idéntica: en particular, el bloque `aav` es lo que permite reconstruir
+// el escenario Activo + Amenaza + Vulnerabilidad de un vistazo, sin que
+// cada endpoint tenga que volver a decidir qué relaciones incluir. Cuando
+// `origen = MANUAL`, `aav` simplemente viene `null` (el riesgo no nació de
+// un escenario AAV, sino de un hallazgo reportado directamente).
 const RIESGO_INCLUDE = {
   aav: {
     include: {
@@ -54,6 +62,14 @@ function whereOrganizacion(organizacionId: string) {
   };
 }
 
+// Listado principal de riesgos de una organización. El riesgo se
+// construye a partir de la relación entre un activo, la amenaza que puede
+// afectarlo y la vulnerabilidad que puede ser explotada (o, si el origen
+// es MANUAL, a partir del hallazgo reportado directamente); esta consulta
+// recupera toda la información necesaria para presentar cada riesgo
+// conforme al modelo AAV utilizado por ISO/IEC 27005, sin recalcular nada:
+// el nivel de riesgo ya vive en la Evaluacion vigente (evaluacionActual),
+// nunca se deriva aquí.
 export async function findRiesgosDeOrganizacion(
   organizacionId: string,
   filtros: FiltrosRiesgos
@@ -70,6 +86,10 @@ export async function findRiesgosDeOrganizacion(
   });
 }
 
+// Detalle de un único riesgo. Misma razón de ser que el listado: trae el
+// escenario AAV completo (o los campos MANUAL) más la evaluación vigente,
+// para que la pantalla de detalle pueda mostrar de dónde viene el riesgo
+// y qué tan grave es hoy sin disparar consultas adicionales.
 export async function findRiesgoDeOrganizacionPorId(
   id: string,
   organizacionId: string
@@ -83,6 +103,16 @@ export async function findRiesgoDeOrganizacionPorId(
 // ---------------------------------------------------------------------------
 // Validaciones de existencia/pertenencia (lectura simple, sin lógica de
 // negocio — la lógica vive en risks.service.ts)
+//
+// Estas tres consultas son el paso previo obligatorio a construir un
+// escenario AAV: antes de crear (o reutilizar) una fila en
+// ActivoAmenazaVulnerabilidad, el servicio necesita confirmar que el
+// Activo, la Amenaza y la Vulnerabilidad elegidos existen y son visibles
+// para la organización del actor. Un Activo siempre pertenece a una única
+// organización (findActivoDeOrganizacion exige coincidencia exacta), pero
+// Amenaza y Vulnerabilidad pueden ser catálogo global (organizacionId
+// NULL) o propio de la organización — por eso sus consultas aceptan
+// ambos casos con `OR: [{ organizacionId: null }, { organizacionId }]`.
 // ---------------------------------------------------------------------------
 
 export async function findActivoDeOrganizacion(
@@ -180,6 +210,14 @@ function esViolacionDeUnicidad(err: unknown): boolean {
  * Riesgo.evaluacionActualId a esa evaluación — replica, para riesgos
  * nuevos, el mismo backfill que la migración V2 aplicó a los riesgos
  * existentes (ver migración `..._v2_riesgo_evaluacion_tratamiento_polimorficos`).
+ *
+ * Este paso es el que convierte un escenario AAV (o un hallazgo MANUAL) en
+ * un riesgo cuantificado: hasta este punto solo existe la relación
+ * Activo+Amenaza+Vulnerabilidad (o el título/descripción del hallazgo
+ * manual); recién aquí se calcula probabilidad × impacto y se decide si
+ * el resultado es ACEPTABLE o NO_ACEPTABLE (BAJO/MEDIO -> ACEPTABLE,
+ * ALTO/CRITICO -> NO_ACEPTABLE), que es lo que más adelante determina si
+ * el riesgo necesitará un Tratamiento.
  */
 async function crearEvaluacionInherenteYFijarActual(
   tx: Prisma.TransactionClient,
@@ -218,6 +256,44 @@ async function crearEvaluacionInherenteYFijarActual(
   });
 }
 
+/**
+ * Punto de entrada donde el modelo AAV se materializa en la base de datos.
+ *
+ * Un riesgo de origen AAV no puede existir sin su escenario
+ * Activo+Amenaza+Vulnerabilidad, así que esta función hace, en una sola
+ * transacción, exactamente los pasos que el modelo conceptual describe:
+ *
+ *   1. Busca si ya existe una fila ActivoAmenazaVulnerabilidad para esta
+ *      combinación exacta de activoId+amenazaId+vulnerabilidadId. Como un
+ *      mismo Activo puede tener varias Amenazas, una misma Amenaza puede
+ *      afectar varios Activos, y una misma Vulnerabilidad puede ser
+ *      explotada por varias Amenazas, la única forma de saber si "este
+ *      escenario ya se identificó antes" es buscar por la combinación
+ *      completa de los tres, no por cada entidad por separado.
+ *   2. Si no existe, la crea — este es el único lugar del sistema donde
+ *      nace una fila AAV; no hay un endpoint para crearla de forma
+ *      aislada (ver comentario en el modelo ActivoAmenazaVulnerabilidad).
+ *   3. Verifica que ese AAV no tenga ya un Riesgo asociado: la relación
+ *      Riesgo.aavId es @unique porque un mismo escenario AAV representa un
+ *      único riesgo — si ya fue identificado, no se duplica (se lanza
+ *      RiesgoDuplicadoParaAavError).
+ *   4. Crea el Riesgo apuntando a ese AAV (origen: "AAV").
+ *   5. Delega en crearEvaluacionInherenteYFijarActual el cálculo real del
+ *      riesgo (probabilidad × impacto), que requiere el Contexto ISO
+ *      activo de la organización — sin un contexto activo no hay matriz
+ *      de riesgo contra la cual evaluar, así que la operación completa
+ *      falla si no existe uno.
+ *   6. Dejar auditoría (Auditoria) e historial de estado (RiesgoHistorial)
+ *      del riesgo recién creado.
+ *
+ * El reintento (`intentosRestantes`) existe porque el paso 1 y el paso 2
+ * no son atómicos entre sí frente a otra request concurrente: si dos
+ * peticiones intentan crear el mismo escenario AAV al mismo tiempo, la
+ * restricción @@unique([activoId, amenazaId, vulnerabilidadId]) hará que
+ * una de las dos falle con P2002; en ese caso se reintenta toda la
+ * transacción, que en el segundo intento sí encontrará la fila ya creada
+ * por la otra petición.
+ */
 export async function crearAavYRiesgo(
   params: CrearRiesgoAavParams,
   intentosRestantes = 3
@@ -255,6 +331,7 @@ export async function crearAavYRiesgo(
         data: {
           origen: "AAV",
           aavId: aav.id,
+          descripcion: params.descripcion,
           creadorId: params.actor.usuarioId,
           responsableId: params.responsableId,
           estado: "IDENTIFICADO",
@@ -293,6 +370,7 @@ export async function crearAavYRiesgo(
             activoId: params.activoId,
             amenazaId: params.amenazaId,
             vulnerabilidadId: params.vulnerabilidadId,
+            descripcion: params.descripcion,
             probabilidad: params.probabilidad,
             impacto: params.impacto,
             valorCalculado,
@@ -325,6 +403,17 @@ export async function crearAavYRiesgo(
 // V2: creación de riesgo de origen MANUAL (punto 1 del prompt) — sin AAV,
 // con titulo/descripcion/justificacionOrigen/categoriaIdentificacionId
 // obligatorios (garantizado también por el CHECK `riesgo_origen_check`).
+//
+// Es el camino alterno a crearAavYRiesgo: cuando un riesgo se identifica
+// directamente (por ejemplo, en una auditoría o un reporte externo) y no
+// existe todavía un Activo/Amenaza/Vulnerabilidad catalogados para
+// describirlo, no tiene sentido forzar la creación de un escenario AAV
+// artificial. Por eso este camino omite por completo el paso de
+// ActivoAmenazaVulnerabilidad, pero converge con el flujo AAV exactamente
+// en el mismo punto: ambos terminan llamando a
+// crearEvaluacionInherenteYFijarActual, porque el cálculo del riesgo
+// (probabilidad × impacto contra la matriz del Contexto ISO activo) es
+// idéntico sin importar de dónde vino el riesgo.
 export async function crearRiesgoManual(
   params: CrearRiesgoManualParams
 ): Promise<RiesgoConRelaciones> {

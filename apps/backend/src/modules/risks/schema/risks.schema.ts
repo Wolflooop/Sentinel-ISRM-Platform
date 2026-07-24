@@ -1,25 +1,29 @@
 import { z } from "zod";
 
+// Fase 3a (creación de riesgos): responsableId ya no se recibe del
+// frontend. El servicio fija creadorId = responsableId = usuario
+// autenticado automáticamente; la reasignación sigue viviendo únicamente
+// en el endpoint dedicado POST /riesgos/:id/responsable
+// (asignarResponsableSchema, sin modificar).
 export const crearRiesgoAavSchema = z.object({
   origen: z.literal("AAV"),
   activoId: z.string().uuid("activoId debe ser un identificador válido"),
   amenazaId: z.string().uuid("amenazaId debe ser un identificador válido"),
   vulnerabilidadId: z.string().uuid("vulnerabilidadId debe ser un identificador válido"),
+  descripcion: z.string().trim().min(1, "La descripción del riesgo es obligatoria"),
   probabilidad: z.number().int().min(1).max(5),
   impacto: z.number().int().min(1).max(5),
-  responsableId: z.string().uuid("responsableId debe ser un identificador válido"),
 });
 export type CrearRiesgoAavInput = z.infer<typeof crearRiesgoAavSchema>;
 
 export const crearRiesgoManualSchema = z.object({
   origen: z.literal("MANUAL"),
   titulo: z.string().trim().min(1, "El título es obligatorio"),
-  descripcion: z.string().trim().min(1, "La descripción es obligatoria"),
+  descripcion: z.string().trim().min(1, "La descripción del riesgo es obligatoria"),
   justificacionOrigen: z.string().trim().min(1, "La justificación de origen es obligatoria"),
   categoriaIdentificacionId: z.string().uuid("categoriaIdentificacionId debe ser un identificador válido"),
   probabilidad: z.number().int().min(1).max(5),
   impacto: z.number().int().min(1).max(5),
-  responsableId: z.string().uuid("responsableId debe ser un identificador válido"),
 });
 export type CrearRiesgoManualInput = z.infer<typeof crearRiesgoManualSchema>;
 

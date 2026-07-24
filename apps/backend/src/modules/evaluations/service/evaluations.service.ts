@@ -1,4 +1,5 @@
 import { AppError } from "../../../shared/AppError";
+import { canManageRegistro, UsuarioParaOwnership } from "../../../shared/ownership";
 import {
   findEvaluaciones,
   findEvaluacionPorId,
@@ -11,8 +12,7 @@ import {
 import { CrearEvaluacionInput } from "../schema/evaluations.schema";
 import { EvaluacionConRelaciones, FiltrosEvaluaciones } from "../types/evaluations.types";
 
-interface ActorAuditoria {
-  usuarioId: string;
+interface ActorAuditoria extends UsuarioParaOwnership {
   direccionIp: string;
 }
 
@@ -42,6 +42,16 @@ export async function crearNuevaEvaluacion(
   const riesgo = await findRiesgoPorIdYOrganizacion(input.riesgoId, organizacionId);
   if (!riesgo) {
     throw new AppError("El riesgo especificado no existe en esta organización", 404);
+  }
+
+  // Fase 3B: evaluar un riesgo es una acción de gestión sobre ese riesgo.
+  // Administrador TIC gestiona cualquiera de su organización; un usuario
+  // común solo puede evaluar el riesgo del que es responsable actual.
+  if (!canManageRegistro(actor, riesgo)) {
+    throw new AppError(
+      "Acceso denegado: solo el responsable actual del riesgo o un Administrador TIC pueden registrar una evaluación",
+      403
+    );
   }
 
   const contexto = await findContextoActivoPorOrganizacion(organizacionId);

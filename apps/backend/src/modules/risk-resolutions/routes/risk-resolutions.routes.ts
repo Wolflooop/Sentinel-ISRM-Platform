@@ -11,6 +11,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", authorize("riesgos", "leer"), listarResolucionesController);
-router.post("/", authorize("riesgos", "actualizar"), crearResolucionController);
+router.post("/", authorize("resolucionesRiesgo", "crear"), crearResolucionController);
 
 export { router as riskResolutionsRouter };

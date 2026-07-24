@@ -125,6 +125,7 @@ export async function findRiesgoParaTratamiento(
   organizacionId: string
 ): Promise<{
   id: string;
+  responsableId: string | null;
   evaluacionActualId: string | null;
   evaluacionActual: { id: string; contextoId: string; probabilidad: number; impacto: number } | null;
 } | null> {
@@ -138,6 +139,7 @@ export async function findRiesgoParaTratamiento(
     },
     select: {
       id: true,
+      responsableId: true,
       evaluacionActualId: true,
       evaluacionActual: {
         select: { id: true, contextoId: true, probabilidad: true, impacto: true },

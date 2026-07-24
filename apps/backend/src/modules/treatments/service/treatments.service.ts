@@ -1,4 +1,5 @@
 import { AppError } from "../../../shared/AppError";
+import { canManageRegistro, canReasignarRegistro, UsuarioParaOwnership } from "../../../shared/ownership";
 import {
   actualizarTratamiento,
   crearTratamiento,
@@ -13,8 +14,7 @@ import {
 import { CrearTratamientoInput, ActualizarTratamientoInput } from "../schema/treatments.schema";
 import { FiltrosTratamientos, TratamientoConRelaciones } from "../types/treatments.types";
 
-interface ActorAuditoria {
-  usuarioId: string;
+interface ActorAuditoria extends UsuarioParaOwnership {
   direccionIp: string;
 }
 
@@ -61,6 +61,14 @@ export async function crearNuevoTratamiento(
   const riesgo = await findRiesgoParaTratamiento(input.riesgoId, organizacionId);
   if (!riesgo) {
     throw new AppError("El riesgo especificado no existe en esta organización", 404);
+  }
+
+  // Fase 3B: crear un tratamiento es gestionar el riesgo al que pertenece.
+  if (!canManageRegistro(actor, riesgo)) {
+    throw new AppError(
+      "Acceso denegado: solo el responsable actual del riesgo o un Administrador TIC pueden crear un tratamiento",
+      403
+    );
   }
 
   if (input.evaluacionOrigenId) {
@@ -137,6 +145,32 @@ export async function actualizarTratamientoExistente(
   const tratamiento = await findTratamientoPorId(id, organizacionId);
   if (!tratamiento) {
     throw new AppError("Tratamiento no encontrado", 404);
+  }
+
+  // Fase 3B: gestionar (actualizar) un tratamiento requiere ser su
+  // responsable actual (usuarioResponsableId) o Administrador TIC. Nótese
+  // que el "registro" aquí es el propio tratamiento, no el riesgo padre:
+  // un tratamiento tiene su responsable operativo propio.
+  if (!canManageRegistro(actor, { responsableId: tratamiento.usuarioResponsableId })) {
+    throw new AppError(
+      "Acceso denegado: solo el responsable actual del tratamiento o un Administrador TIC pueden actualizarlo",
+      403
+    );
+  }
+
+  // Reasignar el responsable del tratamiento (cambiar usuarioResponsableId)
+  // es una operación reservada a Administrador TIC, igual que la
+  // reasignación de responsable de un riesgo: el responsable actual no
+  // puede reasignarse a otra persona a sí mismo.
+  if (
+    input.usuarioResponsableId !== undefined &&
+    input.usuarioResponsableId !== tratamiento.usuarioResponsableId &&
+    !canReasignarRegistro(actor)
+  ) {
+    throw new AppError(
+      "Acceso denegado: solo un Administrador TIC puede reasignar el responsable de un tratamiento",
+      403
+    );
   }
 
   const riesgo = await findRiesgoParaTratamiento(tratamiento.riesgoId, organizacionId);

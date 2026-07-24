@@ -91,13 +91,16 @@ export interface CrearRiesgoAavParams {
   activoId: string;
   amenazaId: string;
   vulnerabilidadId: string;
+  descripcion: string;
 
   probabilidad: number;
   impacto: number;
 
   nivelRiesgoInherente: NivelRiesgo;
 
-  responsableId: string | null;
+  // Fase 3a: siempre el usuario autenticado (actor.usuarioId) — ya no
+  // proviene de un selector del formulario.
+  responsableId: string;
 
   actor: {
     usuarioId: string;
@@ -119,7 +122,9 @@ export interface CrearRiesgoManualParams {
 
   nivelRiesgoInherente: NivelRiesgo;
 
-  responsableId: string | null;
+  // Fase 3a: siempre el usuario autenticado (actor.usuarioId) — ya no
+  // proviene de un selector del formulario.
+  responsableId: string;
 
   actor: {
     usuarioId: string;

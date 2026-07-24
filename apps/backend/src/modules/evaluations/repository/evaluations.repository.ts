@@ -69,7 +69,7 @@ export async function findEvaluacionPorId(
 export async function findRiesgoPorIdYOrganizacion(
   riesgoId: string,
   organizacionId: string
-): Promise<{ id: string } | null> {
+): Promise<{ id: string; responsableId: string | null } | null> {
   return prisma.riesgo.findFirst({
     where: {
       id: riesgoId,
@@ -78,7 +78,7 @@ export async function findRiesgoPorIdYOrganizacion(
         { creador: { organizacionId } },
       ],
     },
-    select: { id: true },
+    select: { id: true, responsableId: true },
   });
 }
 

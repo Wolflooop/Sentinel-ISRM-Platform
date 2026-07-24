@@ -36,7 +36,7 @@ export async function findResolucionesDeOrganizacion(
 export async function findRiesgoParaResolucion(
   riesgoId: string,
   organizacionId: string
-): Promise<{ id: string; estado: string } | null> {
+): Promise<{ id: string; estado: string; responsableId: string | null } | null> {
   return prisma.riesgo.findFirst({
     where: {
       id: riesgoId,
@@ -45,7 +45,7 @@ export async function findRiesgoParaResolucion(
         { creador: { organizacionId } },
       ],
     },
-    select: { id: true, estado: true },
+    select: { id: true, estado: true, responsableId: true },
   });
 }
 

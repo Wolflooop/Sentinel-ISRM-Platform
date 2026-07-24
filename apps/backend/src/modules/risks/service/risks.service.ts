@@ -1,4 +1,5 @@
 import { AppError } from "../../../shared/AppError";
+import { canReasignarRegistro, UsuarioParaOwnership } from "../../../shared/ownership";
 import {
   findRiesgosDeOrganizacion,
   findRiesgoDeOrganizacionPorId,
@@ -19,8 +20,7 @@ import { RiesgoConRelaciones, FiltrosRiesgos } from "../types/risks.types";
 import { RiesgoHistorialEntrada } from "../../history/types/history.types";
 import { CrearRiesgoInput } from "../schema/risks.schema";
 
-interface ActorAuditoria {
-  usuarioId: string;
+interface ActorAuditoria extends UsuarioParaOwnership {
   direccionIp: string;
 }
 
@@ -75,8 +75,6 @@ async function crearRiesgoOrigenAav(
     );
   }
 
-  await validarResponsable(input.responsableId, organizacionId);
-
   const contexto = await findContextoActivoDeOrganizacion(organizacionId);
   if (!contexto) {
     throw new AppError(
@@ -99,10 +97,12 @@ async function crearRiesgoOrigenAav(
       activoId: input.activoId,
       amenazaId: input.amenazaId,
       vulnerabilidadId: input.vulnerabilidadId,
+      descripcion: input.descripcion,
       probabilidad: input.probabilidad,
       impacto: input.impacto,
       nivelRiesgoInherente: celda.nivelResultante,
-      responsableId: input.responsableId,
+      // Cambio 2/3: creadorId = responsableId = usuario autenticado.
+      responsableId: actor.usuarioId,
       actor,
     });
   } catch (err) {
@@ -122,8 +122,6 @@ async function crearRiesgoOrigenManual(
   if (!categoria) {
     throw new AppError("La categoría de identificación especificada no existe", 404);
   }
-
-  await validarResponsable(input.responsableId, organizacionId);
 
   const contexto = await findContextoActivoDeOrganizacion(organizacionId);
   if (!contexto) {
@@ -150,7 +148,8 @@ async function crearRiesgoOrigenManual(
     probabilidad: input.probabilidad,
     impacto: input.impacto,
     nivelRiesgoInherente: celda.nivelResultante,
-    responsableId: input.responsableId,
+    // Cambio 2/3: creadorId = responsableId = usuario autenticado.
+    responsableId: actor.usuarioId,
     actor,
   });
 }
@@ -174,6 +173,16 @@ export async function asignarResponsableDeRiesgo(
   responsableIdNuevo: string,
   actor: ActorAuditoria
 ): Promise<RiesgoConRelaciones> {
+  // Fase 3B: reasignar responsable es una operación reservada a
+  // Administrador TIC. Un usuario común NUNCA puede reasignar, ni siquiera
+  // si es el responsable actual del riesgo (regla explícita de negocio).
+  if (!canReasignarRegistro(actor)) {
+    throw new AppError(
+      "Acceso denegado: solo un Administrador TIC puede reasignar el responsable de un riesgo",
+      403
+    );
+  }
+
   await obtenerRiesgo(riesgoId, organizacionId);
   await validarResponsable(responsableIdNuevo, organizacionId);
 

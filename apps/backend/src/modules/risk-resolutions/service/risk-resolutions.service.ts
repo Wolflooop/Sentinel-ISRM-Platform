@@ -1,4 +1,5 @@
 import { AppError } from "../../../shared/AppError";
+import { canManageRegistro, UsuarioParaOwnership } from "../../../shared/ownership";
 import {
   findResolucionesDeOrganizacion,
   findRiesgoParaResolucion,
@@ -7,8 +8,7 @@ import {
 import { CrearResolucionInput } from "../schema/risk-resolutions.schema";
 import { ResolucionRiesgoConRelaciones, FiltrosResoluciones } from "../types/risk-resolutions.types";
 
-interface ActorAuditoria {
-  usuarioId: string;
+interface ActorAuditoria extends UsuarioParaOwnership {
   direccionIp: string;
 }
 
@@ -31,6 +31,14 @@ export async function crearNuevaResolucion(
   const riesgo = await findRiesgoParaResolucion(input.riesgoId, organizacionId);
   if (!riesgo) {
     throw new AppError("El riesgo especificado no existe en esta organización", 404);
+  }
+
+  // Fase 3B: resolver o reabrir un riesgo es gestionarlo.
+  if (!canManageRegistro(actor, riesgo)) {
+    throw new AppError(
+      "Acceso denegado: solo el responsable actual del riesgo o un Administrador TIC pueden crear una resolución",
+      403
+    );
   }
 
   if (input.tipo === "RESOLUCION" && riesgo.estado === "CERRADO") {
