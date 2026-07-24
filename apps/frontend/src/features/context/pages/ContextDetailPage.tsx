@@ -32,7 +32,7 @@ export function ContextDetailPage() {
   const [mensajeGuardado, setMensajeGuardado] = useState<string | null>(null);
 
   if (isLoading) {
-    return <p className="p-8 text-sm text-slate-500">Cargando contexto...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando contexto...</p>;
   }
 
   if (isError || !contexto) {
@@ -43,7 +43,7 @@ export function ContextDetailPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Contexto ISO</h1>
+      <h1 className="text-lg font-semibold text-ink">Contexto ISO</h1>
       {disabled && (
         <p className="mt-1 text-xs text-amber-700">
           Este contexto está activo: su configuración (escalas y matriz) no puede modificarse.
@@ -53,8 +53,8 @@ export function ContextDetailPage() {
       <div className="mt-6 space-y-6">
         <ContextStatusPanel contexto={contexto} />
 
-        <div className="rounded-md border border-slate-200 p-4">
-          <h2 className="mb-4 text-sm font-semibold text-slate-800">Alcance y criterios</h2>
+        <div className="rounded-md border border-border p-4">
+          <h2 className="mb-4 text-sm font-semibold text-ink">Alcance y criterios</h2>
           <ContextForm
             contexto={contexto}
             isSubmittingRequest={actualizarContexto.isPending}
@@ -74,7 +74,7 @@ export function ContextDetailPage() {
           )}
         </div>
 
-        <div className="rounded-md border border-slate-200 p-4">
+        <div className="rounded-md border border-border p-4">
           <EscalaEditor
             titulo="Escala de impacto"
             escalasExistentes={contexto.escalasImpacto}
@@ -88,7 +88,7 @@ export function ContextDetailPage() {
           />
         </div>
 
-        <div className="rounded-md border border-slate-200 p-4">
+        <div className="rounded-md border border-border p-4">
           <EscalaEditor
             titulo="Escala de probabilidad"
             escalasExistentes={contexto.escalasProbabilidad}
@@ -102,7 +102,7 @@ export function ContextDetailPage() {
           />
         </div>
 
-        <div className="rounded-md border border-slate-200 p-4">
+        <div className="rounded-md border border-border p-4">
           <MatrizEditor
             celdasExistentes={contexto.matriz}
             disabled={disabled}

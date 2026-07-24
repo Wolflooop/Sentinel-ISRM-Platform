@@ -60,8 +60,8 @@ export function MatrizEditor({
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-slate-800">Matriz de riesgo</h3>
-      <p className="mt-1 text-xs text-slate-500">
+      <h3 className="text-sm font-semibold text-ink">Matriz de riesgo</h3>
+      <p className="mt-1 text-xs text-muted">
         Filas: probabilidad (1-5). Columnas: impacto (1-5).
       </p>
       <form className="mt-3 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -69,7 +69,7 @@ export function MatrizEditor({
           <tbody>
             {[1, 2, 3, 4, 5].map((p) => (
               <tr key={p}>
-                <td className="pr-2 text-xs font-medium text-slate-500">P{p}</td>
+                <td className="pr-2 text-xs font-medium text-muted">P{p}</td>
                 {[1, 2, 3, 4, 5].map((i) => {
                   const index = fields.findIndex(
                     (f) => f.nivelProbabilidad === p && f.nivelImpacto === i
@@ -79,7 +79,7 @@ export function MatrizEditor({
                     <td key={i} className="p-1">
                       <select
                         disabled={disabled}
-                        className={`rounded-md border border-slate-300 px-2 py-1.5 text-xs disabled:text-slate-400 ${COLOR_POR_NIVEL[nivelActual]}`}
+                        className={`rounded-md border border-border px-2 py-1.5 text-xs disabled:text-muted ${COLOR_POR_NIVEL[nivelActual]}`}
                         {...register(`celdas.${index}.nivelResultante` as const)}
                       >
                         {NIVELES.map((nivel) => (
@@ -101,7 +101,7 @@ export function MatrizEditor({
         <button
           type="submit"
           disabled={disabled || isSubmitting || isSubmittingRequest}
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
         >
           {isSubmittingRequest ? "Guardando..." : "Guardar matriz"}
         </button>

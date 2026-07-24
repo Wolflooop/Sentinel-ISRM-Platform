@@ -47,16 +47,16 @@ export function TreatmentCreatePage() {
   }
 
   if (isLoadingControles || isLoadingUsuarios) {
-    return <p className="p-8 text-sm text-slate-500">Cargando datos del formulario...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando datos del formulario...</p>;
   }
 
   return (
     <main className="mx-auto max-w-xl px-4 py-8">
-      <Link to={`/riesgos/${riesgoId}`} className="text-sm text-slate-500 underline">
+      <Link to={`/riesgos/${riesgoId}`} className="text-sm text-muted underline">
         ← Volver al riesgo
       </Link>
-      <h1 className="mt-4 text-lg font-semibold text-slate-800">Nuevo tratamiento</h1>
-      <p className="mt-2 text-sm text-slate-500">Define el plan de tratamiento para este riesgo.</p>
+      <h1 className="mt-4 text-lg font-semibold text-ink">Nuevo tratamiento</h1>
+      <p className="mt-2 text-sm text-muted">Define el plan de tratamiento para este riesgo.</p>
       <div className="mt-6">
         <TreatmentForm
           controles={(controles ?? []).map((c) => ({ id: c.id, nombre: c.nombre }))}

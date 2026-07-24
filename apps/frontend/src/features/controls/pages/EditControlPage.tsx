@@ -31,7 +31,7 @@ export function EditControlPage() {
     : null;
 
   if (isLoading) {
-    return <p className="p-8 text-sm text-slate-500">Cargando control...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando control...</p>;
   }
 
   if (isError || !control) {
@@ -42,8 +42,8 @@ export function EditControlPage() {
   if (!control.esPropia) {
     return (
       <main className="mx-auto max-w-lg px-4 py-8">
-        <h1 className="text-lg font-semibold text-slate-800">Control del catálogo global</h1>
-        <p className="mt-4 text-sm text-slate-500">
+        <h1 className="text-lg font-semibold text-ink">Control del catálogo global</h1>
+        <p className="mt-4 text-sm text-muted">
           "{control.nombre}" pertenece al catálogo global y es de solo lectura.
         </p>
       </main>
@@ -52,7 +52,7 @@ export function EditControlPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Editar control</h1>
+      <h1 className="text-lg font-semibold text-ink">Editar control</h1>
       <div className="mt-6">
         <ControlForm
           control={control}

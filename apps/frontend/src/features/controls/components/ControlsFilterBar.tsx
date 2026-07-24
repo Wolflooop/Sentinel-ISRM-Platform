@@ -16,13 +16,13 @@ const estadosControl: Array<EstadoImplementacionControl | ""> = [
 
 export function ControlsFilterBar({ filtros, onChange }: Props) {
   return (
-    <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2">
-      <label className="text-sm text-slate-600">
+    <div className="grid gap-3 rounded-lg border border-border bg-surface-elevated p-4 shadow-sm md:grid-cols-2">
+      <label className="text-sm text-muted">
         <span className="mb-1 block font-medium">Tipo</span>
         <select
           value={filtros.tipo ?? ""}
           onChange={(e) => onChange({ ...filtros, tipo: (e.target.value || undefined) as TipoControl | undefined })}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
         >
           {tiposControl.map((tipo) => (
             <option key={tipo || "todos"} value={tipo}>
@@ -32,7 +32,7 @@ export function ControlsFilterBar({ filtros, onChange }: Props) {
         </select>
       </label>
 
-      <label className="text-sm text-slate-600">
+      <label className="text-sm text-muted">
         <span className="mb-1 block font-medium">Estado</span>
         <select
           value={filtros.estadoImplementacion ?? ""}
@@ -42,7 +42,7 @@ export function ControlsFilterBar({ filtros, onChange }: Props) {
               estadoImplementacion: (e.target.value || undefined) as EstadoImplementacionControl | undefined,
             })
           }
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
         >
           {estadosControl.map((estado) => (
             <option key={estado || "todos"} value={estado}>

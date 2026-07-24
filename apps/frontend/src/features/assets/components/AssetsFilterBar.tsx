@@ -12,22 +12,22 @@ export function AssetsFilterBar({ filtros, onChange }: Props) {
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div>
-        <label className="block text-xs font-medium text-slate-500">Buscar</label>
+        <label className="block text-xs font-medium text-muted">Buscar</label>
         <input
           type="text"
           placeholder="Nombre del activo..."
           value={filtros.busqueda ?? ""}
           onChange={(e) => onChange({ ...filtros, busqueda: e.target.value || undefined })}
-          className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="mt-1 rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-ink placeholder:text-muted"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-500">Tipo</label>
+        <label className="block text-xs font-medium text-muted">Tipo</label>
         <select
           value={filtros.categoriaId ?? ""}
           onChange={(e) => onChange({ ...filtros, categoriaId: e.target.value || undefined })}
-          className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="mt-1 rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-ink placeholder:text-muted"
         >
           <option value="">Todos</option>
           {categorias?.map((c) => (
@@ -39,7 +39,7 @@ export function AssetsFilterBar({ filtros, onChange }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-500">Criticidad</label>
+        <label className="block text-xs font-medium text-muted">Criticidad</label>
         <select
           value={filtros.criticidad ?? ""}
           onChange={(e) =>
@@ -48,7 +48,7 @@ export function AssetsFilterBar({ filtros, onChange }: Props) {
               criticidad: e.target.value ? Number(e.target.value) : undefined,
             })
           }
-          className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="mt-1 rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-ink placeholder:text-muted"
         >
           <option value="">Todas</option>
           {[1, 2, 3, 4, 5].map((n) => (
@@ -60,13 +60,13 @@ export function AssetsFilterBar({ filtros, onChange }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-500">Estado</label>
+        <label className="block text-xs font-medium text-muted">Estado</label>
         <select
           value={filtros.estado ?? ""}
           onChange={(e) =>
             onChange({ ...filtros, estado: (e.target.value || undefined) as FiltrosActivos["estado"] })
           }
-          className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="mt-1 rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-ink placeholder:text-muted"
         >
           <option value="">Todos</option>
           <option value="ACTIVO">Activo</option>

@@ -45,11 +45,11 @@ export function EscalaEditor({
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-slate-800">{titulo}</h3>
+      <h3 className="text-sm font-semibold text-ink">{titulo}</h3>
       <form className="mt-3 space-y-3" onSubmit={handleSubmit(onSubmit)} noValidate>
         {fields.map((field, index) => (
           <div key={field.id} className="flex items-start gap-3">
-            <span className="mt-2 w-6 shrink-0 text-sm font-medium text-slate-500">
+            <span className="mt-2 w-6 shrink-0 text-sm font-medium text-muted">
               {field.nivel}
             </span>
             <div className="flex-1">
@@ -57,7 +57,7 @@ export function EscalaEditor({
                 type="text"
                 placeholder="Etiqueta"
                 disabled={disabled}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted disabled:bg-surface disabled:text-muted"
                 {...register(`niveles.${index}.etiqueta` as const)}
               />
               {errors.niveles?.[index]?.etiqueta && (
@@ -71,7 +71,7 @@ export function EscalaEditor({
                 type="text"
                 placeholder="Descripción (opcional)"
                 disabled={disabled}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted disabled:bg-surface disabled:text-muted"
                 {...register(`niveles.${index}.descripcion` as const)}
               />
             </div>
@@ -83,7 +83,7 @@ export function EscalaEditor({
         <button
           type="submit"
           disabled={disabled || isSubmitting || isSubmittingRequest}
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
         >
           {isSubmittingRequest ? "Guardando..." : `Guardar ${titulo.toLowerCase()}`}
         </button>

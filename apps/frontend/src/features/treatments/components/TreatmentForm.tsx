@@ -78,13 +78,13 @@ export function TreatmentForm({
   return (
     <form className="space-y-4" onSubmit={manejarEnvio} noValidate>
       <div>
-        <label htmlFor="estrategia" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="estrategia" className="block text-sm font-medium text-ink">
           Estrategia
         </label>
         <select
           id="estrategia"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("estrategia")}
         >
           <option value="" disabled>
@@ -99,14 +99,14 @@ export function TreatmentForm({
       </div>
 
       <div>
-        <label htmlFor="controlIds" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="controlIds" className="block text-sm font-medium text-ink">
           Controles asociados {requiereControl && <span className="text-red-600">*</span>}
         </label>
         <select
           id="controlIds"
           multiple
           size={Math.min(6, Math.max(3, controles.length))}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("controlIds")}
         >
           {controles.map((control) => (
@@ -117,18 +117,18 @@ export function TreatmentForm({
         </select>
         {errors.controlIds && <p className="mt-1 text-sm text-red-600">{errors.controlIds.message}</p>}
         {!requiereControl && (
-          <p className="mt-1 text-xs text-slate-400">Obligatorio solo cuando la estrategia es "Mitigar".</p>
+          <p className="mt-1 text-xs text-muted">Obligatorio solo cuando la estrategia es "Mitigar".</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="controlPrincipalId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="controlPrincipalId" className="block text-sm font-medium text-ink">
           Control principal
         </label>
         <select
           id="controlPrincipalId"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("controlPrincipalId")}
         >
           <option value="">Sin control principal</option>
@@ -146,13 +146,13 @@ export function TreatmentForm({
       </div>
 
       <div>
-        <label htmlFor="descripcionPlan" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="descripcionPlan" className="block text-sm font-medium text-ink">
           Descripción del plan
         </label>
         <textarea
           id="descripcionPlan"
           rows={3}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("descripcionPlan")}
         />
         {errors.descripcionPlan && (
@@ -161,26 +161,26 @@ export function TreatmentForm({
       </div>
 
       <div>
-        <label htmlFor="justificacion" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="justificacion" className="block text-sm font-medium text-ink">
           Justificación
         </label>
         <textarea
           id="justificacion"
           rows={2}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("justificacion")}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="usuarioResponsableId" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="usuarioResponsableId" className="block text-sm font-medium text-ink">
             Responsable
           </label>
           <select
             id="usuarioResponsableId"
             defaultValue=""
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("usuarioResponsableId")}
           >
             <option value="" disabled>
@@ -198,13 +198,13 @@ export function TreatmentForm({
         </div>
 
         <div>
-          <label htmlFor="aprobadoPorId" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="aprobadoPorId" className="block text-sm font-medium text-ink">
             Aprobado por
           </label>
           <select
             id="aprobadoPorId"
             defaultValue=""
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("aprobadoPorId")}
           >
             <option value="">Sin aprobar aún</option>
@@ -219,25 +219,25 @@ export function TreatmentForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="fechaInicio" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="fechaInicio" className="block text-sm font-medium text-ink">
             Fecha de inicio
           </label>
           <input
             id="fechaInicio"
             type="date"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("fechaInicio")}
           />
         </div>
 
         <div>
-          <label htmlFor="fechaLimite" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="fechaLimite" className="block text-sm font-medium text-ink">
             Fecha límite
           </label>
           <input
             id="fechaLimite"
             type="date"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("fechaLimite")}
           />
           {errors.fechaLimite && <p className="mt-1 text-sm text-red-600">{errors.fechaLimite.message}</p>}
@@ -246,12 +246,12 @@ export function TreatmentForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="estado" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="estado" className="block text-sm font-medium text-ink">
             Estado
           </label>
           <select
             id="estado"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("estado")}
           >
             <option value="PROPUESTO">Propuesto</option>
@@ -262,7 +262,7 @@ export function TreatmentForm({
         </div>
 
         <div>
-          <label htmlFor="porcentajeAvance" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="porcentajeAvance" className="block text-sm font-medium text-ink">
             % de avance
           </label>
           <input
@@ -270,7 +270,7 @@ export function TreatmentForm({
             type="number"
             min={0}
             max={100}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("porcentajeAvance")}
           />
           {errors.porcentajeAvance && (
@@ -280,7 +280,7 @@ export function TreatmentForm({
       </div>
 
       {estadoSeleccionado === "COMPLETADO" && (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-muted">
           Al guardar con estado "Completado" se calculará automáticamente el riesgo residual y se
           generará una nueva evaluación RESIDUAL.
         </p>
@@ -288,13 +288,13 @@ export function TreatmentForm({
 
       {cambiaEstado && (
         <div>
-          <label htmlFor="comentario" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="comentario" className="block text-sm font-medium text-ink">
             Comentario (obligatorio al cambiar de estado)
           </label>
           <textarea
             id="comentario"
             rows={2}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             placeholder="Ej: Se inició aplicación del plan de mitigación."
             {...register("comentario")}
           />
@@ -307,7 +307,7 @@ export function TreatmentForm({
       <button
         type="submit"
         disabled={isSubmitting || isSubmittingRequest}
-        className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {isSubmittingRequest ? "Guardando..." : "Guardar tratamiento"}
       </button>

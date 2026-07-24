@@ -17,7 +17,7 @@ export function EditAssetPage() {
     : null;
 
   if (isLoading) {
-    return <p className="p-8 text-sm text-slate-500">Cargando activo...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando activo...</p>;
   }
 
   if (isError || !activo) {
@@ -26,7 +26,7 @@ export function EditAssetPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Editar activo</h1>
+      <h1 className="text-lg font-semibold text-ink">Editar activo</h1>
       <div className="mt-6">
         <AssetForm
           activo={activo}

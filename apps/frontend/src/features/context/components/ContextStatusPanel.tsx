@@ -19,9 +19,9 @@ export function ContextStatusPanel({ contexto }: Props) {
     : null;
 
   return (
-    <div className="rounded-md border border-slate-200 p-4">
+    <div className="rounded-md border border-border p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-800">Estado</h2>
+        <h2 className="text-sm font-semibold text-ink">Estado</h2>
         <span
           className={
             contexto.activo
@@ -39,7 +39,7 @@ export function ContextStatusPanel({ contexto }: Props) {
             <button
               type="button"
               onClick={() => setConfirmando(true)}
-              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
             >
               Activar contexto
             </button>
@@ -55,14 +55,14 @@ export function ContextStatusPanel({ contexto }: Props) {
                   type="button"
                   disabled={activarMutation.isPending}
                   onClick={() => activarMutation.mutate()}
-                  className="rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-on-primary disabled:opacity-60"
                 >
                   {activarMutation.isPending ? "Activando..." : "Confirmar activación"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmando(false)}
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+                  className="rounded-md border border-border px-3 py-1.5 text-xs text-ink"
                 >
                   Cancelar
                 </button>

@@ -18,9 +18,9 @@ function estadoBadge(estado: Control["estadoImplementacion"]) {
 
 export function ControlsTable({ controles }: Props) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50 text-left text-slate-600">
+    <div className="overflow-hidden rounded-lg border border-border bg-surface-elevated shadow-sm">
+      <table className="min-w-full divide-y divide-border text-sm">
+        <thead className="bg-surface text-left text-muted">
           <tr>
             <th className="px-4 py-3 font-medium">Control</th>
             <th className="px-4 py-3 font-medium">Tipo</th>
@@ -30,35 +30,35 @@ export function ControlsTable({ controles }: Props) {
             <th className="px-4 py-3 font-medium">Acciones</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-border">
           {controles.map((control) => (
-            <tr key={control.id} className="hover:bg-slate-50">
+            <tr key={control.id} className="hover:bg-surface">
               <td className="px-4 py-3">
-                <div className="font-medium text-slate-800">{control.nombre}</div>
+                <div className="font-medium text-ink">{control.nombre}</div>
                 {control.codigoIso27001 && (
-                  <div className="text-xs text-slate-500">{control.codigoIso27001}</div>
+                  <div className="text-xs text-muted">{control.codigoIso27001}</div>
                 )}
               </td>
-              <td className="px-4 py-3 text-slate-600">{control.tipo}</td>
+              <td className="px-4 py-3 text-muted">{control.tipo}</td>
               <td className="px-4 py-3">
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${estadoBadge(control.estadoImplementacion)}`}>
                   {control.estadoImplementacion}
                 </span>
               </td>
-              <td className="px-4 py-3 text-slate-600">
+              <td className="px-4 py-3 text-muted">
                 {control.organizacion?.nombre ?? "Sin organización"}
               </td>
-              <td className="px-4 py-3 text-slate-600">
+              <td className="px-4 py-3 text-muted">
                 {control.responsable?.nombre ?? "Sin asignar"}
               </td>
               <td className="px-4 py-3">
-                <Link to={`/controles/${control.id}`} className="text-sm font-medium text-slate-700 underline">
+                <Link to={`/controles/${control.id}`} className="text-sm font-medium text-ink underline">
                   Ver detalle
                 </Link>
                 {control.esPropia && (
                   <Link
                     to={`/controles/${control.id}/editar`}
-                    className="ml-3 text-sm font-medium text-slate-700 underline"
+                    className="ml-3 text-sm font-medium text-ink underline"
                   >
                     Editar
                   </Link>
@@ -70,7 +70,7 @@ export function ControlsTable({ controles }: Props) {
       </table>
 
       {controles.length === 0 && (
-        <div className="border-t border-slate-200 p-6 text-center text-sm text-slate-500">
+        <div className="border-t border-border p-6 text-center text-sm text-muted">
           No se encontraron controles con los filtros aplicados.
         </div>
       )}

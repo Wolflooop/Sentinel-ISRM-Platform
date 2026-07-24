@@ -4,6 +4,7 @@ import { useRiesgos } from "../hooks/useRisks";
 import { RisksTable } from "../components/RisksTable";
 import { RisksFilterBar } from "../components/RisksFilterBar";
 import { FiltrosRiesgos } from "../types/risks.types";
+import { ConPermiso } from "../../../components/ConPermiso";
 
 export function RisksListPage() {
   const [filtros, setFiltros] = useState<FiltrosRiesgos>({});
@@ -12,20 +13,22 @@ export function RisksListPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-800">Riesgos</h1>
+        <h1 className="text-lg font-semibold text-ink">Riesgos</h1>
         <div className="flex items-center gap-3">
           <Link
             to="/riesgos/matriz"
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink hover:bg-surface"
           >
             Ver matriz
           </Link>
-          <Link
-            to="/riesgos/nuevo"
-            className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
-          >
-            Nuevo riesgo
-          </Link>
+          <ConPermiso recurso="riesgos" accion="crear">
+            <Link
+              to="/riesgos/nuevo"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
+            >
+              Nuevo riesgo
+            </Link>
+          </ConPermiso>
         </div>
       </div>
 
@@ -33,7 +36,7 @@ export function RisksListPage() {
         <RisksFilterBar filtros={filtros} onChange={setFiltros} />
       </div>
 
-      {isLoading && <p className="mt-4 text-sm text-slate-500">Cargando riesgos...</p>}
+      {isLoading && <p className="mt-4 text-sm text-muted">Cargando riesgos...</p>}
       {isError && <p className="mt-4 text-sm text-red-600">No se pudieron cargar los riesgos.</p>}
       {riesgos && (
         <div className="mt-4">

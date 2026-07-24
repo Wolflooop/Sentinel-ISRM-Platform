@@ -45,26 +45,26 @@ export function AssetForm({ activo, onSubmit, isSubmittingRequest, errorMessage 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div>
-        <label htmlFor="nombre" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="nombre" className="block text-sm font-medium text-ink">
           Nombre
         </label>
         <input
           id="nombre"
           type="text"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("nombre")}
         />
         {errors.nombre && <p className="mt-1 text-sm text-red-600">{errors.nombre.message}</p>}
       </div>
 
       <div>
-        <label htmlFor="categoriaId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="categoriaId" className="block text-sm font-medium text-ink">
           Tipo (categoría)
         </label>
         <select
           id="categoriaId"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("categoriaId")}
         >
           <option value="" disabled>
@@ -82,13 +82,13 @@ export function AssetForm({ activo, onSubmit, isSubmittingRequest, errorMessage 
       </div>
 
       <div>
-        <label htmlFor="usuarioResponsableId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="usuarioResponsableId" className="block text-sm font-medium text-ink">
           Propietario / Responsable
         </label>
         <select
           id="usuarioResponsableId"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("usuarioResponsableId")}
         >
           <option value="" disabled>
@@ -106,19 +106,19 @@ export function AssetForm({ activo, onSubmit, isSubmittingRequest, errorMessage 
       </div>
 
       <div>
-        <label htmlFor="ubicacion" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="ubicacion" className="block text-sm font-medium text-ink">
           Ubicación
         </label>
         <input
           id="ubicacion"
           type="text"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("ubicacion")}
         />
       </div>
 
       <div>
-        <label htmlFor="criticidad" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="criticidad" className="block text-sm font-medium text-ink">
           Criticidad (1 a 5)
         </label>
         <input
@@ -126,7 +126,7 @@ export function AssetForm({ activo, onSubmit, isSubmittingRequest, errorMessage 
           type="number"
           min={1}
           max={5}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("criticidad", { valueAsNumber: true })}
         />
         {errors.criticidad && (
@@ -135,13 +135,13 @@ export function AssetForm({ activo, onSubmit, isSubmittingRequest, errorMessage 
       </div>
 
       <div>
-        <label htmlFor="descripcion" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="descripcion" className="block text-sm font-medium text-ink">
           Descripción
         </label>
         <textarea
           id="descripcion"
           rows={2}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("descripcion")}
         />
       </div>
@@ -151,7 +151,7 @@ export function AssetForm({ activo, onSubmit, isSubmittingRequest, errorMessage 
       <button
         type="submit"
         disabled={isSubmitting || isSubmittingRequest}
-        className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {isSubmittingRequest ? "Guardando..." : "Guardar activo"}
       </button>

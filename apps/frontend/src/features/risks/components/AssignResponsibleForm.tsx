@@ -27,9 +27,9 @@ export function AssignResponsibleForm({ riesgoId, responsableActualId, onDone }:
       onSubmit={handleSubmit((values) => asignar.mutate(values, { onSuccess: onDone }))}
     >
       <div>
-        <label className="block text-xs font-medium text-slate-500">Reasignar responsable</label>
+        <label className="block text-xs font-medium text-muted">Reasignar responsable</label>
         <select
-          className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="mt-1 rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-ink"
           {...register("responsableId")}
         >
           {usuarios?.map((u) => (
@@ -42,7 +42,7 @@ export function AssignResponsibleForm({ riesgoId, responsableActualId, onDone }:
       <button
         type="submit"
         disabled={asignar.isPending}
-        className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:opacity-60"
+        className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink disabled:opacity-60"
       >
         {asignar.isPending ? "Guardando..." : "Reasignar"}
       </button>

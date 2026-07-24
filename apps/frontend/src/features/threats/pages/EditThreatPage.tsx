@@ -17,7 +17,7 @@ export function EditThreatPage() {
     : null;
 
   if (isLoading) {
-    return <p className="p-8 text-sm text-slate-500">Cargando amenaza...</p>;
+    return <p className="p-8 text-sm text-muted">Cargando amenaza...</p>;
   }
 
   if (isError || !amenaza) {
@@ -27,8 +27,8 @@ export function EditThreatPage() {
   if (!amenaza.esPropia) {
     return (
       <main className="mx-auto max-w-lg px-4 py-8">
-        <h1 className="text-lg font-semibold text-slate-800">Amenaza del catálogo global</h1>
-        <p className="mt-4 text-sm text-slate-500">
+        <h1 className="text-lg font-semibold text-ink">Amenaza del catálogo global</h1>
+        <p className="mt-4 text-sm text-muted">
           "{amenaza.nombre}" pertenece al catálogo global y es de solo lectura para tu
           organización.
         </p>
@@ -38,7 +38,7 @@ export function EditThreatPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Editar amenaza</h1>
+      <h1 className="text-lg font-semibold text-ink">Editar amenaza</h1>
       <div className="mt-6">
         <ThreatForm
           amenaza={amenaza}

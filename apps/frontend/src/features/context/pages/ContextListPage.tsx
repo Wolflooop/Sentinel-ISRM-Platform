@@ -7,16 +7,16 @@ export function ContextListPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-800">Contexto ISO</h1>
+        <h1 className="text-lg font-semibold text-ink">Contexto ISO</h1>
         <Link
           to="/contexto/nuevo"
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
         >
           Nuevo contexto
         </Link>
       </div>
 
-      {isLoading && <p className="mt-4 text-sm text-slate-500">Cargando contextos...</p>}
+      {isLoading && <p className="mt-4 text-sm text-muted">Cargando contextos...</p>}
       {isError && (
         <p className="mt-4 text-sm text-red-600">No se pudieron cargar los contextos.</p>
       )}
@@ -24,7 +24,7 @@ export function ContextListPage() {
       {contextos && (
         <table className="mt-4 w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-slate-500">
+            <tr className="border-b border-border text-left text-muted">
               <th className="py-2 pr-4">Alcance</th>
               <th className="py-2 pr-4">Estado</th>
               <th className="py-2 pr-4">Creado</th>
@@ -33,8 +33,8 @@ export function ContextListPage() {
           </thead>
           <tbody>
             {contextos.map((contexto) => (
-              <tr key={contexto.id} className="border-b border-slate-100">
-                <td className="max-w-xs truncate py-2 pr-4 text-slate-700">{contexto.alcance}</td>
+              <tr key={contexto.id} className="border-b border-border">
+                <td className="max-w-xs truncate py-2 pr-4 text-ink">{contexto.alcance}</td>
                 <td className="py-2 pr-4">
                   <span
                     className={
@@ -46,11 +46,11 @@ export function ContextListPage() {
                     {contexto.activo ? "Activo" : "Inactivo"}
                   </span>
                 </td>
-                <td className="py-2 pr-4 text-slate-500">
+                <td className="py-2 pr-4 text-muted">
                   {new Date(contexto.creadoEn).toLocaleDateString()}
                 </td>
                 <td className="py-2 pr-4">
-                  <Link to={`/contexto/${contexto.id}`} className="text-slate-700 underline">
+                  <Link to={`/contexto/${contexto.id}`} className="text-ink underline">
                     Ver detalle
                   </Link>
                 </td>
@@ -58,7 +58,7 @@ export function ContextListPage() {
             ))}
             {contextos.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-4 text-sm text-slate-400">
+                <td colSpan={4} className="py-4 text-sm text-muted">
                   Aún no se ha creado ningún contexto.
                 </td>
               </tr>

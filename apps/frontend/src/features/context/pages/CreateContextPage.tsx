@@ -16,7 +16,7 @@ export function CreateContextPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Nuevo contexto ISO</h1>
+      <h1 className="text-lg font-semibold text-ink">Nuevo contexto ISO</h1>
       <div className="mt-6">
         <ContextForm
           isSubmittingRequest={crearContexto.isPending}

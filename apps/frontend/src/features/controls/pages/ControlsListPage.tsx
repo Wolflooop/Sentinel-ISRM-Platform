@@ -14,14 +14,14 @@ export function ControlsListPage() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-slate-800">Controles</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-lg font-semibold text-ink">Controles</h1>
+          <p className="mt-1 text-sm text-muted">
             Consulta y actualiza el estado de implementación de los controles del programa de seguridad.
           </p>
         </div>
         <Link
           to="/controles/nuevo"
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
         >
           Nuevo control
         </Link>
@@ -31,7 +31,7 @@ export function ControlsListPage() {
         <ControlsFilterBar filtros={filtros} onChange={setFiltros} />
       </div>
 
-      {isLoading && <p className="mt-4 text-sm text-slate-500">Cargando controles...</p>}
+      {isLoading && <p className="mt-4 text-sm text-muted">Cargando controles...</p>}
       {isError && <p className="mt-4 text-sm text-red-600">No se pudieron cargar los controles.</p>}
       {controles && (
         <div className="mt-4">

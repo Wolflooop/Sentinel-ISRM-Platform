@@ -16,7 +16,7 @@ export function CreateAssetPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Nuevo activo</h1>
+      <h1 className="text-lg font-semibold text-ink">Nuevo activo</h1>
       <div className="mt-6">
         <AssetForm
           isSubmittingRequest={crearActivo.isPending}

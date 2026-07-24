@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Vulnerabilidad } from "../types/vulnerabilities.types";
 import { useEliminarVulnerabilidad } from "../hooks/useVulnerabilities";
+import { ConPermiso } from "../../../components/ConPermiso";
 
 interface Props {
   vulnerabilidades: Vulnerabilidad[];
@@ -30,7 +31,7 @@ export function VulnerabilitiesTable({ vulnerabilidades }: Props) {
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
-        <tr className="border-b border-slate-200 text-left text-slate-500">
+        <tr className="border-b border-border text-left text-muted">
           <th className="py-2 pr-4">Nombre</th>
           <th className="py-2 pr-4">Categoría</th>
           <th className="py-2 pr-4">Severidad</th>
@@ -41,9 +42,9 @@ export function VulnerabilitiesTable({ vulnerabilidades }: Props) {
       </thead>
       <tbody>
         {vulnerabilidades.map((vulnerabilidad) => (
-          <tr key={vulnerabilidad.id} className="border-b border-slate-100">
-            <td className="py-2 pr-4 font-medium text-slate-800">{vulnerabilidad.nombre}</td>
-            <td className="py-2 pr-4 text-slate-600">{vulnerabilidad.categoria.nombre}</td>
+          <tr key={vulnerabilidad.id} className="border-b border-border">
+            <td className="py-2 pr-4 font-medium text-ink">{vulnerabilidad.nombre}</td>
+            <td className="py-2 pr-4 text-muted">{vulnerabilidad.categoria.nombre}</td>
             <td className="py-2 pr-4">
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -53,37 +54,41 @@ export function VulnerabilitiesTable({ vulnerabilidades }: Props) {
                 {vulnerabilidad.severidad}
               </span>
             </td>
-            <td className="py-2 pr-4 text-slate-500">{vulnerabilidad.referenciaCVE ?? "—"}</td>
-            <td className="py-2 pr-4 text-slate-500">
+            <td className="py-2 pr-4 text-muted">{vulnerabilidad.referenciaCVE ?? "—"}</td>
+            <td className="py-2 pr-4 text-muted">
               {vulnerabilidad.esPropia ? "Propia" : "Predefinida"}
             </td>
             <td className="py-2 pr-4 space-x-3">
               {vulnerabilidad.esPropia ? (
                 <>
-                  <Link
-                    to={`/vulnerabilidades/${vulnerabilidad.id}/editar`}
-                    className="text-slate-700 underline"
-                  >
-                    Editar
-                  </Link>
-                  <button
-                    type="button"
-                    disabled={eliminarVulnerabilidad.isPending}
-                    onClick={() => handleEliminar(vulnerabilidad)}
-                    className="text-red-600 underline disabled:opacity-50"
-                  >
-                    Eliminar
-                  </button>
+                  <ConPermiso recurso="vulnerabilidades" accion="actualizar">
+                    <Link
+                      to={`/vulnerabilidades/${vulnerabilidad.id}/editar`}
+                      className="text-ink underline"
+                    >
+                      Editar
+                    </Link>
+                  </ConPermiso>
+                  <ConPermiso recurso="vulnerabilidades" accion="eliminar">
+                    <button
+                      type="button"
+                      disabled={eliminarVulnerabilidad.isPending}
+                      onClick={() => handleEliminar(vulnerabilidad)}
+                      className="text-red-600 underline disabled:opacity-50"
+                    >
+                      Eliminar
+                    </button>
+                  </ConPermiso>
                 </>
               ) : (
-                <span className="text-slate-400">Solo lectura</span>
+                <span className="text-muted">Solo lectura</span>
               )}
             </td>
           </tr>
         ))}
         {vulnerabilidades.length === 0 && (
           <tr>
-            <td colSpan={6} className="py-4 text-sm text-slate-400">
+            <td colSpan={6} className="py-4 text-sm text-muted">
               No se encontraron vulnerabilidades con los filtros aplicados.
             </td>
           </tr>

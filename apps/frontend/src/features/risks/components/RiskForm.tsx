@@ -12,7 +12,6 @@ import { useCategoriasIdentificacion } from "../hooks/useRisks";
 import { useActivos } from "../../assets/hooks/useAssets";
 import { useAmenazas } from "../../threats/hooks/useThreats";
 import { useVulnerabilidades } from "../../vulnerabilities/hooks/useVulnerabilities";
-import { useUsuarios } from "../../users/hooks/useUsers";
 
 interface Props {
   onSubmit: (values: CrearRiesgoFormValues) => void;
@@ -31,13 +30,13 @@ export function RiskForm({ onSubmit, isSubmittingRequest, errorMessage }: Props)
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-slate-700">Origen del riesgo</label>
+        <label className="block text-sm font-medium text-ink">Origen del riesgo</label>
         <div className="mt-1 flex gap-2">
           <button
             type="button"
             onClick={() => setOrigen("AAV")}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              origen === "AAV" ? "bg-slate-800 text-white" : "border border-slate-300 text-slate-700"
+              origen === "AAV" ? "bg-primary text-on-primary" : "border border-border text-ink"
             }`}
           >
             Desde Activo + Amenaza + Vulnerabilidad
@@ -46,7 +45,7 @@ export function RiskForm({ onSubmit, isSubmittingRequest, errorMessage }: Props)
             type="button"
             onClick={() => setOrigen("MANUAL")}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              origen === "MANUAL" ? "bg-slate-800 text-white" : "border border-slate-300 text-slate-700"
+              origen === "MANUAL" ? "bg-primary text-on-primary" : "border border-border text-ink"
             }`}
           >
             Identificación manual
@@ -67,7 +66,6 @@ function RiskFormAav({ onSubmit, isSubmittingRequest, errorMessage }: Props) {
   const { data: activos } = useActivos({});
   const { data: amenazas } = useAmenazas({});
   const { data: vulnerabilidades } = useVulnerabilidades({});
-  const { data: usuarios } = useUsuarios();
 
   const {
     register,
@@ -83,13 +81,13 @@ function RiskFormAav({ onSubmit, isSubmittingRequest, errorMessage }: Props) {
       <input type="hidden" value="AAV" {...register("origen")} />
 
       <div>
-        <label htmlFor="activoId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="activoId" className="block text-sm font-medium text-ink">
           Activo
         </label>
         <select
           id="activoId"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("activoId")}
         >
           <option value="" disabled>
@@ -105,13 +103,13 @@ function RiskFormAav({ onSubmit, isSubmittingRequest, errorMessage }: Props) {
       </div>
 
       <div>
-        <label htmlFor="amenazaId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="amenazaId" className="block text-sm font-medium text-ink">
           Amenaza
         </label>
         <select
           id="amenazaId"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("amenazaId")}
         >
           <option value="" disabled>
@@ -127,13 +125,13 @@ function RiskFormAav({ onSubmit, isSubmittingRequest, errorMessage }: Props) {
       </div>
 
       <div>
-        <label htmlFor="vulnerabilidadId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="vulnerabilidadId" className="block text-sm font-medium text-ink">
           Vulnerabilidad
         </label>
         <select
           id="vulnerabilidadId"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("vulnerabilidadId")}
         >
           <option value="" disabled>
@@ -150,14 +148,28 @@ function RiskFormAav({ onSubmit, isSubmittingRequest, errorMessage }: Props) {
         )}
       </div>
 
-      <NivelesYResponsable register={register} errors={errors} usuarios={usuarios} />
+      <div>
+        <label htmlFor="descripcion" className="block text-sm font-medium text-ink">
+          Descripción del riesgo
+        </label>
+        <textarea
+          id="descripcion"
+          rows={3}
+          placeholder="Ej. Se detectó que el servidor principal utiliza contraseñas débiles y carece de autenticación multifactor, aumentando el riesgo de acceso no autorizado."
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
+          {...register("descripcion")}
+        />
+        {errors.descripcion && <p className="mt-1 text-sm text-red-600">{errors.descripcion.message}</p>}
+      </div>
+
+      <NivelesRiesgo register={register} errors={errors} />
 
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <button
         type="submit"
         disabled={isSubmitting || isSubmittingRequest}
-        className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {isSubmittingRequest ? "Guardando..." : "Registrar riesgo"}
       </button>
@@ -167,7 +179,6 @@ function RiskFormAav({ onSubmit, isSubmittingRequest, errorMessage }: Props) {
 
 function RiskFormManual({ onSubmit, isSubmittingRequest, errorMessage }: Props) {
   const { data: categorias } = useCategoriasIdentificacion();
-  const { data: usuarios } = useUsuarios();
 
   const {
     register,
@@ -183,40 +194,41 @@ function RiskFormManual({ onSubmit, isSubmittingRequest, errorMessage }: Props) 
       <input type="hidden" value="MANUAL" {...register("origen")} />
 
       <div>
-        <label htmlFor="titulo" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="titulo" className="block text-sm font-medium text-ink">
           Título del riesgo
         </label>
         <input
           id="titulo"
           type="text"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("titulo")}
         />
         {errors.titulo && <p className="mt-1 text-sm text-red-600">{errors.titulo.message}</p>}
       </div>
 
       <div>
-        <label htmlFor="descripcion" className="block text-sm font-medium text-slate-700">
-          Descripción
+        <label htmlFor="descripcion" className="block text-sm font-medium text-ink">
+          Descripción del riesgo
         </label>
         <textarea
           id="descripcion"
           rows={3}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          placeholder="Ej. Se detectó que el servidor principal utiliza contraseñas débiles y carece de autenticación multifactor, aumentando el riesgo de acceso no autorizado."
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("descripcion")}
         />
         {errors.descripcion && <p className="mt-1 text-sm text-red-600">{errors.descripcion.message}</p>}
       </div>
 
       <div>
-        <label htmlFor="justificacionOrigen" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="justificacionOrigen" className="block text-sm font-medium text-ink">
           Justificación de origen
         </label>
         <textarea
           id="justificacionOrigen"
           rows={2}
           placeholder="¿Cómo se identificó este riesgo si no proviene de un AAV?"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("justificacionOrigen")}
         />
         {errors.justificacionOrigen && (
@@ -225,13 +237,13 @@ function RiskFormManual({ onSubmit, isSubmittingRequest, errorMessage }: Props) 
       </div>
 
       <div>
-        <label htmlFor="categoriaIdentificacionId" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="categoriaIdentificacionId" className="block text-sm font-medium text-ink">
           Categoría de identificación
         </label>
         <select
           id="categoriaIdentificacionId"
           defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
           {...register("categoriaIdentificacionId")}
         >
           <option value="" disabled>
@@ -248,14 +260,14 @@ function RiskFormManual({ onSubmit, isSubmittingRequest, errorMessage }: Props) 
         )}
       </div>
 
-      <NivelesYResponsable register={register} errors={errors} usuarios={usuarios} />
+      <NivelesRiesgo register={register} errors={errors} />
 
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <button
         type="submit"
         disabled={isSubmitting || isSubmittingRequest}
-        className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {isSubmittingRequest ? "Guardando..." : "Registrar riesgo"}
       </button>
@@ -263,32 +275,30 @@ function RiskFormManual({ onSubmit, isSubmittingRequest, errorMessage }: Props) 
   );
 }
 
-// Común a ambos sub-formularios: probabilidad, impacto (punto 3/4 del
-// prompt: alimentan la Evaluacion INHERENTE creada automáticamente) y
-// responsable (punto 13: distinto de creador, que se fija en el backend
-// al usuario autenticado).
-function NivelesYResponsable({
+// Común a ambos sub-formularios: probabilidad e impacto (punto 3/4 del
+// prompt: alimentan la Evaluacion INHERENTE creada automáticamente).
+// Fase 3a: el selector de Responsable se elimina de aquí — el backend fija
+// creadorId = responsableId = usuario autenticado automáticamente.
+function NivelesRiesgo({
   register,
   errors,
-  usuarios,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: any;
-  usuarios: Array<{ id: string; nombre: string }> | undefined;
 }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="probabilidad" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="probabilidad" className="block text-sm font-medium text-ink">
             Probabilidad (1–5)
           </label>
           <select
             id="probabilidad"
             defaultValue=""
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("probabilidad")}
           >
             <option value="" disabled>
@@ -306,13 +316,13 @@ function NivelesYResponsable({
         </div>
 
         <div>
-          <label htmlFor="impacto" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="impacto" className="block text-sm font-medium text-ink">
             Impacto (1–5)
           </label>
           <select
             id="impacto"
             defaultValue=""
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
             {...register("impacto")}
           >
             <option value="" disabled>
@@ -326,30 +336,6 @@ function NivelesYResponsable({
           </select>
           {errors.impacto && <p className="mt-1 text-sm text-red-600">{errors.impacto.message as string}</p>}
         </div>
-      </div>
-
-      <div>
-        <label htmlFor="responsableId" className="block text-sm font-medium text-slate-700">
-          Responsable
-        </label>
-        <select
-          id="responsableId"
-          defaultValue=""
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          {...register("responsableId")}
-        >
-          <option value="" disabled>
-            Selecciona un responsable...
-          </option>
-          {usuarios?.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.nombre}
-            </option>
-          ))}
-        </select>
-        {errors.responsableId && (
-          <p className="mt-1 text-sm text-red-600">{errors.responsableId.message as string}</p>
-        )}
       </div>
     </>
   );

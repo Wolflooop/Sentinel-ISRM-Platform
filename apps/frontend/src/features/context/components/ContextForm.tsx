@@ -40,28 +40,28 @@ export function ContextForm({
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div>
-        <label htmlFor="alcance" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="alcance" className="block text-sm font-medium text-ink">
           Alcance
         </label>
         <textarea
           id="alcance"
           rows={3}
           disabled={disabled}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted disabled:bg-surface disabled:text-muted"
           {...register("alcance")}
         />
         {errors.alcance && <p className="mt-1 text-sm text-red-600">{errors.alcance.message}</p>}
       </div>
 
       <div>
-        <label htmlFor="criteriosAceptacion" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="criteriosAceptacion" className="block text-sm font-medium text-ink">
           Criterios de aceptación
         </label>
         <textarea
           id="criteriosAceptacion"
           rows={3}
           disabled={disabled}
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted disabled:bg-surface disabled:text-muted"
           {...register("criteriosAceptacion")}
         />
         {errors.criteriosAceptacion && (
@@ -74,7 +74,7 @@ export function ContextForm({
       <button
         type="submit"
         disabled={disabled || isSubmitting || isSubmittingRequest}
-        className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
       >
         {isSubmittingRequest ? "Guardando..." : "Guardar cambios"}
       </button>

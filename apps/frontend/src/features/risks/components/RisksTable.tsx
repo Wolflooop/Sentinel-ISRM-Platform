@@ -25,7 +25,7 @@ export function RisksTable({ riesgos }: Props) {
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
-        <tr className="border-b border-slate-200 text-left text-slate-500">
+        <tr className="border-b border-border text-left text-muted">
           <th className="py-2 pr-4">Riesgo</th>
           <th className="py-2 pr-4">Origen</th>
           <th className="py-2 pr-4">Responsable</th>
@@ -37,13 +37,13 @@ export function RisksTable({ riesgos }: Props) {
       </thead>
       <tbody>
         {riesgos.map((riesgo) => (
-          <tr key={riesgo.id} className="border-b border-slate-100">
-            <td className="py-2 pr-4 font-medium text-slate-800">{tituloDeFila(riesgo)}</td>
-            <td className="py-2 pr-4 text-slate-600">
+          <tr key={riesgo.id} className="border-b border-border">
+            <td className="py-2 pr-4 font-medium text-ink">{tituloDeFila(riesgo)}</td>
+            <td className="py-2 pr-4 text-muted">
               {riesgo.origen === "AAV" ? "AAV" : "Manual"}
             </td>
-            <td className="py-2 pr-4 text-slate-600">{riesgo.responsable.nombre}</td>
-            <td className="py-2 pr-4 text-slate-600">
+            <td className="py-2 pr-4 text-muted">{riesgo.responsable.nombre}</td>
+            <td className="py-2 pr-4 text-muted">
               {riesgo.evaluacionActual
                 ? `${riesgo.evaluacionActual.probabilidad} × ${riesgo.evaluacionActual.impacto} = ${riesgo.evaluacionActual.valorCalculado}`
                 : "—"}
@@ -56,12 +56,12 @@ export function RisksTable({ riesgos }: Props) {
                   {riesgo.evaluacionActual.nivelRiesgo}
                 </span>
               ) : (
-                <span className="text-xs text-slate-400">Sin evaluar</span>
+                <span className="text-xs text-muted">Sin evaluar</span>
               )}
             </td>
-            <td className="py-2 pr-4 text-slate-500">{riesgo.estado}</td>
+            <td className="py-2 pr-4 text-muted">{riesgo.estado}</td>
             <td className="py-2 pr-4">
-              <Link to={`/riesgos/${riesgo.id}`} className="text-slate-700 underline">
+              <Link to={`/riesgos/${riesgo.id}`} className="text-ink underline">
                 Ver
               </Link>
             </td>
@@ -69,7 +69,7 @@ export function RisksTable({ riesgos }: Props) {
         ))}
         {riesgos.length === 0 && (
           <tr>
-            <td colSpan={7} className="py-4 text-sm text-slate-400">
+            <td colSpan={7} className="py-4 text-sm text-muted">
               No se encontraron riesgos con los filtros aplicados.
             </td>
           </tr>

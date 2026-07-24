@@ -30,7 +30,7 @@ export function CreateControlPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-800">Nuevo control</h1>
+      <h1 className="text-lg font-semibold text-ink">Nuevo control</h1>
       <div className="mt-6">
         <ControlForm
           isSubmittingRequest={crearControl.isPending}

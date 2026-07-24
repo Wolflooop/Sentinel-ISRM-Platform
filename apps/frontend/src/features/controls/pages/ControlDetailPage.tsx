@@ -53,7 +53,7 @@ export function ControlDetailPage() {
   };
 
   if (isLoading) {
-    return <p className="px-4 py-8 text-sm text-slate-500">Cargando control...</p>;
+    return <p className="px-4 py-8 text-sm text-muted">Cargando control...</p>;
   }
 
   if (isError || !control) {
@@ -66,42 +66,42 @@ export function ControlDetailPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-border bg-surface-elevated p-6 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-800">{control.nombre}</h1>
-            <p className="mt-1 text-sm text-slate-500">{control.codigoIso27001 ?? "Sin código ISO 27001"}</p>
+            <h1 className="text-lg font-semibold text-ink">{control.nombre}</h1>
+            <p className="mt-1 text-sm text-muted">{control.codigoIso27001 ?? "Sin código ISO 27001"}</p>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
+          <span className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-ink">
             {control.tipo}
           </span>
         </div>
 
-        <dl className="mt-6 grid gap-4 text-sm text-slate-600 sm:grid-cols-2">
+        <dl className="mt-6 grid gap-4 text-sm text-muted sm:grid-cols-2">
           <div>
-            <dt className="font-medium text-slate-700">Estado</dt>
+            <dt className="font-medium text-ink">Estado</dt>
             <dd className="mt-1">{control.estadoImplementacion}</dd>
           </div>
           <div>
-            <dt className="font-medium text-slate-700">Organización</dt>
+            <dt className="font-medium text-ink">Organización</dt>
             <dd className="mt-1">{control.organizacion?.nombre ?? "Sin organización"}</dd>
           </div>
           <div>
-            <dt className="font-medium text-slate-700">Responsable</dt>
+            <dt className="font-medium text-ink">Responsable</dt>
             <dd className="mt-1">{control.responsable?.nombre ?? "Sin asignar"}</dd>
           </div>
           <div>
-            <dt className="font-medium text-slate-700">Fecha de implementación</dt>
+            <dt className="font-medium text-ink">Fecha de implementación</dt>
             <dd className="mt-1">{control.fechaImplementacion ?? "No definida"}</dd>
           </div>
           <div>
-            <dt className="font-medium text-slate-700">Descripción</dt>
+            <dt className="font-medium text-ink">Descripción</dt>
             <dd className="mt-1">{control.descripcionImplementacion ?? "Sin descripción"}</dd>
           </div>
         </dl>
 
-        <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <h2 className="text-sm font-semibold text-slate-800">Actualizar estado</h2>
+        <div className="mt-6 rounded-lg border border-border bg-surface p-4">
+          <h2 className="text-sm font-semibold text-ink">Actualizar estado</h2>
           {control.esPropia ? (
             <>
               <form className="mt-3 flex flex-col gap-3" onSubmit={handleSubmit}>
@@ -110,7 +110,7 @@ export function ControlDetailPage() {
                     name="estado"
                     defaultValue={control.estadoImplementacion}
                     onChange={(e) => setEstadoSeleccionado(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
                   >
                     {estados.map((estado) => (
                       <option key={estado} value={estado}>
@@ -121,7 +121,7 @@ export function ControlDetailPage() {
                   <button
                     type="submit"
                     disabled={actualizarControl.isPending}
-                    className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-60"
                   >
                     {actualizarControl.isPending ? "Guardando..." : "Guardar cambios"}
                   </button>
@@ -134,7 +134,7 @@ export function ControlDetailPage() {
                     de estado). */}
                 {(estadoSeleccionado ?? control.estadoImplementacion) !== control.estadoImplementacion && (
                   <div>
-                    <label htmlFor="comentario" className="block text-sm font-medium text-slate-700">
+                    <label htmlFor="comentario" className="block text-sm font-medium text-ink">
                       Comentario (obligatorio al cambiar de estado)
                     </label>
                     <textarea
@@ -142,7 +142,7 @@ export function ControlDetailPage() {
                       value={comentario}
                       onChange={(e) => setComentario(e.target.value)}
                       rows={2}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
                       placeholder="Ej: Control aplicado correctamente."
                     />
                   </div>
@@ -156,7 +156,7 @@ export function ControlDetailPage() {
               )}
             </>
           ) : (
-            <p className="mt-3 text-sm text-slate-500">
+            <p className="mt-3 text-sm text-muted">
               Este control pertenece al catálogo global y es de solo lectura para tu organización.
             </p>
           )}
