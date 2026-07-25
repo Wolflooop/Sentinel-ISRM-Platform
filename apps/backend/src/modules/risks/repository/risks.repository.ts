@@ -16,6 +16,7 @@ import {
 import { RiesgoHistorialEntrada } from "../../history/types/history.types";
 import { registrarCreacionRiesgo } from "../../history/service/history.service";
 import { findHistorialDeRiesgo as findHistorialDeRiesgoRepo } from "../../history/repository/history.repository";
+import { registrarAuditoria } from "../../../shared/audit";
 
 // Forma canónica en la que el resto del módulo (servicio, controlador,
 // mapper hacia el frontend) espera recibir un Riesgo. Se centraliza aquí
@@ -358,27 +359,25 @@ export async function crearAavYRiesgo(
         usuarioId: params.actor.usuarioId,
       });
 
-      await tx.auditoria.create({
-        data: {
-          usuarioId: params.actor.usuarioId,
-          organizacionId: params.organizacionId,
-          entidad: "Riesgo",
-          entidadId: riesgoCreado.id,
-          accion: "CREAR",
-          datosNuevos: {
-            origen: "AAV",
-            activoId: params.activoId,
-            amenazaId: params.amenazaId,
-            vulnerabilidadId: params.vulnerabilidadId,
-            descripcion: params.descripcion,
-            probabilidad: params.probabilidad,
-            impacto: params.impacto,
-            valorCalculado,
-            nivelRiesgoInherente: params.nivelRiesgoInherente,
-            responsableId: params.responsableId,
-          } as never,
-          direccionIp: params.actor.direccionIp,
+      await registrarAuditoria(tx, {
+        usuarioId: params.actor.usuarioId,
+        organizacionId: params.organizacionId,
+        entidad: "Riesgo",
+        entidadId: riesgoCreado.id,
+        accion: "CREAR",
+        datosNuevos: {
+          origen: "AAV",
+          activoId: params.activoId,
+          amenazaId: params.amenazaId,
+          vulnerabilidadId: params.vulnerabilidadId,
+          descripcion: params.descripcion,
+          probabilidad: params.probabilidad,
+          impacto: params.impacto,
+          valorCalculado,
+          nivelRiesgoInherente: params.nivelRiesgoInherente,
+          responsableId: params.responsableId,
         },
+        direccionIp: params.actor.direccionIp,
       });
 
       await registrarCreacionRiesgo(tx, {
@@ -453,25 +452,23 @@ export async function crearRiesgoManual(
       usuarioId: params.actor.usuarioId,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: params.actor.usuarioId,
-        organizacionId: params.organizacionId,
-        entidad: "Riesgo",
-        entidadId: riesgoCreado.id,
-        accion: "CREAR",
-        datosNuevos: {
-          origen: "MANUAL",
-          titulo: params.titulo,
-          categoriaIdentificacionId: params.categoriaIdentificacionId,
-          probabilidad: params.probabilidad,
-          impacto: params.impacto,
-          valorCalculado,
-          nivelRiesgoInherente: params.nivelRiesgoInherente,
-          responsableId: params.responsableId,
-        } as never,
-        direccionIp: params.actor.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: params.actor.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: "Riesgo",
+      entidadId: riesgoCreado.id,
+      accion: "CREAR",
+      datosNuevos: {
+        origen: "MANUAL",
+        titulo: params.titulo,
+        categoriaIdentificacionId: params.categoriaIdentificacionId,
+        probabilidad: params.probabilidad,
+        impacto: params.impacto,
+        valorCalculado,
+        nivelRiesgoInherente: params.nivelRiesgoInherente,
+        responsableId: params.responsableId,
       },
+      direccionIp: params.actor.direccionIp,
     });
 
     await registrarCreacionRiesgo(tx, {
@@ -507,17 +504,15 @@ export async function reasignarResponsableDeRiesgo(params: {
       include: RIESGO_INCLUDE,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: params.actor.usuarioId,
-        organizacionId: params.organizacionId,
-        entidad: "Riesgo",
-        entidadId: params.riesgoId,
-        accion: "EDITAR",
-        datosAnteriores: { responsableId: anterior.responsableId } as never,
-        datosNuevos: { responsableId: params.responsableIdNuevo } as never,
-        direccionIp: params.actor.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: params.actor.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: "Riesgo",
+      entidadId: params.riesgoId,
+      accion: "EDITAR",
+      datosAnteriores: { responsableId: anterior.responsableId },
+      datosNuevos: { responsableId: params.responsableIdNuevo },
+      direccionIp: params.actor.direccionIp,
     });
 
     return actualizado;
