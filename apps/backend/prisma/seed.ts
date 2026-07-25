@@ -193,6 +193,30 @@ const SUPER_ADMIN_SEED = {
   email: process.env.SEED_ADMIN_EMAIL ?? "admin@sentinel.local",
 };
 
+// ----------------------------------------------------------------------------
+// Organización técnica de sistema (__SISTEMA__)
+//
+// Auditoria.organizacionId es obligatorio (no nullable), pero el
+// Administrador Principal (Rol.tipo = SUPER_ADMIN) es un usuario global con
+// Usuario.organizacionId = null (ver comentario en el modelo Usuario). Para
+// poder auditar acciones que ejecuta ese SUPER_ADMIN sin volver nullable
+// Auditoria.organizacionId ni asignarle una organización real de negocio, se
+// reserva esta única Organizacion técnica.
+//
+// IMPORTANTE:
+//   - NO representa un tenant real ni una organización operativa.
+//   - NO se asigna nunca a Usuario.organizacionId (el SUPER_ADMIN sigue null).
+//   - Se resuelve exclusivamente a través de shared/audit.ts
+//     (resolverOrganizacionIdParaAuditoria), nunca por su nombre en otros
+//     módulos.
+const ORGANIZACION_SISTEMA_SEED = {
+  nombre: "__SISTEMA__",
+  sector: "PRIVADO" as const,
+  tamano: "MICRO" as const,
+  paisIso: "ZZ", // Código no asignado (ISO 3166-1): marca explícita de "no aplica".
+  estado: "SUSPENDIDA" as const, // No operativa: solo existe para satisfacer la FK de Auditoria.
+};
+
 const CATEGORIAS_ACTIVO: Array<{ nombre: string; descripcion: string }> = [
   { nombre: "Información", descripcion: "Datos, documentos y bases de datos con valor para la organización" },
   { nombre: "Software", descripcion: "Aplicaciones, sistemas operativos y herramientas" },
@@ -294,6 +318,17 @@ const CONTROLES_ISO27001: Array<{
   { codigoIso27001: "A.8.16", nombre: "Actividades de monitoreo", tipo: "DETECTIVO" },
   { codigoIso27001: "A.8.24", nombre: "Uso de criptografía", tipo: "PREVENTIVO" },
 ];
+
+// Idempotente vía upsert sobre Organizacion.nombre (@unique): no duplica la
+// fila en re-ejecuciones y no toca ninguna organización real existente,
+// porque el `where` solo puede matchear el nombre reservado "__SISTEMA__".
+async function seedOrganizacionSistema() {
+  return prisma.organizacion.upsert({
+    where: { nombre: ORGANIZACION_SISTEMA_SEED.nombre },
+    update: {}, // Si ya existe, no se sobreescribe: es una fila técnica fija.
+    create: ORGANIZACION_SISTEMA_SEED,
+  });
+}
 
 async function seedPermisos() {
   return Promise.all(
@@ -527,6 +562,8 @@ async function seedControles() {
 }
 
 async function main(): Promise<void> {
+  await seedOrganizacionSistema();
+
   const permisosCreados = await seedPermisos();
   const rolAdministrador = await seedRoles(permisosCreados);
   const { adminCreado } = await seedSuperAdminInicial(rolAdministrador.id);
@@ -541,6 +578,7 @@ async function main(): Promise<void> {
   await seedControles();
 
   console.log("Seed completado (solo datos globales):");
+  console.log(`  Organización técnica de auditoría: ${ORGANIZACION_SISTEMA_SEED.nombre}`);
   console.log(`  Roles:        Administrador, ${Object.keys(ROLES_ADICIONALES).join(", ")}`);
   console.log(`  Permisos:     ${permisosCreados.length}`);
   console.log(`  Categorías activo: ${categoriasActivo.length}`);

@@ -1,5 +1,19 @@
 import { prisma } from "../../../config/prisma";
-import { Rol, RolConPermisos, CrearRolParams, ActualizarRolParams } from "../types/roles.types";
+import {
+  Rol,
+  RolConPermisos,
+  CrearRolParams,
+  ActualizarRolParams,
+} from "../types/roles.types";
+
+// Actor + organizacionId ya resuelto (nunca null: el service resuelve el
+// caso SUPER_ADMIN vía shared/audit.ts antes de llegar aquí), necesarios
+// para dejar el registro de Auditoria.
+interface ActorAuditoriaRol {
+  usuarioId: string;
+  organizacionId: string;
+  direccionIp: string;
+}
 
 export async function findRoles(): Promise<Rol[]> {
   return prisma.rol.findMany({ orderBy: { nombre: "asc" } });
@@ -42,18 +56,71 @@ export async function existeNombreRol(nombre: string): Promise<boolean> {
   return existente !== null;
 }
 
-export async function crearRol(params: CrearRolParams): Promise<Rol> {
-  return prisma.rol.create({
-    data: {
-      nombre: params.nombre,
-      descripcion: params.descripcion,
-      esSistema: false, // Solo el catálogo base (seed) puede marcar esSistema=true
-    },
+// La creación del Rol y su Auditoria son atómicas: si el registro de
+// auditoría falla, la transacción revierte también la creación del rol
+// (nunca queda un rol creado sin su rastro de auditoría, ni viceversa).
+export async function crearRol(
+  params: CrearRolParams,
+  actor: ActorAuditoriaRol
+): Promise<Rol> {
+  return prisma.$transaction(async (tx) => {
+    const rol = await tx.rol.create({
+      data: {
+        nombre: params.nombre,
+        descripcion: params.descripcion,
+        esSistema: false, // Solo el catálogo base (seed) puede marcar esSistema=true
+      },
+    });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: actor.usuarioId,
+        organizacionId: actor.organizacionId,
+        entidad: "Rol",
+        entidadId: rol.id,
+        accion: "CREAR",
+        datosNuevos: {
+          nombre: params.nombre,
+          descripcion: params.descripcion ?? null,
+        } as never,
+        direccionIp: actor.direccionIp,
+      },
+    });
+
+    return rol;
   });
 }
 
-export async function actualizarRol(id: string, params: ActualizarRolParams): Promise<Rol> {
-  return prisma.rol.update({ where: { id }, data: params });
+// datosAnteriores se recibe ya resuelto desde el service (el estado del rol
+// antes de esta actualización), para no tener que releerlo dentro de la
+// transacción.
+export async function actualizarRol(
+  id: string,
+  params: ActualizarRolParams,
+  actor: ActorAuditoriaRol,
+  datosAnteriores: Pick<Rol, "nombre" | "descripcion">
+): Promise<Rol> {
+  return prisma.$transaction(async (tx) => {
+    const rol = await tx.rol.update({ where: { id }, data: params });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: actor.usuarioId,
+        organizacionId: actor.organizacionId,
+        entidad: "Rol",
+        entidadId: rol.id,
+        accion: "EDITAR",
+        datosAnteriores: datosAnteriores as never,
+        datosNuevos: {
+          nombre: rol.nombre,
+          descripcion: rol.descripcion,
+        } as never,
+        direccionIp: actor.direccionIp,
+      },
+    });
+
+    return rol;
+  });
 }
 
 export async function existePermiso(permisoId: string): Promise<boolean> {
@@ -71,13 +138,56 @@ export async function existeAsignacion(rolId: string, permisoId: string): Promis
   return asignacion !== null;
 }
 
-export async function asignarPermisoARol(rolId: string, permisoId: string): Promise<void> {
-  await prisma.rolPermiso.create({ data: { rolId, permisoId } });
+export async function asignarPermisoARol(
+  rolId: string,
+  permisoId: string,
+  actor: ActorAuditoriaRol
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    await tx.rolPermiso.create({ data: { rolId, permisoId } });
+
+    await tx.auditoria.create({
+      data: {
+        usuarioId: actor.usuarioId,
+        organizacionId: actor.organizacionId,
+        entidad: "Rol",
+        entidadId: rolId,
+        accion: "EDITAR",
+        datosNuevos: {
+          accion: "ASIGNAR_PERMISO",
+          rolId,
+          permisoId,
+        } as never,
+        direccionIp: actor.direccionIp,
+      },
+    });
+  });
 }
 
-export async function quitarPermisoDeRol(rolId: string, permisoId: string): Promise<void> {
+export async function quitarPermisoDeRol(
+  rolId: string,
+  permisoId: string,
+  actor: ActorAuditoriaRol
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    await tx.rolPermiso.delete({
+      where: { rolId_permisoId: { rolId, permisoId } },
+    });
 
-  await prisma.rolPermiso.delete({
-    where: { rolId_permisoId: { rolId, permisoId } },
+    await tx.auditoria.create({
+      data: {
+        usuarioId: actor.usuarioId,
+        organizacionId: actor.organizacionId,
+        entidad: "Rol",
+        entidadId: rolId,
+        accion: "EDITAR",
+        datosNuevos: {
+          accion: "QUITAR_PERMISO",
+          rolId,
+          permisoId,
+        } as never,
+        direccionIp: actor.direccionIp,
+      },
+    });
   });
 }
