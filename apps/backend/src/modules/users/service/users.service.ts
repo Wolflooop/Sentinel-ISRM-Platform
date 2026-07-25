@@ -10,7 +10,6 @@ import {
   cambiarEstadoUsuario,
   findRolConTipoPorId,
   existeOrganizacionActiva,
-  registrarAuditoria,
 } from "../repository/users.repository";
 import { registrarEventoSeguridad } from "../../security-events/service/security-events.service";
 import { UsuarioConRol } from "../types/users.types";
@@ -18,8 +17,6 @@ import {
   CrearUsuarioInput,
   ActualizarUsuarioInput,
 } from "../schema/users.schema";
-
-const ENTIDAD = "Usuario";
 
 // Identidad del actor que realiza la operación, tomada SIEMPRE del JWT
 // (req.user), nunca de datos enviados en el body.
@@ -169,23 +166,20 @@ export async function crearUsuarioComoActor(
 
   const passwordHash = await hashPassword(input.password);
 
-  const usuarioCreado = await crearUsuario({
-    organizacionId: organizacionDestinoId,
-    rolId: input.rolId,
-    nombre: input.nombre,
-    email: input.email,
-    passwordHash,
-  });
-
-  await registrarAuditoria({
-    usuarioId: actor.usuarioId,
-    organizacionId: organizacionDestinoId,
-    entidad: ENTIDAD,
-    entidadId: usuarioCreado.id,
-    accion: "CREAR",
-    datosNuevos: { nombre: usuarioCreado.nombre, email: usuarioCreado.email, rolId: input.rolId },
-    direccionIp: actor.direccionIp,
-  });
+  const usuarioCreado = await crearUsuario(
+    {
+      organizacionId: organizacionDestinoId,
+      rolId: input.rolId,
+      nombre: input.nombre,
+      email: input.email,
+      passwordHash,
+    },
+    {
+      usuarioId: actor.usuarioId,
+      organizacionId: organizacionDestinoId,
+      direccionIp: actor.direccionIp,
+    }
+  );
 
   return usuarioCreado;
 }
@@ -253,20 +247,24 @@ export async function actualizarUsuarioComoActor(
     }
   }
 
-  const usuarioActualizado = await actualizarUsuario(id, input);
-
-  if (usuarioExistente.organizacionId) {
-    await registrarAuditoria({
-      usuarioId: actor.usuarioId,
-      organizacionId: usuarioExistente.organizacionId,
-      entidad: ENTIDAD,
-      entidadId: id,
-      accion: "EDITAR",
-      datosAnteriores: { nombre: usuarioExistente.nombre, email: usuarioExistente.email, rolId: usuarioExistente.rolId },
-      datosNuevos: input,
-      direccionIp: actor.direccionIp,
-    });
-  }
+  const usuarioActualizado = await actualizarUsuario(
+    id,
+    input,
+    usuarioExistente.organizacionId
+      ? {
+          actor: {
+            usuarioId: actor.usuarioId,
+            organizacionId: usuarioExistente.organizacionId,
+            direccionIp: actor.direccionIp,
+          },
+          datosAnteriores: {
+            nombre: usuarioExistente.nombre,
+            email: usuarioExistente.email,
+            rolId: usuarioExistente.rolId,
+          },
+        }
+      : undefined
+  );
 
   return usuarioActualizado;
 }
@@ -291,20 +289,20 @@ export async function cambiarEstadoUsuarioComoActor(
   }
 
   const usuarioExistente = await obtenerUsuario(id, actor);
-  const usuarioActualizado = await cambiarEstadoUsuario(id, activo);
-
-  if (usuarioExistente.organizacionId) {
-    await registrarAuditoria({
-      usuarioId: actor.usuarioId,
-      organizacionId: usuarioExistente.organizacionId,
-      entidad: ENTIDAD,
-      entidadId: id,
-      accion: "EDITAR",
-      datosAnteriores: { activo: usuarioExistente.activo },
-      datosNuevos: { activo: usuarioActualizado.activo },
-      direccionIp: actor.direccionIp,
-    });
-  }
+  const usuarioActualizado = await cambiarEstadoUsuario(
+    id,
+    activo,
+    usuarioExistente.organizacionId
+      ? {
+          actor: {
+            usuarioId: actor.usuarioId,
+            organizacionId: usuarioExistente.organizacionId,
+            direccionIp: actor.direccionIp,
+          },
+          datosAnteriores: { activo: usuarioExistente.activo },
+        }
+      : undefined
+  );
 
   return usuarioActualizado;
 }

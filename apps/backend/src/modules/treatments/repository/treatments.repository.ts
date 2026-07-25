@@ -7,6 +7,7 @@ import {
   TratamientoConRelaciones,
 } from "../types/treatments.types";
 import { transicionarEstadoRiesgo } from "../../history/service/history.service";
+import { registrarAuditoria } from "../../../shared/audit";
 
 const TRATAMIENTO_INCLUDE = {
   riesgo: {
@@ -309,7 +310,9 @@ export async function crearTratamiento(
     riesgoEvaluacionActual: { id: string; contextoId: string; probabilidad: number; impacto: number } | null;
     controlPrincipalTipo: string | null;
     usuarioId: string;
+    organizacionId: string;
     comentario: string;
+    direccionIp: string;
   }
 ): Promise<TratamientoConRelaciones> {
   const nuevoEstadoRiesgo =
@@ -368,6 +371,16 @@ export async function crearTratamiento(
       });
     }
 
+    await registrarAuditoria(tx, {
+      usuarioId: params.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: "Tratamiento",
+      entidadId: tratamiento.id,
+      accion: "CREAR",
+      datosNuevos: { tratamientoId: tratamiento.id },
+      direccionIp: params.direccionIp,
+    });
+
     return shapeTratamiento(
       await tx.tratamiento.findUniqueOrThrow({
         where: { id: tratamiento.id },
@@ -387,6 +400,8 @@ export async function actualizarTratamiento(
     controlPrincipalTipoFinal: string | null;
     controlPrincipalIdFinal: string | null;
     usuarioId: string;
+    organizacionId: string;
+    direccionIp: string;
     comentario?: string;
   }
 ): Promise<TratamientoConRelaciones> {
@@ -453,33 +468,21 @@ export async function actualizarTratamiento(
       }
     }
 
+    await registrarAuditoria(tx, {
+      usuarioId: contexto.usuarioId,
+      organizacionId: contexto.organizacionId,
+      entidad: "Tratamiento",
+      entidadId: id,
+      accion: "EDITAR",
+      datosNuevos: { tratamientoId: id },
+      direccionIp: contexto.direccionIp,
+    });
+
     return shapeTratamiento(
       await tx.tratamiento.findUniqueOrThrow({
         where: { id },
         include: TRATAMIENTO_INCLUDE,
       })
     );
-  });
-}
-
-export async function registrarAuditoriaTratamiento(params: {
-  usuarioId: string;
-  organizacionId: string;
-  entidadId: string;
-  accion: "CREAR" | "EDITAR";
-  direccionIp: string;
-}): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: "Tratamiento",
-      entidadId: params.entidadId,
-      accion: params.accion,
-      datosNuevos: {
-        tratamientoId: params.entidadId,
-      } as never,
-      direccionIp: params.direccionIp,
-    },
   });
 }

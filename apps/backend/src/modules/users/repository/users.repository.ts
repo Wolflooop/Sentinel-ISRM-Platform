@@ -1,6 +1,17 @@
 import { TipoRol } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import { UsuarioConRol, CrearUsuarioParams, ActualizarUsuarioParams } from "../types/users.types";
+import { registrarAuditoria } from "../../../shared/audit";
+
+// organizacionId YA resuelto (nunca null) por quien llama: si el usuario
+// objetivo es un SUPER_ADMIN (Usuario.organizacionId null), el servicio
+// omite por completo pasar este objeto — mismo comportamiento previo de no
+// dejar registro de Auditoria en ese caso puntual (ver users.service.ts).
+interface ActorAuditoriaUsuario {
+  usuarioId: string;
+  organizacionId: string;
+  direccionIp: string;
+}
 
 const SELECT_CON_ROL = {
   id: true,
@@ -48,38 +59,96 @@ export async function existeEmailGlobal(email: string): Promise<boolean> {
   return existente !== null;
 }
 
-export async function crearUsuario(params: CrearUsuarioParams): Promise<UsuarioConRol> {
-  return prisma.usuario.create({
-    data: {
-      organizacionId: params.organizacionId,
-      rolId: params.rolId,
-      nombre: params.nombre,
-      email: params.email,
-      passwordHash: params.passwordHash,
-    },
-    select: SELECT_CON_ROL,
+export async function crearUsuario(
+  params: CrearUsuarioParams,
+  actor: ActorAuditoriaUsuario
+): Promise<UsuarioConRol> {
+  return prisma.$transaction(async (tx) => {
+    const usuario = await tx.usuario.create({
+      data: {
+        organizacionId: params.organizacionId,
+        rolId: params.rolId,
+        nombre: params.nombre,
+        email: params.email,
+        passwordHash: params.passwordHash,
+      },
+      select: SELECT_CON_ROL,
+    });
+
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Usuario",
+      entidadId: usuario.id,
+      accion: "CREAR",
+      datosNuevos: { nombre: usuario.nombre, email: usuario.email, rolId: params.rolId },
+      direccionIp: actor.direccionIp,
+    });
+
+    return usuario;
   });
 }
 
 export async function actualizarUsuario(
   id: string,
-  params: ActualizarUsuarioParams
+  params: ActualizarUsuarioParams,
+  auditoria?: {
+    actor: ActorAuditoriaUsuario;
+    datosAnteriores: { nombre: string; email: string; rolId: string };
+  }
 ): Promise<UsuarioConRol> {
-  return prisma.usuario.update({
-    where: { id },
-    data: params,
-    select: SELECT_CON_ROL,
+  // Sin `auditoria` => el usuario objetivo no tiene organizacionId resuelto
+  // (SUPER_ADMIN): se preserva el comportamiento previo de actualizar sin
+  // dejar registro de Auditoria.
+  if (!auditoria) {
+    return prisma.usuario.update({ where: { id }, data: params, select: SELECT_CON_ROL });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const usuario = await tx.usuario.update({ where: { id }, data: params, select: SELECT_CON_ROL });
+
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.actor.usuarioId,
+      organizacionId: auditoria.actor.organizacionId,
+      entidad: "Usuario",
+      entidadId: id,
+      accion: "EDITAR",
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: params,
+      direccionIp: auditoria.actor.direccionIp,
+    });
+
+    return usuario;
   });
 }
 
 export async function cambiarEstadoUsuario(
   id: string,
-  activo: boolean
+  activo: boolean,
+  auditoria?: {
+    actor: ActorAuditoriaUsuario;
+    datosAnteriores: { activo: boolean };
+  }
 ): Promise<UsuarioConRol> {
-  return prisma.usuario.update({
-    where: { id },
-    data: { activo },
-    select: SELECT_CON_ROL,
+  if (!auditoria) {
+    return prisma.usuario.update({ where: { id }, data: { activo }, select: SELECT_CON_ROL });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const usuario = await tx.usuario.update({ where: { id }, data: { activo }, select: SELECT_CON_ROL });
+
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.actor.usuarioId,
+      organizacionId: auditoria.actor.organizacionId,
+      entidad: "Usuario",
+      entidadId: id,
+      accion: "EDITAR",
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: { activo },
+      direccionIp: auditoria.actor.direccionIp,
+    });
+
+    return usuario;
   });
 }
 
@@ -102,28 +171,3 @@ export async function existeOrganizacionActiva(organizacionId: string): Promise<
   return org !== null && org.estado === "ACTIVA";
 }
 
-export interface RegistrarAuditoriaParams {
-  usuarioId: string;
-  organizacionId: string;
-  entidad: string;
-  entidadId: string;
-  accion: "CREAR" | "EDITAR" | "ELIMINAR" | "APROBAR";
-  datosAnteriores?: unknown;
-  datosNuevos?: unknown;
-  direccionIp: string;
-}
-
-export async function registrarAuditoria(params: RegistrarAuditoriaParams): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: params.entidad,
-      entidadId: params.entidadId,
-      accion: params.accion,
-      datosAnteriores: params.datosAnteriores as never,
-      datosNuevos: params.datosNuevos as never,
-      direccionIp: params.direccionIp,
-    },
-  });
-}

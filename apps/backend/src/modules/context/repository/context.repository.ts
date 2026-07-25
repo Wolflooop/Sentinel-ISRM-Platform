@@ -6,8 +6,14 @@ import {
   ActualizarContextoParams,
   EscalaItemParams,
   MatrizCeldaParams,
-  RegistrarAuditoriaParams,
 } from "../types/context.types";
+import { registrarAuditoria } from "../../../shared/audit";
+
+interface ActorAuditoriaContexto {
+  usuarioId: string;
+  organizacionId: string;
+  direccionIp: string;
+}
 
 const INCLUDE_DETALLE = {
   escalasImpacto: true,
@@ -41,22 +47,56 @@ export async function findContextoActivoPorOrganizacion(
   });
 }
 
-export async function crearContexto(params: CrearContextoParams): Promise<Contexto> {
-  return prisma.contexto.create({
-    data: {
-      organizacionId: params.organizacionId,
-      alcance: params.alcance,
-      criteriosAceptacion: params.criteriosAceptacion,
-      activo: false,
-    },
+export async function crearContexto(
+  params: CrearContextoParams,
+  actor: ActorAuditoriaContexto
+): Promise<Contexto> {
+  return prisma.$transaction(async (tx) => {
+    const contexto = await tx.contexto.create({
+      data: {
+        organizacionId: params.organizacionId,
+        alcance: params.alcance,
+        criteriosAceptacion: params.criteriosAceptacion,
+        activo: false,
+      },
+    });
+
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Contexto",
+      entidadId: contexto.id,
+      accion: "CREAR",
+      datosNuevos: { alcance: contexto.alcance, criteriosAceptacion: contexto.criteriosAceptacion },
+      direccionIp: actor.direccionIp,
+    });
+
+    return contexto;
   });
 }
 
 export async function actualizarContexto(
   id: string,
-  params: ActualizarContextoParams
+  params: ActualizarContextoParams,
+  actor: ActorAuditoriaContexto,
+  datosAnteriores: { alcance: string; criteriosAceptacion: string }
 ): Promise<Contexto> {
-  return prisma.contexto.update({ where: { id }, data: params });
+  return prisma.$transaction(async (tx) => {
+    const contexto = await tx.contexto.update({ where: { id }, data: params });
+
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Contexto",
+      entidadId: id,
+      accion: "EDITAR",
+      datosAnteriores,
+      datosNuevos: { alcance: contexto.alcance, criteriosAceptacion: contexto.criteriosAceptacion },
+      direccionIp: actor.direccionIp,
+    });
+
+    return contexto;
+  });
 }
 
 export async function contarEscalasImpacto(contextoId: string): Promise<number> {
@@ -74,66 +114,98 @@ export async function contarMatriz(contextoId: string): Promise<number> {
 
 export async function reemplazarEscalasImpacto(
   contextoId: string,
-  niveles: EscalaItemParams[]
+  niveles: EscalaItemParams[],
+  actor: ActorAuditoriaContexto
 ): Promise<void> {
-  await prisma.$transaction([
-    prisma.escalaImpacto.deleteMany({ where: { contextoId } }),
-    prisma.escalaImpacto.createMany({
+  await prisma.$transaction(async (tx) => {
+    await tx.escalaImpacto.deleteMany({ where: { contextoId } });
+    await tx.escalaImpacto.createMany({
       data: niveles.map((n) => ({ contextoId, ...n })),
-    }),
-  ]);
+    });
+
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Contexto",
+      entidadId: contextoId,
+      accion: "EDITAR",
+      datosNuevos: { escalasImpacto: niveles },
+      direccionIp: actor.direccionIp,
+    });
+  });
 }
 
 export async function reemplazarEscalasProbabilidad(
   contextoId: string,
-  niveles: EscalaItemParams[]
+  niveles: EscalaItemParams[],
+  actor: ActorAuditoriaContexto
 ): Promise<void> {
-  await prisma.$transaction([
-    prisma.escalaProbabilidad.deleteMany({ where: { contextoId } }),
-    prisma.escalaProbabilidad.createMany({
+  await prisma.$transaction(async (tx) => {
+    await tx.escalaProbabilidad.deleteMany({ where: { contextoId } });
+    await tx.escalaProbabilidad.createMany({
       data: niveles.map((n) => ({ contextoId, ...n })),
-    }),
-  ]);
+    });
+
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Contexto",
+      entidadId: contextoId,
+      accion: "EDITAR",
+      datosNuevos: { escalasProbabilidad: niveles },
+      direccionIp: actor.direccionIp,
+    });
+  });
 }
 
 export async function reemplazarMatriz(
   contextoId: string,
-  celdas: MatrizCeldaParams[]
+  celdas: MatrizCeldaParams[],
+  actor: ActorAuditoriaContexto
 ): Promise<void> {
-  await prisma.$transaction([
-    prisma.matrizRiesgo.deleteMany({ where: { contextoId } }),
-    prisma.matrizRiesgo.createMany({
+  await prisma.$transaction(async (tx) => {
+    await tx.matrizRiesgo.deleteMany({ where: { contextoId } });
+    await tx.matrizRiesgo.createMany({
       data: celdas.map((c) => ({ contextoId, ...c })),
-    }),
-  ]);
+    });
+
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Contexto",
+      entidadId: contextoId,
+      accion: "EDITAR",
+      datosNuevos: { matriz: celdas },
+      direccionIp: actor.direccionIp,
+    });
+  });
 }
 
 
 export async function activarContextoTransaccion(
   id: string,
-  organizacionId: string
+  organizacionId: string,
+  actor: ActorAuditoriaContexto
 ): Promise<Contexto> {
-  const [, activado] = await prisma.$transaction([
-    prisma.contexto.updateMany({
+  return prisma.$transaction(async (tx) => {
+    await tx.contexto.updateMany({
       where: { organizacionId, activo: true },
       data: { activo: false },
-    }),
-    prisma.contexto.update({ where: { id }, data: { activo: true } }),
-  ]);
-  return activado;
-}
+    });
+    const activado = await tx.contexto.update({ where: { id }, data: { activo: true } });
 
-export async function registrarAuditoria(params: RegistrarAuditoriaParams): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: params.entidad,
-      entidadId: params.entidadId,
-      accion: params.accion,
-      datosAnteriores: params.datosAnteriores as never,
-      datosNuevos: params.datosNuevos as never,
-      direccionIp: params.direccionIp,
-    },
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Contexto",
+      entidadId: id,
+      accion: "APROBAR",
+      datosAnteriores: { activo: false },
+      datosNuevos: { activo: true },
+      direccionIp: actor.direccionIp,
+    });
+
+    return activado;
   });
 }
+

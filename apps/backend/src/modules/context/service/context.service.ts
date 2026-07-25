@@ -12,7 +12,6 @@ import {
   reemplazarEscalasProbabilidad,
   reemplazarMatriz,
   activarContextoTransaccion,
-  registrarAuditoria,
 } from "../repository/context.repository";
 import { Contexto, ContextoConDetalle } from "../types/context.types";
 import {
@@ -21,8 +20,6 @@ import {
   ReemplazarEscalaInput,
   ReemplazarMatrizInput,
 } from "../schema/context.schema";
-
-const ENTIDAD = "Contexto";
 
 interface ActorAuditoria {
   usuarioId: string;
@@ -55,17 +52,10 @@ export async function crearNuevoContexto(
   input: CrearContextoInput,
   actor: ActorAuditoria
 ): Promise<Contexto> {
-  const contexto = await crearContexto({ organizacionId, ...input });
-
-  await registrarAuditoria({
-    usuarioId: actor.usuarioId,
-    organizacionId,
-    entidad: ENTIDAD,
-    entidadId: contexto.id,
-    accion: "CREAR",
-    datosNuevos: { alcance: contexto.alcance, criteriosAceptacion: contexto.criteriosAceptacion },
-    direccionIp: actor.direccionIp,
-  });
+  const contexto = await crearContexto(
+    { organizacionId, ...input },
+    { usuarioId: actor.usuarioId, organizacionId, direccionIp: actor.direccionIp }
+  );
 
   return contexto;
 }
@@ -78,24 +68,12 @@ export async function actualizarContextoExistente(
 ): Promise<Contexto> {
   const anterior = await obtenerContexto(id, organizacionId);
 
-  const actualizado = await actualizarContexto(id, input);
-
-  await registrarAuditoria({
-    usuarioId: actor.usuarioId,
-    organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
-    accion: "EDITAR",
-    datosAnteriores: {
-      alcance: anterior.alcance,
-      criteriosAceptacion: anterior.criteriosAceptacion,
-    },
-    datosNuevos: {
-      alcance: actualizado.alcance,
-      criteriosAceptacion: actualizado.criteriosAceptacion,
-    },
-    direccionIp: actor.direccionIp,
-  });
+  const actualizado = await actualizarContexto(
+    id,
+    input,
+    { usuarioId: actor.usuarioId, organizacionId, direccionIp: actor.direccionIp },
+    { alcance: anterior.alcance, criteriosAceptacion: anterior.criteriosAceptacion }
+  );
 
   return actualizado;
 }
@@ -118,14 +96,9 @@ export async function reemplazarEscalaImpacto(
   actor: ActorAuditoria
 ): Promise<void> {
   await verificarContextoNoActivo(id, organizacionId);
-  await reemplazarEscalasImpacto(id, input.niveles);
-  await registrarAuditoria({
+  await reemplazarEscalasImpacto(id, input.niveles, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
-    accion: "EDITAR",
-    datosNuevos: { escalasImpacto: input.niveles },
     direccionIp: actor.direccionIp,
   });
 }
@@ -137,14 +110,9 @@ export async function reemplazarEscalaProbabilidad(
   actor: ActorAuditoria
 ): Promise<void> {
   await verificarContextoNoActivo(id, organizacionId);
-  await reemplazarEscalasProbabilidad(id, input.niveles);
-  await registrarAuditoria({
+  await reemplazarEscalasProbabilidad(id, input.niveles, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
-    accion: "EDITAR",
-    datosNuevos: { escalasProbabilidad: input.niveles },
     direccionIp: actor.direccionIp,
   });
 }
@@ -156,14 +124,9 @@ export async function reemplazarMatrizRiesgo(
   actor: ActorAuditoria
 ): Promise<void> {
   await verificarContextoNoActivo(id, organizacionId);
-  await reemplazarMatriz(id, input.celdas);
-  await registrarAuditoria({
+  await reemplazarMatriz(id, input.celdas, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
-    accion: "EDITAR",
-    datosNuevos: { matriz: input.celdas },
     direccionIp: actor.direccionIp,
   });
 }
@@ -194,16 +157,9 @@ export async function activarContexto(
     );
   }
 
-  const activado = await activarContextoTransaccion(id, organizacionId);
-
-  await registrarAuditoria({
+  const activado = await activarContextoTransaccion(id, organizacionId, {
     usuarioId: actor.usuarioId,
     organizacionId,
-    entidad: ENTIDAD,
-    entidadId: id,
-    accion: "APROBAR",
-    datosAnteriores: { activo: false },
-    datosNuevos: { activo: true },
     direccionIp: actor.direccionIp,
   });
 

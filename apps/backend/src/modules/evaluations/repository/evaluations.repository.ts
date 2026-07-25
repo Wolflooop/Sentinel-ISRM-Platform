@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import { CrearEvaluacionParams, EvaluacionConRelaciones, FiltrosEvaluaciones, CeldaMatrizResumen } from "../types/evaluations.types";
 import { transicionarEstadoRiesgo } from "../../history/service/history.service";
+import { registrarAuditoria } from "../../../shared/audit";
 
 const EVALUACION_INCLUDE = {
   riesgo: {
@@ -141,6 +142,16 @@ export async function crearEvaluacion(params: CrearEvaluacionParams): Promise<Ev
       data: { evaluacionActualId: evaluacion.id },
     });
 
+    await registrarAuditoria(tx, {
+      usuarioId: params.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: "Evaluacion",
+      entidadId: evaluacion.id,
+      accion: "CREAR",
+      datosNuevos: { riesgoId: params.riesgoId },
+      direccionIp: params.direccionIp,
+    });
+
     return tx.evaluacion.findUniqueOrThrow({
       where: { id: evaluacion.id },
       include: EVALUACION_INCLUDE,
@@ -148,23 +159,3 @@ export async function crearEvaluacion(params: CrearEvaluacionParams): Promise<Ev
   });
 }
 
-export async function registrarAuditoriaEvaluacion(params: {
-  usuarioId: string;
-  organizacionId: string;
-  entidadId: string;
-  direccionIp: string;
-}): Promise<void> {
-  await prisma.auditoria.create({
-    data: {
-      usuarioId: params.usuarioId,
-      organizacionId: params.organizacionId,
-      entidad: "Evaluacion",
-      entidadId: params.entidadId,
-      accion: "CREAR",
-      datosNuevos: {
-        riesgoId: params.entidadId,
-      } as never,
-      direccionIp: params.direccionIp,
-    },
-  });
-}

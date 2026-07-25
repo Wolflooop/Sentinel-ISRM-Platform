@@ -9,7 +9,6 @@ import {
   findTratamientoPorId,
   findTratamientos,
   findUsuarioResponsablePorOrganizacion,
-  registrarAuditoriaTratamiento,
 } from "../repository/treatments.repository";
 import { CrearTratamientoInput, ActualizarTratamientoInput } from "../schema/treatments.schema";
 import { FiltrosTratamientos, TratamientoConRelaciones } from "../types/treatments.types";
@@ -122,14 +121,8 @@ export async function crearNuevoTratamiento(
     riesgoEvaluacionActual: riesgo.evaluacionActual,
     controlPrincipalTipo,
     usuarioId: actor.usuarioId,
-    comentario: input.comentario,
-  });
-
-  await registrarAuditoriaTratamiento({
-    usuarioId: actor.usuarioId,
     organizacionId,
-    entidadId: tratamiento.id,
-    accion: "CREAR",
+    comentario: input.comentario,
     direccionIp: actor.direccionIp,
   });
 
@@ -249,17 +242,11 @@ export async function actualizarTratamientoExistente(
       controlPrincipalTipoFinal,
       controlPrincipalIdFinal,
       usuarioId: actor.usuarioId,
+      organizacionId,
+      direccionIp: actor.direccionIp,
       comentario: input.comentario,
     }
   );
-
-  await registrarAuditoriaTratamiento({
-    usuarioId: actor.usuarioId,
-    organizacionId,
-    entidadId: tratamientoActualizado.id,
-    accion: "EDITAR",
-    direccionIp: actor.direccionIp,
-  });
 
   return tratamientoActualizado;
 }

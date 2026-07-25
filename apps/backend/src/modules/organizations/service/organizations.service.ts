@@ -5,10 +5,8 @@ import {
   existeOrganizacionConNombre,
   actualizarOrganizacion,
   cambiarEstadoOrganizacion,
-  revocarSesionesActivasDeOrganizacion,
   crearOrganizacion,
   findOrganizaciones,
-  registrarAuditoria,
 } from "../repository/organizations.repository";
 import {
   ActualizarOrganizacionInput,
@@ -35,15 +33,8 @@ export async function crearNuevaOrganizacion(
     throw new AppError("Ya existe una organización con ese nombre", 409);
   }
 
-  const organizacion = await crearOrganizacion(input);
-
-  await registrarAuditoria({
+  const organizacion = await crearOrganizacion(input, {
     usuarioId: actor.usuarioId,
-    organizacionId: organizacion.id,
-    entidad: "Organizacion",
-    entidadId: organizacion.id,
-    accion: "CREAR",
-    datosNuevos: { nombre: organizacion.nombre, sector: organizacion.sector },
     direccionIp: actor.direccionIp,
   });
 
@@ -78,18 +69,12 @@ export async function actualizarOrganizacionActual(
     }
   }
 
-  const organizacionActualizada = await actualizarOrganizacion(organizacionId, input);
-
-  await registrarAuditoria({
-    usuarioId: actor.usuarioId,
+  const organizacionActualizada = await actualizarOrganizacion(
     organizacionId,
-    entidad: "Organizacion",
-    entidadId: organizacionId,
-    accion: "EDITAR",
-    datosAnteriores: { nombre: organizacionExistente.nombre, sector: organizacionExistente.sector },
-    datosNuevos: input,
-    direccionIp: actor.direccionIp,
-  });
+    input,
+    { usuarioId: actor.usuarioId, direccionIp: actor.direccionIp },
+    { nombre: organizacionExistente.nombre, sector: organizacionExistente.sector }
+  );
 
   return organizacionActualizada;
 }
@@ -103,23 +88,11 @@ export async function cambiarEstadoOrganizacionActual(
 
   const organizacionActualizada = await cambiarEstadoOrganizacion(
     organizacionId,
-    input.estado
+    input.estado,
+    { usuarioId: actor.usuarioId, direccionIp: actor.direccionIp },
+    { estado: organizacionExistente.estado },
+    input.estado === "SUSPENDIDA" || input.estado === "INACTIVA"
   );
-
-  if (input.estado === "SUSPENDIDA" || input.estado === "INACTIVA") {
-    await revocarSesionesActivasDeOrganizacion(organizacionId);
-  }
-
-  await registrarAuditoria({
-    usuarioId: actor.usuarioId,
-    organizacionId,
-    entidad: "Organizacion",
-    entidadId: organizacionId,
-    accion: "EDITAR",
-    datosAnteriores: { estado: organizacionExistente.estado },
-    datosNuevos: { estado: organizacionActualizada.estado },
-    direccionIp: actor.direccionIp,
-  });
 
   return organizacionActualizada;
 }

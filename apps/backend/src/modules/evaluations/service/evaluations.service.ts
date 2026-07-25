@@ -7,7 +7,6 @@ import {
   findContextoActivoPorOrganizacion,
   findCeldaMatriz,
   crearEvaluacion,
-  registrarAuditoriaEvaluacion,
 } from "../repository/evaluations.repository";
 import { CrearEvaluacionInput } from "../schema/evaluations.schema";
 import { EvaluacionConRelaciones, FiltrosEvaluaciones } from "../types/evaluations.types";
@@ -86,13 +85,6 @@ export async function crearNuevaEvaluacion(
     comentario: input.comentario,
     usuarioId: actor.usuarioId,
     organizacionId,
-    direccionIp: actor.direccionIp,
-  });
-
-  await registrarAuditoriaEvaluacion({
-    usuarioId: actor.usuarioId,
-    organizacionId,
-    entidadId: evaluacion.id,
     direccionIp: actor.direccionIp,
   });
 
