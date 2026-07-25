@@ -10,6 +10,7 @@ import {
 import { ControlHistorialEntrada } from "../../history/types/history.types";
 import { registrarCreacionControl, transicionarEstadoControl } from "../../history/service/history.service";
 import { findHistorialDeControl as findHistorialDeControlRepo } from "../../history/repository/history.repository";
+import { registrarAuditoria, RegistrarAuditoriaParams } from "../../../shared/audit";
 
 const CONTROL_INCLUDE = {
   organizacion: {
@@ -56,18 +57,9 @@ export async function findResponsableDeOrganizacion(
   });
 }
 
-type AuditoriaControlParams = {
-  usuarioId: string;
-  organizacionId: string;
-  accion: "CREAR" | "EDITAR" | "ELIMINAR";
-  direccionIp: string;
-  datosAnteriores?: unknown;
-  datosNuevos?: unknown;
-};
-
 export async function crearControlConAuditoria(
   params: CrearControlParams,
-  auditoria: AuditoriaControlParams
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
 ): Promise<ControlConRelaciones> {
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const control = await tx.control.create({
@@ -85,17 +77,15 @@ export async function crearControlConAuditoria(
       include: CONTROL_INCLUDE,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Control",
-        entidadId: control.id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Control",
+      entidadId: control.id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     await registrarCreacionControl(tx, {
@@ -111,7 +101,7 @@ export async function crearControlConAuditoria(
 export async function actualizarControlConAuditoria(
   id: string,
   params: ActualizarControlParams,
-  auditoria: AuditoriaControlParams,
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">,
   transicion: {
     usuarioId: string;
     estadoNuevo: EstadoImplementacionControl;
@@ -127,17 +117,15 @@ export async function actualizarControlConAuditoria(
       datosControl: params,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Control",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Control",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return tx.control.findUniqueOrThrow({ where: { id }, include: CONTROL_INCLUDE });
@@ -146,22 +134,20 @@ export async function actualizarControlConAuditoria(
 
 export async function eliminarControlConAuditoria(
   id: string,
-  auditoria: AuditoriaControlParams
+  auditoria: Omit<RegistrarAuditoriaParams, "entidad" | "entidadId">
 ): Promise<void> {
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.control.delete({ where: { id } });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Control",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Control",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
   });
 }
