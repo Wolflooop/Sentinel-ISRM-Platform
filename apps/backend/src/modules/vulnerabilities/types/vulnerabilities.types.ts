@@ -41,14 +41,3 @@ export interface ActualizarVulnerabilidadParams {
   severidad?: number;
   referenciaCVE?: string;
 }
-
-export interface RegistrarAuditoriaParams {
-  usuarioId: string;
-  organizacionId: string;
-  entidad: string;
-  entidadId: string;
-  accion: "CREAR" | "EDITAR" | "ELIMINAR" | "APROBAR";
-  datosAnteriores?: unknown;
-  datosNuevos?: unknown;
-  direccionIp: string;
-}

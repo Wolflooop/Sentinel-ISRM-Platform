@@ -5,9 +5,9 @@ import {
   CategoriaVulnerabilidad,
   CrearVulnerabilidadParams,
   FiltrosVulnerabilidades,
-  RegistrarAuditoriaParams,
   VulnerabilidadConRelaciones,
 } from "../types/vulnerabilities.types";
+import { registrarAuditoria, RegistrarAuditoriaParams } from "../../../shared/audit";
 
 const INCLUDE_RELACIONES = {
   categoria: { select: { id: true, nombre: true } },
@@ -97,17 +97,15 @@ export async function crearVulnerabilidadConAuditoria(
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Vulnerabilidad",
-        entidadId: vulnerabilidad.id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Vulnerabilidad",
+      entidadId: vulnerabilidad.id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return vulnerabilidad;
@@ -126,17 +124,15 @@ export async function actualizarVulnerabilidadConAuditoria(
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Vulnerabilidad",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Vulnerabilidad",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return actualizada;
@@ -150,17 +146,15 @@ export async function eliminarVulnerabilidadConAuditoria(
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.vulnerabilidad.delete({ where: { id } });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Vulnerabilidad",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Vulnerabilidad",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
   });
 }
