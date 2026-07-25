@@ -6,8 +6,8 @@ import {
   FiltrosAmenazas,
   CrearAmenazaParams,
   ActualizarAmenazaParams,
-  RegistrarAuditoriaParams,
 } from "../types/threats.types";
+import { registrarAuditoria, RegistrarAuditoriaParams } from "../../../shared/audit";
 
 const INCLUDE_RELACIONES = {
   categoria: { select: { id: true, nombre: true } },
@@ -98,17 +98,15 @@ export async function crearAmenazaConAuditoria(
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Amenaza",
-        entidadId: amenaza.id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Amenaza",
+      entidadId: amenaza.id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return amenaza;
@@ -127,17 +125,15 @@ export async function actualizarAmenazaConAuditoria(
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Amenaza",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Amenaza",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return actualizada;
@@ -152,17 +148,15 @@ export async function eliminarAmenazaConAuditoria(
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.amenaza.delete({ where: { id } });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Amenaza",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Amenaza",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
   });
 }

@@ -42,14 +42,3 @@ export interface ActualizarAmenazaParams {
   descripcion?: string;
   origen?: OrigenAmenaza;
 }
-
-export interface RegistrarAuditoriaParams {
-  usuarioId: string;
-  organizacionId: string;
-  entidad: string;
-  entidadId: string;
-  accion: "CREAR" | "EDITAR" | "ELIMINAR" | "APROBAR";
-  datosAnteriores?: unknown;
-  datosNuevos?: unknown;
-  direccionIp: string;
-}
