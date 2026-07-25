@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useContextos } from "../hooks/useContext";
+import { ConPermiso } from "../../../components/ConPermiso";
 
 export function ContextListPage() {
   const { data: contextos, isLoading, isError } = useContextos();
@@ -8,12 +9,14 @@ export function ContextListPage() {
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-ink">Contexto ISO</h1>
-        <Link
-          to="/contexto/nuevo"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
-        >
-          Nuevo contexto
-        </Link>
+        <ConPermiso recurso="contexto" accion="crear">
+          <Link
+            to="/contexto/nuevo"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
+          >
+            Nuevo contexto
+          </Link>
+        </ConPermiso>
       </div>
 
       {isLoading && <p className="mt-4 text-sm text-muted">Cargando contextos...</p>}

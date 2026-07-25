@@ -34,12 +34,7 @@ export const matrizFormSchema = z.object({
 });
 export type MatrizFormValues = z.infer<typeof matrizFormSchema>;
 
-// Tipo usado únicamente mientras el usuario está editando la matriz en el
-// formulario. A diferencia de MatrizFormValues (que exige un NivelRiesgo
-// válido en las 25 celdas, tal como lo requiere el backend), aquí
-// `nivelResultante` admite "" para representar una celda que el usuario
-// todavía no ha configurado. Nunca se envía "" al backend: el envío se
-// valida contra matrizFormSchema antes de llamar a onSubmit.
+
 export interface MatrizCeldaDraft {
   nivelProbabilidad: number;
   nivelImpacto: number;

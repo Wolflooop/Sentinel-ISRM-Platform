@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 import { useOrganizaciones, useCrearOrganizacion } from "../hooks/useOrganization";
 import { CreateOrganizationForm } from "../components/CreateOrganizationForm";
 import { CrearOrganizacionFormValues } from "../schemas/organizationsSchema";
+import { ConPermiso } from "../../../components/ConPermiso";
 
 const ETIQUETA_ESTADO: Record<string, string> = {
   ACTIVA: "Activa",
@@ -46,13 +47,15 @@ export function OrganizationsListPage() {
             Administración global de la plataforma — exclusiva del Administrador Principal.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setMostrarFormulario((valor) => !valor)}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-        >
-          {mostrarFormulario ? "Cancelar" : "Nueva organización"}
-        </button>
+        <ConPermiso recurso="organizaciones" accion="crear">
+          <button
+            type="button"
+            onClick={() => setMostrarFormulario((valor) => !valor)}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
+          >
+            {mostrarFormulario ? "Cancelar" : "Nueva organización"}
+          </button>
+        </ConPermiso>
       </div>
 
       {mostrarFormulario && (

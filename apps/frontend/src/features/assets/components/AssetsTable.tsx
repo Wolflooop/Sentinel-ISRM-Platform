@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Activo } from "../types/assets.types";
 import { useCambiarEstadoActivo } from "../hooks/useAssets";
+import { ConPermiso } from "../../../components/ConPermiso";
 
 interface Props {
   activos: Activo[];
@@ -42,39 +43,45 @@ export function AssetsTable({ activos }: Props) {
               </span>
             </td>
             <td className="py-2 pr-4 space-x-3">
-              <Link to={`/activos/${activo.id}/editar`} className="text-ink underline">
-                Editar
-              </Link>
-              {activo.estado === "ACTIVO" && (
-                <button
-                  type="button"
-                  disabled={cambiarEstado.isPending}
-                  onClick={() => cambiarEstado.mutate({ id: activo.id, estado: "INACTIVO" })}
-                  className="text-ink underline disabled:opacity-50"
-                >
-                  Desactivar
-                </button>
-              )}
-              {activo.estado === "INACTIVO" && (
-                <button
-                  type="button"
-                  disabled={cambiarEstado.isPending}
-                  onClick={() => cambiarEstado.mutate({ id: activo.id, estado: "ACTIVO" })}
-                  className="text-ink underline disabled:opacity-50"
-                >
-                  Activar
-                </button>
-              )}
-              {activo.estado !== "RETIRADO" && (
-                <button
-                  type="button"
-                  disabled={cambiarEstado.isPending}
-                  onClick={() => cambiarEstado.mutate({ id: activo.id, estado: "RETIRADO" })}
-                  className="text-red-600 underline disabled:opacity-50"
-                >
-                  Retirar
-                </button>
-              )}
+              <ConPermiso recurso="activos" accion="actualizar">
+                <Link to={`/activos/${activo.id}/editar`} className="text-ink underline">
+                  Editar
+                </Link>
+              </ConPermiso>
+              <ConPermiso recurso="activos" accion="cambiarEstado">
+                <>
+                  {activo.estado === "ACTIVO" && (
+                    <button
+                      type="button"
+                      disabled={cambiarEstado.isPending}
+                      onClick={() => cambiarEstado.mutate({ id: activo.id, estado: "INACTIVO" })}
+                      className="text-ink underline disabled:opacity-50"
+                    >
+                      Desactivar
+                    </button>
+                  )}
+                  {activo.estado === "INACTIVO" && (
+                    <button
+                      type="button"
+                      disabled={cambiarEstado.isPending}
+                      onClick={() => cambiarEstado.mutate({ id: activo.id, estado: "ACTIVO" })}
+                      className="text-ink underline disabled:opacity-50"
+                    >
+                      Activar
+                    </button>
+                  )}
+                  {activo.estado !== "RETIRADO" && (
+                    <button
+                      type="button"
+                      disabled={cambiarEstado.isPending}
+                      onClick={() => cambiarEstado.mutate({ id: activo.id, estado: "RETIRADO" })}
+                      className="text-red-600 underline disabled:opacity-50"
+                    >
+                      Retirar
+                    </button>
+                  )}
+                </>
+              </ConPermiso>
             </td>
           </tr>
         ))}

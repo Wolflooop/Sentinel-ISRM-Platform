@@ -4,6 +4,7 @@ import { ControlsTable } from "../components/ControlsTable";
 import { ControlsFilterBar } from "../components/ControlsFilterBar";
 import { FiltrosControles } from "../types/controls.types";
 import { Link } from "react-router-dom";
+import { ConPermiso } from "../../../components/ConPermiso";
 
 export function ControlsListPage() {
   const [filtros, setFiltros] = useState<FiltrosControles>({});
@@ -19,12 +20,14 @@ export function ControlsListPage() {
             Consulta y actualiza el estado de implementación de los controles del programa de seguridad.
           </p>
         </div>
-        <Link
-          to="/controles/nuevo"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
-        >
-          Nuevo control
-        </Link>
+        <ConPermiso recurso="controles" accion="crear">
+          <Link
+            to="/controles/nuevo"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
+          >
+            Nuevo control
+          </Link>
+        </ConPermiso>
       </div>
 
       <div className="mt-5">

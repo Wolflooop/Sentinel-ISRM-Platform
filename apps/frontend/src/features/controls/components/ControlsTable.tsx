@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Control } from "../types/controls.types";
+import { ConPermiso } from "../../../components/ConPermiso";
 
 interface Props {
   controles: Control[];
@@ -56,12 +57,14 @@ export function ControlsTable({ controles }: Props) {
                   Ver detalle
                 </Link>
                 {control.esPropia && (
-                  <Link
-                    to={`/controles/${control.id}/editar`}
-                    className="ml-3 text-sm font-medium text-ink underline"
-                  >
-                    Editar
-                  </Link>
+                  <ConPermiso recurso="controles" accion="actualizar">
+                    <Link
+                      to={`/controles/${control.id}/editar`}
+                      className="ml-3 text-sm font-medium text-ink underline"
+                    >
+                      Editar
+                    </Link>
+                  </ConPermiso>
                 )}
               </td>
             </tr>
