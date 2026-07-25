@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import {
+  AlcanceReporte,
   CrearReporteParams,
   DatosReporteOrganizacion,
   FiltrosReportes,
@@ -75,8 +76,34 @@ export async function crearReporteConAuditoria(
 
 
 export async function recopilarDatosOrganizacion(
-  organizacionId: string
+  organizacionId: string,
+  alcance: AlcanceReporte
 ): Promise<DatosReporteOrganizacion> {
+  // Filtrado por alcance (Fase Reportes RBAC):
+  //   ADMIN_TIC       -> sin restricción adicional, comportamiento previo intacto.
+  //   USUARIO_COMUN   -> limitado a lo que el usuario posee/creó.
+  // Esto es filtrado de DATOS únicamente; no reemplaza ni interactúa con
+  // RBAC/permisos/rutas (esos ya se resolvieron antes de llegar aquí).
+  const esUsuarioComun = alcance.tipoRol === "USUARIO_COMUN";
+
+  const filtroActivos = esUsuarioComun
+    ? { usuarioResponsableId: alcance.usuarioId }
+    : {};
+
+  // Riesgo: responsableId si existe; si no, creadorId (regla de negocio
+  // solicitada: "responsableId === usuarioId, si no existe usar
+  // creadorId === usuarioId").
+  const filtroRiesgosPorAlcance = esUsuarioComun
+    ? [
+        {
+          OR: [
+            { responsableId: alcance.usuarioId },
+            { responsableId: null, creadorId: alcance.usuarioId },
+          ],
+        },
+      ]
+    : [];
+
   const [organizacion, activos, riesgos, controles, contextoActivo] =
     await Promise.all([
       prisma.organizacion.findUnique({
@@ -84,7 +111,7 @@ export async function recopilarDatosOrganizacion(
         select: { nombre: true, sector: true, tamano: true, paisIso: true },
       }),
       prisma.activo.findMany({
-        where: { organizacionId },
+        where: { organizacionId, ...filtroActivos },
         select: {
           nombre: true,
           criticidad: true,
@@ -95,9 +122,14 @@ export async function recopilarDatosOrganizacion(
       }),
       prisma.riesgo.findMany({
         where: {
-          OR: [
-            { aav: { activo: { organizacionId } } },
-            { creador: { organizacionId } },
+          AND: [
+            {
+              OR: [
+                { aav: { activo: { organizacionId } } },
+                { creador: { organizacionId } },
+              ],
+            },
+            ...filtroRiesgosPorAlcance,
           ],
         },
         select: {

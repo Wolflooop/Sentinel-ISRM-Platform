@@ -18,6 +18,10 @@ function actorDe(req: Request) {
   return {
     usuarioId: req.user.sub,
     organizacionId: req.user.organizacionId,
+    // tipoRol viene del JWT vía middleware `authenticate` existente (mismo
+    // patrón que ya usan risks/treatments/evidence controllers) — no se
+    // toca el middleware, solo se lee el campo que ya está en req.user.
+    tipoRol: req.user.tipoRol,
     direccionIp: req.ip ?? "desconocida",
   };
 }

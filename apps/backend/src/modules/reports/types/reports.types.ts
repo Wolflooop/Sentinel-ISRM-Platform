@@ -1,5 +1,17 @@
+import { TipoRol } from "@prisma/client";
+
 export type TipoReporte = "EJECUTIVO" | "TECNICO" | "GENERAL";
 export type FormatoReporte = "PDF" | "XLSX" | "CSV";
+
+// Alcance del reporte: determina si recopilarDatosOrganizacion trae la
+// organización completa (ADMIN_TIC) o solo lo vinculado al usuario actual
+// (USUARIO_COMUN). Esta capa es exclusivamente de FILTRADO DE DATOS — no
+// sustituye ni interactúa con RBAC/permisos/rutas, que ya decidieron antes
+// de llegar aquí si el usuario puede generar el reporte.
+export interface AlcanceReporte {
+  tipoRol: TipoRol;
+  usuarioId: string;
+}
 
 export interface ReporteConRelaciones {
   id: string;

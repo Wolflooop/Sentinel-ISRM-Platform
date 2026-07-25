@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
+import { TipoRol } from "@prisma/client";
 import { AppError } from "../../../shared/AppError";
 import {
   crearReporteConAuditoria,
@@ -19,6 +20,7 @@ interface ActorAuditoria {
   usuarioId: string;
   organizacionId: string;
   direccionIp: string;
+  tipoRol: TipoRol;
 }
 
 const STORAGE_DIR = path.resolve(__dirname, "../../../../storage/reports");
@@ -366,7 +368,10 @@ export async function generarReporteNuevo(
   validarFormatoSoportado(input.formato);
   asegurarDirectorioStorage();
 
-  const datos = await recopilarDatosOrganizacion(actor.organizacionId);
+  const datos = await recopilarDatosOrganizacion(actor.organizacionId, {
+    tipoRol: actor.tipoRol,
+    usuarioId: actor.usuarioId,
+  });
 
   const nombreArchivo = `${actor.organizacionId}_${input.tipo}_${Date.now()}.pdf`;
   const rutaAbsoluta = path.join(STORAGE_DIR, nombreArchivo);
