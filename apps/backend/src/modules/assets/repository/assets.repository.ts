@@ -7,8 +7,8 @@ import {
   FiltrosActivos,
   CrearActivoParams,
   ActualizarActivoParams,
-  RegistrarAuditoriaParams,
 } from "../types/assets.types";
+import { registrarAuditoria, RegistrarAuditoriaParams } from "../../../shared/audit";
 
 const INCLUDE_RELACIONES = {
   categoria: { select: { id: true, nombre: true } },
@@ -126,17 +126,15 @@ export async function crearActivoConAuditoria(
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Activo",
-        entidadId: creado.id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Activo",
+      entidadId: creado.id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return creado;
@@ -156,17 +154,15 @@ export async function actualizarActivoConAuditoria(
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Activo",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Activo",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return actualizado;
@@ -186,17 +182,15 @@ export async function cambiarEstadoActivoConAuditoria(
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Activo",
-        entidadId: id,
-        accion: auditoria.accion,
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Activo",
+      entidadId: id,
+      accion: auditoria.accion,
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return actualizado;
