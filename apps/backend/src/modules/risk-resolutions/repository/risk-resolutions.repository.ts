@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../../config/prisma";
 import { CrearResolucionParams, ResolucionRiesgoConRelaciones, FiltrosResoluciones } from "../types/risk-resolutions.types";
 import { transicionarEstadoRiesgo } from "../../history/service/history.service";
+import { registrarAuditoria } from "../../../shared/audit";
 
 const INCLUDE_USUARIO = {
   usuario: { select: { id: true, nombre: true } },
@@ -78,16 +79,14 @@ export async function crearResolucion(
       include: INCLUDE_USUARIO,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: params.usuarioId,
-        organizacionId: params.organizacionId,
-        entidad: "ResolucionRiesgo",
-        entidadId: resolucion.id,
-        accion: "CREAR",
-        datosNuevos: { riesgoId: params.riesgoId, tipo: params.tipo } as never,
-        direccionIp: params.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: params.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: "ResolucionRiesgo",
+      entidadId: resolucion.id,
+      accion: "CREAR",
+      datosNuevos: { riesgoId: params.riesgoId, tipo: params.tipo },
+      direccionIp: params.direccionIp,
     });
 
     return resolucion;

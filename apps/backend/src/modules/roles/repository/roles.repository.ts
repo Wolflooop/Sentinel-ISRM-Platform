@@ -5,6 +5,7 @@ import {
   CrearRolParams,
   ActualizarRolParams,
 } from "../types/roles.types";
+import { registrarAuditoria } from "../../../shared/audit";
 
 // Actor + organizacionId ya resuelto (nunca null: el service resuelve el
 // caso SUPER_ADMIN vía shared/audit.ts antes de llegar aquí), necesarios
@@ -72,19 +73,17 @@ export async function crearRol(
       },
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: actor.usuarioId,
-        organizacionId: actor.organizacionId,
-        entidad: "Rol",
-        entidadId: rol.id,
-        accion: "CREAR",
-        datosNuevos: {
-          nombre: params.nombre,
-          descripcion: params.descripcion ?? null,
-        } as never,
-        direccionIp: actor.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Rol",
+      entidadId: rol.id,
+      accion: "CREAR",
+      datosNuevos: {
+        nombre: params.nombre,
+        descripcion: params.descripcion ?? null,
       },
+      direccionIp: actor.direccionIp,
     });
 
     return rol;
@@ -103,20 +102,18 @@ export async function actualizarRol(
   return prisma.$transaction(async (tx) => {
     const rol = await tx.rol.update({ where: { id }, data: params });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: actor.usuarioId,
-        organizacionId: actor.organizacionId,
-        entidad: "Rol",
-        entidadId: rol.id,
-        accion: "EDITAR",
-        datosAnteriores: datosAnteriores as never,
-        datosNuevos: {
-          nombre: rol.nombre,
-          descripcion: rol.descripcion,
-        } as never,
-        direccionIp: actor.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Rol",
+      entidadId: rol.id,
+      accion: "EDITAR",
+      datosAnteriores,
+      datosNuevos: {
+        nombre: rol.nombre,
+        descripcion: rol.descripcion,
       },
+      direccionIp: actor.direccionIp,
     });
 
     return rol;
@@ -146,20 +143,18 @@ export async function asignarPermisoARol(
   await prisma.$transaction(async (tx) => {
     await tx.rolPermiso.create({ data: { rolId, permisoId } });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: actor.usuarioId,
-        organizacionId: actor.organizacionId,
-        entidad: "Rol",
-        entidadId: rolId,
-        accion: "EDITAR",
-        datosNuevos: {
-          accion: "ASIGNAR_PERMISO",
-          rolId,
-          permisoId,
-        } as never,
-        direccionIp: actor.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Rol",
+      entidadId: rolId,
+      accion: "EDITAR",
+      datosNuevos: {
+        accion: "ASIGNAR_PERMISO",
+        rolId,
+        permisoId,
       },
+      direccionIp: actor.direccionIp,
     });
   });
 }
@@ -174,20 +169,18 @@ export async function quitarPermisoDeRol(
       where: { rolId_permisoId: { rolId, permisoId } },
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: actor.usuarioId,
-        organizacionId: actor.organizacionId,
-        entidad: "Rol",
-        entidadId: rolId,
-        accion: "EDITAR",
-        datosNuevos: {
-          accion: "QUITAR_PERMISO",
-          rolId,
-          permisoId,
-        } as never,
-        direccionIp: actor.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: actor.usuarioId,
+      organizacionId: actor.organizacionId,
+      entidad: "Rol",
+      entidadId: rolId,
+      accion: "EDITAR",
+      datosNuevos: {
+        accion: "QUITAR_PERMISO",
+        rolId,
+        permisoId,
       },
+      direccionIp: actor.direccionIp,
     });
   });
 }

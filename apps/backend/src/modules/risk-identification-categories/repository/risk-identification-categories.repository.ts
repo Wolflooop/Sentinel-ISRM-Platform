@@ -5,6 +5,7 @@ import {
   CategoriaIdentificacionRiesgo,
   CrearCategoriaIdentificacionParams,
 } from "../types/risk-identification-categories.types";
+import { registrarAuditoria } from "../../../shared/audit";
 
 export async function findCategoriasIdentificacion(): Promise<CategoriaIdentificacionRiesgo[]> {
   return prisma.categoriaIdentificacionRiesgo.findMany({ orderBy: { nombre: "asc" } });
@@ -39,16 +40,14 @@ export async function crearCategoriaIdentificacionConAuditoria(
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const categoria = await tx.categoriaIdentificacionRiesgo.create({ data: params });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "CategoriaIdentificacionRiesgo",
-        entidadId: categoria.id,
-        accion: "CREAR",
-        datosNuevos: params as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "CategoriaIdentificacionRiesgo",
+      entidadId: categoria.id,
+      accion: "CREAR",
+      datosNuevos: params,
+      direccionIp: auditoria.direccionIp,
     });
 
     return categoria;
@@ -63,17 +62,15 @@ export async function actualizarCategoriaIdentificacionConAuditoria(
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const categoria = await tx.categoriaIdentificacionRiesgo.update({ where: { id }, data: params });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "CategoriaIdentificacionRiesgo",
-        entidadId: id,
-        accion: "EDITAR",
-        datosAnteriores: auditoria.datosAnteriores as never,
-        datosNuevos: params as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "CategoriaIdentificacionRiesgo",
+      entidadId: id,
+      accion: "EDITAR",
+      datosAnteriores: auditoria.datosAnteriores,
+      datosNuevos: params,
+      direccionIp: auditoria.direccionIp,
     });
 
     return categoria;
@@ -87,16 +84,14 @@ export async function eliminarCategoriaIdentificacionConAuditoria(
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.categoriaIdentificacionRiesgo.delete({ where: { id } });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "CategoriaIdentificacionRiesgo",
-        entidadId: id,
-        accion: "ELIMINAR",
-        datosAnteriores: auditoria.datosAnteriores as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "CategoriaIdentificacionRiesgo",
+      entidadId: id,
+      accion: "ELIMINAR",
+      datosAnteriores: auditoria.datosAnteriores,
+      direccionIp: auditoria.direccionIp,
     });
   });
 }

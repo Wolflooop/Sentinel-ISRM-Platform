@@ -7,6 +7,7 @@ import {
   FiltrosReportes,
   ReporteConRelaciones,
 } from "../types/reports.types";
+import { registrarAuditoria } from "../../../shared/audit";
 
 const REPORTE_INCLUDE = {
   usuario: {
@@ -58,16 +59,14 @@ export async function crearReporteConAuditoria(
       include: REPORTE_INCLUDE,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: auditoria.usuarioId,
-        organizacionId: auditoria.organizacionId,
-        entidad: "Reporte",
-        entidadId: reporte.id,
-        accion: "CREAR",
-        datosNuevos: auditoria.datosNuevos as never,
-        direccionIp: auditoria.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: auditoria.usuarioId,
+      organizacionId: auditoria.organizacionId,
+      entidad: "Reporte",
+      entidadId: reporte.id,
+      accion: "CREAR",
+      datosNuevos: auditoria.datosNuevos,
+      direccionIp: auditoria.direccionIp,
     });
 
     return reporte;

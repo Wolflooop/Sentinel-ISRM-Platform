@@ -1,5 +1,6 @@
 import { prisma } from "../../../config/prisma";
 import { CrearComentarioParams, ComentarioConRelaciones, FiltrosComentarios } from "../types/comments.types";
+import { registrarAuditoria } from "../../../shared/audit";
 
 const INCLUDE_USUARIO = {
   usuario: { select: { id: true, nombre: true, email: true } },
@@ -88,21 +89,19 @@ export async function crearComentario(params: CrearComentarioParams): Promise<Co
       include: INCLUDE_USUARIO,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: params.usuarioId,
-        organizacionId: params.organizacionId,
-        entidad: "Comentario",
-        entidadId: comentario.id,
-        accion: "CREAR",
-        datosNuevos: {
-          riesgoId: params.riesgoId,
-          evaluacionId: params.evaluacionId,
-          tratamientoId: params.tratamientoId,
-          controlId: params.controlId,
-        } as never,
-        direccionIp: params.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: params.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: "Comentario",
+      entidadId: comentario.id,
+      accion: "CREAR",
+      datosNuevos: {
+        riesgoId: params.riesgoId,
+        evaluacionId: params.evaluacionId,
+        tratamientoId: params.tratamientoId,
+        controlId: params.controlId,
       },
+      direccionIp: params.direccionIp,
     });
 
     return comentario;

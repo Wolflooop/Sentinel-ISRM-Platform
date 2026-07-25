@@ -40,6 +40,7 @@ import { RequierePermiso } from "./RequierePermiso";
 import { RequiereTipoRol } from "./RequiereTipoRol";
 import { RequiereOrganizacion } from "./RequiereOrganizacion";
 import { AccesoRestringidoPage } from "../features/shell/pages/AccesoRestringidoPage";
+import { NotFoundPage } from "../features/shell/pages/NotFoundPage";
 
 
 
@@ -170,6 +171,8 @@ export function AppRouter() {
           </Route>
         </Route>
         </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

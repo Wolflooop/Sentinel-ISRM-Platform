@@ -1,5 +1,6 @@
 import { prisma } from "../../../config/prisma";
 import { CrearSeguimientoParams, SeguimientoConRelaciones, FiltrosSeguimientos } from "../types/follow-ups.types";
+import { registrarAuditoria } from "../../../shared/audit";
 
 const INCLUDE_USUARIO = {
   usuario: { select: { id: true, nombre: true, email: true } },
@@ -102,20 +103,18 @@ export async function crearSeguimiento(params: CrearSeguimientoParams): Promise<
       include: INCLUDE_USUARIO,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: params.usuarioId,
-        organizacionId: params.organizacionId,
-        entidad: "Seguimiento",
-        entidadId: seguimiento.id,
-        accion: "CREAR",
-        datosNuevos: {
-          riesgoId: params.riesgoId,
-          tratamientoId: params.tratamientoId,
-          controlId: params.controlId,
-        } as never,
-        direccionIp: params.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: params.usuarioId,
+      organizacionId: params.organizacionId,
+      entidad: "Seguimiento",
+      entidadId: seguimiento.id,
+      accion: "CREAR",
+      datosNuevos: {
+        riesgoId: params.riesgoId,
+        tratamientoId: params.tratamientoId,
+        controlId: params.controlId,
       },
+      direccionIp: params.direccionIp,
     });
 
     return seguimiento;

@@ -1,5 +1,6 @@
 import { prisma } from "../../../config/prisma";
 import { CrearEvidenciaParams, EvidenciaConRelaciones, FiltrosEvidencias, ValidarEvidenciaParams } from "../types/evidence.types";
+import { registrarAuditoria } from "../../../shared/audit";
 
 const INCLUDE_RELACIONES = {
   subidoPor: { select: { id: true, nombre: true, email: true } },
@@ -120,21 +121,19 @@ export async function crearEvidencia(params: CrearEvidenciaParams): Promise<Evid
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: params.subidoPorId,
-        organizacionId: params.organizacionId,
-        entidad: "Evidencia",
-        entidadId: evidencia.id,
-        accion: "CREAR",
-        datosNuevos: {
-          riesgoId: params.riesgoId,
-          tratamientoId: params.tratamientoId,
-          controlId: params.controlId,
-          nombreArchivo: params.nombreArchivo,
-        } as never,
-        direccionIp: params.direccionIp,
+    await registrarAuditoria(tx, {
+      usuarioId: params.subidoPorId,
+      organizacionId: params.organizacionId,
+      entidad: "Evidencia",
+      entidadId: evidencia.id,
+      accion: "CREAR",
+      datosNuevos: {
+        riesgoId: params.riesgoId,
+        tratamientoId: params.tratamientoId,
+        controlId: params.controlId,
+        nombreArchivo: params.nombreArchivo,
       },
+      direccionIp: params.direccionIp,
     });
 
     return evidencia;
@@ -153,16 +152,14 @@ export async function validarEvidencia(params: ValidarEvidenciaParams): Promise<
       include: INCLUDE_RELACIONES,
     });
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: params.validadoPorId,
-        organizacionId: params.organizacionId,
-        entidad: "Evidencia",
-        entidadId: evidencia.id,
-        accion: "APROBAR",
-        datosNuevos: { estado: params.estado, comentarioValidacion: params.comentarioValidacion } as never,
-        direccionIp: params.direccionIp,
-      },
+    await registrarAuditoria(tx, {
+      usuarioId: params.validadoPorId,
+      organizacionId: params.organizacionId,
+      entidad: "Evidencia",
+      entidadId: evidencia.id,
+      accion: "APROBAR",
+      datosNuevos: { estado: params.estado, comentarioValidacion: params.comentarioValidacion },
+      direccionIp: params.direccionIp,
     });
 
     return evidencia;
