@@ -29,6 +29,10 @@ interface NavItem {
   // regla real es la dependencia de contexto organizacional, no la
   // jerarquía del rol.
   requiereOrganizacion?: boolean;
+  // Agrupación puramente visual del sidebar (ver SidebarNav.tsx): no
+  // afecta rutas, permisos, RBAC ni nombres internos — solo cómo se
+  // presentan los ítems relacionados bajo un mismo encabezado plegable.
+  grupo?: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -62,13 +66,21 @@ const NAV_ITEMS: NavItem[] = [
     accion: "leer",
     requiereOrganizacion: true,
   },
-  { to: "/riesgos", label: "Riesgos", recurso: "riesgos", accion: "leer", requiereOrganizacion: true },
+  {
+    to: "/riesgos",
+    label: "Riesgos",
+    recurso: "riesgos",
+    accion: "leer",
+    requiereOrganizacion: true,
+    grupo: "Gestión de Riesgos",
+  },
   {
     to: "/riesgos/matriz",
     label: "Matriz de riesgos",
     recurso: "riesgos",
     accion: "leer",
     requiereOrganizacion: true,
+    grupo: "Gestión de Riesgos",
   },
   { to: "/controles", label: "Controles", recurso: "controles", accion: "leer", requiereOrganizacion: true },
   { to: "/reportes", label: "Reportes", recurso: "reportes", accion: "leer", requiereOrganizacion: true },
