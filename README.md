@@ -1,33 +1,56 @@
 # Sentinel ISRM Platform
 
-Plataforma web multiorganizacional (multi-tenant lógico) para la gestión de riesgos de seguridad de la información, basada en **ISO/IEC 27005:2022**.
+Plataforma web multiorganizacional (multi-tenant lógico) para la gestión
+de riesgos de seguridad de la información, basada en **ISO/IEC
+27005:2022**.
 
-> Fuente de verdad del proyecto: [`docs/PROJECT_CONSTITUTION_SENTINEL_ISRM_v1.0.md`](./docs/PROJECT_CONSTITUTION_SENTINEL_ISRM_v1.0.md). Cualquier duda de arquitectura, alcance o modelo de datos se resuelve ahí, no en este README.
+## Descripción general
+
+Sentinel ISRM permite a una organización identificar sus activos de
+información, las amenazas y vulnerabilidades que los afectan, evaluar el
+riesgo resultante, definir tratamientos y controles, y dar seguimiento a
+todo el ciclo de vida del riesgo, con auditoría y control de acceso
+basado en roles.
+
+## Objetivo del sistema
+
+Ofrecer una herramienta centralizada que permita a distintas
+organizaciones (tenants) administrar de forma aislada e independiente su
+propio proceso de gestión de riesgos de seguridad de la información,
+siguiendo el marco de trabajo de ISO/IEC 27005.
 
 ## Estado del proyecto
 
-Backend y frontend con los módulos funcionales implementados: autenticación JWT, usuarios, roles, permisos, organizaciones, contexto ISO, activos, amenazas, vulnerabilidades, riesgos, evaluaciones, tratamientos y controles.
+Backend y frontend con los módulos funcionales implementados:
+autenticación JWT, usuarios, roles, permisos, organizaciones, contexto
+ISO, activos, amenazas, vulnerabilidades, riesgos (identificación,
+evaluación, tratamiento y control), comentarios, seguimientos, evidencias,
+reportes, auditoría y eventos de seguridad.
 
 ## Stack tecnológico
 
-**Frontend:** React, Vite, TypeScript, Tailwind CSS, React Router DOM, Axios, React Hook Form, Zod, TanStack Query, Chart.js, Lucide React.
+**Frontend:** React, Vite, TypeScript, Tailwind CSS, React Router DOM,
+Axios, React Hook Form, Zod, TanStack Query, Chart.js, Lucide React.
 
-**Backend:** Node.js LTS, Express, TypeScript, Prisma ORM, PostgreSQL, JWT, bcrypt, Helmet, express-rate-limit, Winston, Morgan, Zod.
+**Backend:** Node.js LTS, Express, TypeScript, Prisma ORM, PostgreSQL,
+JWT, bcrypt, Helmet, express-rate-limit, Winston, Morgan, Zod.
 
 ## Estructura del monorepo
 
 ```
 sentinel-isrm/
 ├── apps/
-│   ├── backend/     Express + Prisma + TypeScript
-│   └── frontend/    React + Vite + TypeScript
-├── database/
-│   └── schema.prisma    Fuente física única del modelo de datos (no modificar sin autorización)
+│   ├── backend/
+│   └── frontend/
 ├── docs/
-│   └── PROJECT_CONSTITUTION_SENTINEL_ISRM_v1.0.md
-├── .github/
-│   └── copilot-instructions.md
-└── package.json     Workspaces npm
+│   ├── README.md
+│   ├── architecture/
+│   ├── security/
+│   ├── api/
+│   ├── database/
+│   ├── development/
+│   └── user-guide/
+└── package.json
 ```
 
 ## Requisitos previos
@@ -42,32 +65,28 @@ sentinel-isrm/
 npm install
 ```
 
-Esto instala las dependencias de `apps/backend` y `apps/frontend` mediante npm workspaces.
+Esto instala las dependencias de `apps/backend` y `apps/frontend`
+mediante npm workspaces.
 
-## Variables de entorno
-
-Copia los archivos de ejemplo y completa los valores reales (nunca se versionan valores reales):
+Copia los archivos de variables de entorno de ejemplo y completa los
+valores reales (nunca se versionan valores reales):
 
 ```bash
 cp apps/backend/.env.example apps/backend/.env
 cp apps/frontend/.env.example apps/frontend/.env
 ```
 
-## Levantar el backend
+## Ejecución local
 
 ```bash
+# Backend
 npm run dev:backend
-```
 
-## Levantar el frontend
-
-```bash
+# Frontend
 npm run dev:frontend
 ```
 
-## Base de datos (Prisma)
-
-Toda modificación del modelo de datos se realiza **exclusivamente** mediante Prisma. Nunca se modifican tablas directamente en PostgreSQL.
+## Configuración básica de base de datos
 
 ```bash
 # Generar el cliente de Prisma
@@ -80,8 +99,16 @@ npm run prisma:migrate:dev
 npm run prisma:migrate:deploy
 ```
 
-> El archivo `apps/backend/prisma/schema.prisma` es un espejo exacto de `database/schema.prisma` (fuente única de verdad del modelo de datos), colocado ahí únicamente porque la CLI de Prisma requiere el archivo dentro del paquete que lo ejecuta. Ningún archivo debe editarse de forma independiente del otro.
+Para más detalle sobre el modelo de datos, ver la documentación técnica.
 
-## Convenciones
+## Documentación
 
-Ver Secciones 11, 14, 15 y 16 de la [PROJECT CONSTITUTION](./docs/PROJECT_CONSTITUTION_SENTINEL_ISRM_v1.0.md) para convenciones de código, lenguaje, migraciones y control de versiones.
+La documentación técnica detallada del proyecto vive en
+[`docs/`](./docs/README.md):
+
+- [Arquitectura](./docs/architecture/ARCHITECTURE.md)
+- [Seguridad](./docs/security/SECURITY.md)
+- [API](./docs/api/API.md)
+- [Base de datos](./docs/database/DATABASE.md)
+- [Desarrollo](./docs/development/DEVELOPMENT.md)
+- [Guía de usuario](./docs/user-guide/USER_GUIDE.md)
