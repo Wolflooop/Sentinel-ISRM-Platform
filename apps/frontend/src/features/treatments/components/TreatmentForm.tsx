@@ -34,14 +34,16 @@ export function TreatmentForm({
     formState: { errors, isSubmitting },
   } = useForm<TreatmentFormValues>({
     resolver: zodResolver(treatmentFormSchema),
-    defaultValues: { estado: "PROPUESTO", porcentajeAvance: 0, controlIds: [] },
+    defaultValues: { estado: "PROPUESTO", porcentajeAvance: 0, controlAsociadoId: "" },
   });
 
   useEffect(() => {
     if (tratamiento) {
       reset({
-        controlIds: tratamiento.controles.map((c) => c.id),
-        controlPrincipalId: tratamiento.controles.find((c) => c.esPrincipal)?.id ?? "",
+        // El control asociado es el que esté marcado como principal; si por
+        // datos históricos hubiera más de uno guardado, se toma el primero.
+        controlAsociadoId:
+          tratamiento.controles.find((c) => c.esPrincipal)?.id ?? tratamiento.controles[0]?.id ?? "",
         estrategia: tratamiento.estrategia,
         descripcionPlan: tratamiento.descripcionPlan,
         usuarioResponsableId: tratamiento.usuarioResponsableId,
@@ -57,8 +59,18 @@ export function TreatmentForm({
 
   const estrategiaSeleccionada = watch("estrategia");
   const estadoSeleccionado = watch("estado");
-  const controlIdsSeleccionados = watch("controlIds") ?? [];
   const requiereControl = estrategiaSeleccionada === "MITIGAR";
+  // Texto de ayuda UX según la obligatoriedad del control asociado por
+  // estrategia: Mitigar = obligatorio; Evitar/Transferir = opcional;
+  // Aceptar = no obligatorio.
+  const textoAyudaControl =
+    estrategiaSeleccionada === "MITIGAR"
+      ? null
+      : estrategiaSeleccionada === "ACEPTAR"
+      ? "No es obligatorio para la estrategia Aceptar."
+      : estrategiaSeleccionada === "EVITAR" || estrategiaSeleccionada === "TRANSFERIR"
+      ? "Opcional para esta estrategia."
+      : null;
   // El comentario es obligatorio siempre que haya una transición real de
   // estado del riesgo: en creación SIEMPRE la hay; en edición, solo si el
   // estado seleccionado difiere del que tenía el tratamiento al cargar el
@@ -99,50 +111,26 @@ export function TreatmentForm({
       </div>
 
       <div>
-        <label htmlFor="controlIds" className="block text-sm font-medium text-ink">
-          Controles asociados {requiereControl && <span className="text-red-600">*</span>}
+        <label htmlFor="controlAsociadoId" className="block text-sm font-medium text-ink">
+          Control asociado {requiereControl && <span className="text-red-600">*</span>}
         </label>
         <select
-          id="controlIds"
-          multiple
-          size={Math.min(6, Math.max(3, controles.length))}
+          id="controlAsociadoId"
+          defaultValue=""
           className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
-          {...register("controlIds")}
+          {...register("controlAsociadoId")}
         >
+          <option value="">Seleccionar control...</option>
           {controles.map((control) => (
             <option key={control.id} value={control.id}>
               {control.nombre}
             </option>
           ))}
         </select>
-        {errors.controlIds && <p className="mt-1 text-sm text-red-600">{errors.controlIds.message}</p>}
-        {!requiereControl && (
-          <p className="mt-1 text-xs text-muted">Obligatorio solo cuando la estrategia es "Mitigar".</p>
+        {errors.controlAsociadoId && (
+          <p className="mt-1 text-sm text-red-600">{errors.controlAsociadoId.message}</p>
         )}
-      </div>
-
-      <div>
-        <label htmlFor="controlPrincipalId" className="block text-sm font-medium text-ink">
-          Control principal
-        </label>
-        <select
-          id="controlPrincipalId"
-          defaultValue=""
-          className="mt-1 w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-ink placeholder:text-muted"
-          {...register("controlPrincipalId")}
-        >
-          <option value="">Sin control principal</option>
-          {controles
-            .filter((c) => controlIdsSeleccionados.includes(c.id))
-            .map((control) => (
-              <option key={control.id} value={control.id}>
-                {control.nombre}
-              </option>
-            ))}
-        </select>
-        {errors.controlPrincipalId && (
-          <p className="mt-1 text-sm text-red-600">{errors.controlPrincipalId.message}</p>
-        )}
+        {textoAyudaControl && <p className="mt-1 text-xs text-muted">{textoAyudaControl}</p>}
       </div>
 
       <div>

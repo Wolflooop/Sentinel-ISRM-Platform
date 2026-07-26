@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-// V2 (punto 6 del prompt): N:M con Control — reemplaza controlPrincipalId
-// único. controlPrincipalId, si se indica, debe estar dentro de controlIds.
+// Corrección UX/negocio: la relación tratamiento → control es 1:1. Ya no
+// existen "Controles asociados" (múltiple) ni "Control principal" como
+// campos separados: un único selector "Control asociado".
 export const treatmentFormSchema = z
   .object({
-    controlIds: z.array(z.string()).default([]),
-    controlPrincipalId: z.string().trim().optional(),
+    controlAsociadoId: z.string().trim().optional(),
     estrategia: z.enum(["EVITAR", "MITIGAR", "TRANSFERIR", "ACEPTAR"], {
       errorMap: () => ({ message: "Selecciona una estrategia" }),
     }),
@@ -23,13 +23,9 @@ export const treatmentFormSchema = z
     // TreatmentForm.tsx, que es quien sabe si estamos creando o editando.
     comentario: z.string().trim().optional(),
   })
-  .refine((valores) => valores.estrategia !== "MITIGAR" || valores.controlIds.length > 0, {
-    message: "La estrategia MITIGAR requiere seleccionar al menos un control",
-    path: ["controlIds"],
-  })
-  .refine(
-    (valores) => !valores.controlPrincipalId || valores.controlIds.includes(valores.controlPrincipalId),
-    { message: "El control principal debe estar entre los controles seleccionados", path: ["controlPrincipalId"] }
-  );
+  .refine((valores) => valores.estrategia !== "MITIGAR" || !!valores.controlAsociadoId?.trim(), {
+    message: "La estrategia MITIGAR requiere seleccionar un control asociado",
+    path: ["controlAsociadoId"],
+  });
 
 export type TreatmentFormValues = z.infer<typeof treatmentFormSchema>;

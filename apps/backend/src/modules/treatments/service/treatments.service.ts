@@ -213,10 +213,7 @@ export async function actualizarTratamientoExistente(
 
   const estrategiaFinal = input.estrategia ?? tratamiento.estrategia;
   if (estrategiaFinal === "MITIGAR" && controlIdsEfectivos.length === 0) {
-    throw new AppError(
-      "La estrategia MITIGAR requiere especificar al menos un control (controlIds no vacío)",
-      422
-    );
+    throw new AppError("La estrategia MITIGAR requiere especificar un control asociado", 422);
   }
 
   const tratamientoActualizado = await actualizarTratamiento(

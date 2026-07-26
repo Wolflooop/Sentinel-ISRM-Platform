@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 const ESTRATEGIA_MITIGAR_REQUIERE_CONTROL =
-  "La estrategia MITIGAR requiere especificar al menos un control (controlIds no vacío)";
+  "La estrategia MITIGAR requiere especificar un control asociado";
+const UN_UNICO_CONTROL_ASOCIADO =
+  "Solo se permite asociar un único control al tratamiento (relación 1 a 1)";
 
 export const crearTratamientoSchema = z
   .object({
@@ -9,8 +11,11 @@ export const crearTratamientoSchema = z
     // Referencia histórica opcional (punto 5 del prompt: Tratamiento ya no
     // depende exclusivamente de Evaluacion).
     evaluacionOrigenId: z.string().uuid().nullable().optional(),
-    // V2 (punto 6): N:M con Control — reemplaza controlPrincipalId único.
-    controlIds: z.array(z.string().uuid()).default([]),
+    // Corrección UX/negocio: la relación tratamiento → control es 1:1
+    // (un único "control asociado"), aunque a nivel de modelo Prisma se
+    // siga representando como TratamientoControl (N:M) para no requerir
+    // migración. controlIds nunca debe traer más de un elemento.
+    controlIds: z.array(z.string().uuid()).max(1, UN_UNICO_CONTROL_ASOCIADO).default([]),
     controlPrincipalId: z.string().uuid().nullable().optional(),
     estrategia: z.enum(["EVITAR", "MITIGAR", "TRANSFERIR", "ACEPTAR"]),
     descripcionPlan: z.string().min(1),
@@ -43,7 +48,7 @@ export type CrearTratamientoInput = z.infer<typeof crearTratamientoSchema>;
 
 export const actualizarTratamientoSchema = z
   .object({
-    controlIds: z.array(z.string().uuid()).optional(),
+    controlIds: z.array(z.string().uuid()).max(1, UN_UNICO_CONTROL_ASOCIADO).optional(),
     controlPrincipalId: z.string().uuid().nullable().optional(),
     estrategia: z.enum(["EVITAR", "MITIGAR", "TRANSFERIR", "ACEPTAR"]).optional(),
     descripcionPlan: z.string().min(1).optional(),

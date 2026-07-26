@@ -12,9 +12,13 @@ import { usePerfilActual } from "../../auth/hooks/usePerfilActual";
 import { puedeGestionarRegistro } from "../../../lib/permissions";
 
 function normalizar(input: TreatmentFormValues) {
+  // Relación tratamiento → control 1:1: el único control asociado (si hay
+  // alguno seleccionado) es a la vez el contenido de controlIds y el
+  // control principal, para el contrato existente con el backend.
+  const controlAsociadoId = input.controlAsociadoId?.trim() || null;
   return {
-    controlIds: input.controlIds,
-    controlPrincipalId: input.controlPrincipalId?.trim() || null,
+    controlIds: controlAsociadoId ? [controlAsociadoId] : [],
+    controlPrincipalId: controlAsociadoId,
     estrategia: input.estrategia,
     descripcionPlan: input.descripcionPlan.trim(),
     usuarioResponsableId: input.usuarioResponsableId,
