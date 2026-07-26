@@ -77,6 +77,7 @@ export function ContextDetailPage() {
         <div className="rounded-md border border-border p-4">
           <EscalaEditor
             titulo="Escala de impacto"
+            tipo="IMPACTO"
             escalasExistentes={contexto.escalasImpacto}
             disabled={disabled}
             isSubmittingRequest={reemplazarImpacto.isPending}
@@ -91,6 +92,7 @@ export function ContextDetailPage() {
         <div className="rounded-md border border-border p-4">
           <EscalaEditor
             titulo="Escala de probabilidad"
+            tipo="PROBABILIDAD"
             escalasExistentes={contexto.escalasProbabilidad}
             disabled={disabled}
             isSubmittingRequest={reemplazarProbabilidad.isPending}
